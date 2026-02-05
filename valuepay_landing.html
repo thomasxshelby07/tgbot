@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ValuePay - Powering Payments Across South Asia</title>
+    <meta name="description"
+        content="Fast, secure, and scalable payment infrastructure enabling businesses and partners to move money instantly.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="#" class="logo">
+                <img src="valuepaylogo.png" alt="ValuePay" style="height: 55px; width: auto;">
+            </a>
+            <div class="nav-menu">
+                <a href="#about" class="nav-link">About</a>
+                <a href="#offerings" class="nav-link">Offerings</a>
+                <a href="#capabilities" class="nav-link">Capabilities</a>
+                <a href="#partners" class="nav-link">Partners</a>
+            </div>
+            <div class="nav-actions">
+                <a href="#contact" class="btn btn-primary" style="padding: 0.6rem 1.5rem;">Get Started</a>
+            </div>
+            <div class="mobile-toggle" id="mobile-toggle">
+                <svg class="icon-svg" viewBox="0 0 24 24">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu-overlay" id="mobile-menu">
+        <div class="mobile-close" id="mobile-close">
+            <svg class="icon-svg" viewBox="0 0 24 24"
+                style="width: 32px; height: 32px; stroke: white; stroke-width: 2;">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </div>
+        <a href="#about" class="nav-link mobile-link">About</a>
+        <a href="#offerings" class="nav-link mobile-link">Offerings</a>
+        <a href="#capabilities" class="nav-link mobile-link">Capabilities</a>
+        <a href="#partners" class="nav-link mobile-link">Partners</a>
+        <a href="#contact" class="btn btn-primary mobile-link">Get Started</a>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container hero-grid">
+            <!-- Left Side -->
+            <div class="hero-left fade-in-up">
+
+                <h1>The Future of
+                    <br> Digital Payments.
+                </h1>
+                <p class="hero-sub">Infrastructure for Instant 24×7 Payments</p>
+            </div>
+
+            <!-- Right Side -->
+            <div class="hero-right fade-in-up">
+                <p class="description">The fastest, most reliable payment infrastructure for high-growth companies in
+                    South Asia.</p>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <h3>$4.2M+</h3>
+                        <p>Monthly Volume</p>
+                    </div>
+                    <div class="stat">
+                        <h3>850+</h3>
+                        <p>Active Partners</p>
+                    </div>
+                </div>
+                <div class="hero-actions" style="justify-content: flex-start;">
+                    <a href="#contact" class="btn btn-primary">Start Integration</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Horizon -->
+        <div class="hero-horizon">
+            <div class="horizon-glow"></div>
+            <div class="container horizon-labels">
+                <span>Payment Gateway</span>
+                <span style="color: white;">Smart Payouts</span>
+                <span>Neo Banking</span>
+                <div class="scroll-down" onclick="document.getElementById('about').scrollIntoView()">
+                    Scroll Down <svg class="icon-svg" style="width: 16px; height: 16px;" viewBox="0 0 24 24">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="section">
+        <div class="container about-split-grid">
+            <!-- Left Side: Content -->
+            <div class="about-left fade-in-up">
+                <span class="section-label">The infrastructure for growth</span>
+                <h2>Simplify your payments <br> with our platform</h2>
+                <p class="about-desc">
+                    ValuePay is a next-generation digital payments platform built to support
+                    high-volume businesses, agencies, and partners across South Asia.
+                </p>
+            </div>
+
+            <!-- Right Side: Points (Pills) -->
+            <div class="about-right fade-in-up">
+                <div class="about-pills">
+                    <div class="pill-item">
+                        <span class="icon">
+                            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                            </svg>
+                        </span> Real-time Infrastructure
+                    </div>
+                    <div class="pill-item">
+                        <span class="icon">
+                            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                        </span> Reliable & Secure
+                    </div>
+                    <div class="pill-item">
+                        <span class="icon">
+                            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </span> Cost-Efficient
+                    </div>
+                </div>
+                <div class="bg-grid-effect"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- What We Offer -->
+    <section id="offerings" class="section">
+        <div class="container">
+            <h2 class="section-title fade-in-up">What We Offer</h2>
+            <p class="section-subtitle fade-in-up">Enterprise-grade solutions designed for speed and reliability</p>
+
+            <div class="offerings-grid fade-in-up">
+                <!-- Card 1: Highlighted (Payment Gateway) -->
+                <div class="offering-card highlight-card" onclick="openContactForm()">
+                    <div class="card-top">
+                        <div class="icon-box">
+                            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <h3>Payment Gateway</h3>
+                    <p>Accept payments seamlessly with our robust, high-success rate gateway engine.</p>
+                    <div class="card-footer">
+                        <span>Explore Solution</span>
+                        <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14m-7-7 7 7-7 7" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Card 2: Smart Payouts -->
+                <div class="offering-card" onclick="openContactForm()">
+                    <div class="card-top">
+                        <div class="icon-box">
+                            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <h3>Smart Payouts</h3>
+                    <p>Automate vendor payments and refunds with instant settlement capabilities.</p>
+                    <div class="card-footer">
+                        <span>View Details</span>
+                        <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14m-7-7 7 7-7 7" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Card 3: Neo Banking -->
+                <div class="offering-card" onclick="openContactForm()">
+                    <div class="card-top">
+                        <div class="icon-box">
+                            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M3 21h18M5 21V7l8-4 8 4v14M8 21v-4h8v4" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h3>Neo Banking</h3>
+                    <p>A complete digital banking suite for modern businesses to manage finances.</p>
+                    <div class="card-footer">
+                        <span>Coming Soon</span>
+                        <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14m-7-7 7 7-7 7" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Capabilities (Bento Grid) -->
+    <section id="capabilities" class="section">
+        <div class="container">
+            <h2 class="section-title fade-in-up">Core Capabilities</h2>
+            <p class="section-subtitle fade-in-up">Everything you need to manage money movement</p>
+
+            <div class="bento-grid fade-in-up">
+                <!-- Card 1: Wide -->
+                <div class="bento-card card-wide" onclick="toggleBento(this)">
+                    <div class="bento-content">
+                        <span class="bento-tag">INTEGRATION</span>
+                        <h3>Pay-in Channel Partners</h3>
+                        <p>Seamless integration with a wide network of payment channels for maximum coverage.</p>
+                    </div>
+                    <div class="bento-visual visual-network">
+                        <!-- CSS/SVG Visual: Global Network -->
+                        <svg class="visual-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path
+                                d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 0 1 9-9">
+                            </path>
+                        </svg>
+                    </div>
+                    <!-- Chevron for Mobile -->
+                    <div class="mobile-chevron">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Card 2: Standard -->
+                <div class="bento-card" onclick="toggleBento(this)">
+                    <div class="bento-content">
+                        <span class="bento-tag">ROUTING</span>
+                        <h3>P2P & Intent-Based</h3>
+                        <p>Smart routing for peer-to-peer and intent-driven transaction flows.</p>
+                    </div>
+                    <div class="bento-visual visual-arrows">
+                        <!-- Visual: Clean Transfer -->
+                        <svg class="visual-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M7 17l9.2-9.2M17 17V7H7"></path>
+                        </svg>
+                    </div>
+                    <div class="mobile-chevron">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Card 3: Standard -->
+                <div class="bento-card" onclick="toggleBento(this)">
+                    <div class="bento-content">
+                        <span class="bento-tag">SPEED</span>
+                        <h3>Instant Settlements</h3>
+                        <p>Get access to your funds immediately with our rapid settlement engine.</p>
+                    </div>
+                    <div class="bento-visual visual-speed">
+                        <!-- Visual: Lightning Flash -->
+                        <svg class="visual-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                        </svg>
+                    </div>
+                    <div class="mobile-chevron">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Card 4: Wide -->
+                <div class="bento-card card-wide" onclick="toggleBento(this)">
+                    <div class="bento-content">
+                        <span class="bento-tag">SECURITY</span>
+                        <h3>Fraud Protection</h3>
+                        <p>Advanced AI-driven fraud detection to keep your transactions secure.</p>
+                    </div>
+                    <div class="bento-visual visual-shield">
+                        <!-- Shield visual -->
+                        <svg class="visual-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                    </div>
+                    <div class="mobile-chevron">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Clients / Who We Work With -->
+
+
+    <!-- Why ValuePay -->
+    <section class="section" style="background: rgba(11, 44, 77, 0.3);">
+        <div class="container">
+            <h2 class="section-title fade-in-up">Why Choose ValuePay</h2>
+            <div class="benefit-list fade-in-up" style="margin-top: 3rem;">
+                <div class="benefit-item">
+                    <div class="check-icon">✓</div>
+                    <div>
+                        <h4>Faster Settlements</h4>
+                        <p style="color: var(--color-gray-dark); margin-top: 0.5rem;">Improve your cash flow with rapid
+                            movement.</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <div class="check-icon">✓</div>
+                    <div>
+                        <h4>Transparent Pricing</h4>
+                        <p style="color: var(--color-gray-dark); margin-top: 0.5rem;">No hidden fees, ever. Clear and
+                            competitive.</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <div class="check-icon">✓</div>
+                    <div>
+                        <h4>Scalable Tech</h4>
+                        <p style="color: var(--color-gray-dark); margin-top: 0.5rem;">Infrastructure that grows with
+                            your business.</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <div class="check-icon">✓</div>
+                    <div>
+                        <h4>Developer Friendly</h4>
+                        <p style="color: var(--color-gray-dark); margin-top: 0.5rem;">Easy APIs and documentation for
+                            quick integration.</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <div class="check-icon">✓</div>
+                    <div>
+                        <h4>Dedicated Support</h4>
+                        <p style="color: var(--color-gray-dark); margin-top: 0.5rem;">24/7 expert onboarding and
+                            assistance.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Who We Work With (Accordion) -->
+    <section id="who-we-work-with" class="section">
+        <div class="container">
+            <h2 class="section-title fade-in-up">Who We Work With</h2>
+            <p class="section-subtitle fade-in-up">We partner with businesses, platforms, and professionals who rely on
+                fast, reliable, and scalable payment infrastructure to grow.</p>
+
+            <div class="accordion-list fade-in-up">
+                <!-- Item 1 -->
+                <div class="accordion-item active" onclick="toggleAccordion(this)">
+                    <div class="accordion-header">
+                        <span class="acc-number">01</span>
+                        <h3 class="acc-title">Marketing & Growth Experts</h3>
+                        <div class="acc-icon-box">
+                            <svg class="acc-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M5 12h14m-7-7 7 7-7 7" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="accordion-body">
+                        <p>Performance-driven marketers and growth teams who need instant payment flows to manage
+                            campaigns,
+                            optimize budgets, and scale efficiently.</p>
+                    </div>
+                </div>
+
+                <!-- Item 2 -->
+                <div class="accordion-item" onclick="toggleAccordion(this)">
+                    <div class="accordion-header">
+                        <span class="acc-number">02</span>
+                        <h3 class="acc-title">Agencies & Freelancers</h3>
+                        <div class="acc-icon-box">
+                            <svg class="acc-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M5 12h14m-7-7 7 7-7 7" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="accordion-body">
+                        <p>Creative agencies and independent professionals looking for seamless pay-ins and fast,
+                            dependable
+                            payouts without operational friction.</p>
+                    </div>
+                </div>
+
+                <!-- Item 3 -->
+                <div class="accordion-item" onclick="toggleAccordion(this)">
+                    <div class="accordion-header">
+                        <span class="acc-number">03</span>
+                        <h3 class="acc-title">Fintech Platforms</h3>
+                        <div class="acc-icon-box">
+                            <svg class="acc-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M5 12h14m-7-7 7 7-7 7" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="accordion-body">
+                        <p>Payment apps, wallets, and financial platforms that require secure, compliant, and highly
+                            scalable infrastructure for high-volume transactions.</p>
+                    </div>
+                </div>
+
+                <!-- Item 4 -->
+                <div class="accordion-item" onclick="toggleAccordion(this)">
+                    <div class="accordion-header">
+                        <span class="acc-number">04</span>
+                        <h3 class="acc-title">Digital Businesses</h3>
+                        <div class="acc-icon-box">
+                            <svg class="acc-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M5 12h14m-7-7 7 7-7 7" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="accordion-body">
+                        <p>Online-first companies and service providers accepting payments across multiple digital
+                            channels
+                            with a focus on speed and reliability.</p>
+                    </div>
+                </div>
+
+                <!-- Item 5 -->
+                <div class="accordion-item" onclick="toggleAccordion(this)">
+                    <div class="accordion-header">
+                        <span class="acc-number">05</span>
+                        <h3 class="acc-title">High-Volume Merchants</h3>
+                        <div class="acc-icon-box">
+                            <svg class="acc-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M5 12h14m-7-7 7 7-7 7" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="accordion-body">
+                        <p>Enterprises handling large transaction volumes that demand consistent uptime, rapid
+                            settlements,
+                            and enterprise-grade performance.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Partners / Ecosystem (Core Pillars Layout) -->
+    <section id="partners" class="section">
+        <div class="container ecosystem-split">
+
+            <!-- Left Side: Sticky Title & Info -->
+            <div class="ecosystem-left fade-in-up">
+                <div class="new-pill" style="align-self: flex-start; margin-left: 0;">
+                    <span class="new-badge">PARTNERS</span>
+                </div>
+                <!-- Inline styles to override center alignment for this specific section layout -->
+                <h2 class="section-title"
+                    style="text-align: left; margin: 0 0 1.5rem 0; display: block; transform: none; left: 0;">
+                    Our Ecosystem
+                </h2>
+                <p class="section-subtitle" style="text-align: left; margin: 0 0 2rem 0; max-width: 100%;">
+                    A comprehensive network designed to support every stage of your business growth.
+                </p>
+            </div>
+
+            <!-- Right Side: Vertical Pillars Stack -->
+            <div class="pillars-stack fade-in-up">
+
+                <!-- Pillar 01 -->
+                <div class="pillar-card">
+                    <div class="pillar-number">01</div>
+                    <div class="pillar-content">
+                        <h3>Channel Partners</h3>
+                        <p>Connecting you to the widest payment networks for maximum reach.</p>
+                    </div>
+                </div>
+
+                <!-- Pillar 02 -->
+                <div class="pillar-card">
+                    <div class="pillar-number">02</div>
+                    <div class="pillar-content">
+                        <h3>Growth Experts</h3>
+                        <p>Helping you scale user acquisition and retention with data-driven strategies.</p>
+                    </div>
+                </div>
+
+                <!-- Pillar 03 -->
+                <div class="pillar-card">
+                    <div class="pillar-number">03</div>
+                    <div class="pillar-content">
+                        <h3>Agencies & Freelancers</h3>
+                        <p>Tailored payment solutions designed specifically for the gig economy workforce.</p>
+                    </div>
+                </div>
+
+                <!-- Pillar 04 -->
+                <div class="pillar-card">
+                    <div class="pillar-number">04</div>
+                    <div class="pillar-content">
+                        <h3>HR Specialists</h3>
+                        <p>Streamlining payroll, compliance, and bulk payouts for efficient operations.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Merged Contact & CTA Section -->
+    <section id="contact" class="section">
+        <div class="container">
+            <div class="contact-split-layout fade-in-up">
+
+                <!-- Left Side: CTA Content -->
+                <div class="contact-left">
+                    <h2 class="section-title" style="text-align: left; margin-bottom: 1rem;">Ready to Scale Your
+                        Payments?</h2>
+                    <p style="color: var(--color-gray-soft); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
+                        Join fast-growing businesses across South Asia trusting ValuePay.
+                        Get in touch with our experts to streamline your financial operations today.
+                    </p>
+
+                    <div class="contact-features">
+                        <div class="contact-feat-item"
+                            style="display: items; display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; color: #fff;">
+                            <div
+                                style="background: rgba(79, 163, 209, 0.2); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--color-accent-start);">
+                                ✓</div>
+                            <span>24/7 Dedicated Support</span>
+                        </div>
+                        <div class="contact-feat-item"
+                            style="display: items; display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; color: #fff;">
+                            <div
+                                style="background: rgba(79, 163, 209, 0.2); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--color-accent-start);">
+                                ✓</div>
+                            <span>Custom Pricing for Enterprise</span>
+                        </div>
+                        <div class="contact-feat-item"
+                            style="display: items; display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; color: #fff;">
+                            <div
+                                style="background: rgba(79, 163, 209, 0.2); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--color-accent-start);">
+                                ✓</div>
+                            <span>Instant Integration</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side: Form -->
+                <div class="contact-right">
+                    <div class="contact-container" style="margin: 0; padding: 2.5rem;">
+                        <form id="contactForm" action="https://formspree.io/f/xgolwadj" method="POST">
+                            <div class="form-group">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" name="name" class="form-input" required placeholder="John Doe">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" name="phone" class="form-input" required
+                                    placeholder="+91 00000 00000">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" name="email" class="form-input" required
+                                    placeholder="john@company.com">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Company Name (Optional)</label>
+                                <input type="text" name="company" class="form-input" placeholder="Company Ltd">
+                            </div>
+                            <button type="submit" class="submit-btn" id="submitBtn">Send Message</button>
+                            <div id="formStatus" class="form-success">
+                                Thanks! We'll be in touch shortly.
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="logo">
+                        <img src="valuepaylogo.png" alt="ValuePay" class="footer-logo-img">
+                    </a>
+                    <p>Next-gen digital payments infrastructure for South Asia.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Explore</h4>
+                    <ul>
+                        <li><a href="#about">About Us</a></li>
+                        <li><a href="#offerings">What We Offer</a></li>
+                        <li><a href="#capabilities">Capabilities</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Network</h4>
+                    <ul>
+                        <li><a href="#partners">Our Ecosystem</a></li>
+                        <li><a href="#who-we-work-with">Who We Work With</a></li>
+                        <li><a href="#contact">Contact Support</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>Designed for the future of finance.</p>
+                <p>&copy; 2026 ValuePay. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="js/script.js"></script>
+</body>
+
+</html>
