@@ -43,6 +43,8 @@ console.log('Menu routes registered.');
 // Register webhook route for Telegram - As per user request for Cloudflare Tunnel
 // Webhook route removed for Polling Mode
 
+import { webhookCallback } from 'grammy';
+
 const start = async () => {
     try {
         await connectDB();
@@ -51,18 +53,31 @@ const start = async () => {
         // Start Broadcast Worker
         initWorker();
 
-        await app.listen({ port: Number(PORT), host: '0.0.0.0' });
-        console.log(`✅ Server running at http://localhost:${PORT}`);
-
-        // Switch to POLLING mode as requested
-        console.log('🔄 Switching to POLLING mode...');
-        await bot.api.deleteWebhook();
-        bot.start({
-            allowed_updates: ['message', 'callback_query', 'my_chat_member'],
-            onStart: (botInfo) => {
-                console.log(`✅ Bot started as @${botInfo.username} (Polling Mode)`);
-            }
+        // Health Check Route (for Railway)
+        app.get('/', async (request, reply) => {
+            return { status: 'alive', message: 'Bot is alive 🚀' };
         });
+
+        // Webhook Route
+        // explicit type casting to any to avoid fastify/grammy type mismatch issues if necessary, 
+        // but try standard way first. 
+        // Grammy's webhookCallback returns a standard handle function.
+        app.post('/webhook', webhookCallback(bot, 'fastify'));
+
+        const port = Number(PORT) || 4000;
+        await app.listen({ port: port, host: '0.0.0.0' });
+        console.log(`✅ Server running at http://localhost:${port}`);
+
+        // Set Webhook
+        const BASE_URL = process.env.BASE_URL;
+        if (BASE_URL) {
+            const webhookUrl = `${BASE_URL}/webhook`;
+            console.log(`Configuring webhook to: ${webhookUrl}`);
+            await bot.api.setWebhook(webhookUrl);
+            console.log(`✅ Webhook set successfully`);
+        } else {
+            console.warn('⚠️ BASE_URL not set. Webhook NOT registered automatically. Please set via API or env var.');
+        }
 
     } catch (err) {
         console.error(err);
