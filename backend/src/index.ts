@@ -63,18 +63,31 @@ const start = async () => {
         // Webhook Route - Optimization for Railway/Telegram timeouts
         // 1. Respond immediately with 200 OK
         // 2. Process update asynchronously
-        app.post('/webhook', async (req, reply) => {
-            reply.send(); // Respond 200 OK immediately
-            try {
-                // Determine if we need to await this or strictly fire-and-forget.
-                // Telegram wants 200 OK fast. Processing can happen in background.
-                // Validating req.body is an object before passing
-                if (req.body) {
-                    await bot.handleUpdate(req.body as any);
+        // 3. Manual raw body parsing to avoid Fastify/Railway JSON issues
+        app.register(async (webhookScope) => {
+            webhookScope.addContentTypeParser('application/json', { parseAs: 'string' }, (req, body, done) => {
+                try {
+                    const json = JSON.parse(body as string);
+                    done(null, json);
+                } catch (err: any) {
+                    err.statusCode = 400;
+                    done(err, undefined);
                 }
-            } catch (err) {
-                console.error('❌ Error in webhook handling:', err);
-            }
+            });
+
+            webhookScope.post('/webhook', async (req, reply) => {
+                reply.send(); // Respond 200 OK immediately
+                try {
+                    // Determine if we need to await this or strictly fire-and-forget.
+                    // Telegram wants 200 OK fast. Processing can happen in background.
+                    // Validating req.body is an object before passing
+                    if (req.body) {
+                        await bot.handleUpdate(req.body as any);
+                    }
+                } catch (err) {
+                    console.error('❌ Error in webhook handling:', err);
+                }
+            });
         });
 
         const port = Number(PORT) || 4000;
