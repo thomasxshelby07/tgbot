@@ -45,6 +45,14 @@ async function getSettings() {
 
 // Initialize bot logic
 export const initBot = async () => {
+    // Debug logging for incoming messages
+    bot.on("message", async (ctx, next) => {
+        if (ctx.message?.text) {
+            console.log("MESSAGE:", ctx.message.text);
+        }
+        await next();
+    });
+
     bot.command('start', async (ctx: Context) => {
         // 1. Fire-and-Forget User Tracking (Zero Latency Impact)
         // We do NOT await this.

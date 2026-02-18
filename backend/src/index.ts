@@ -8,7 +8,9 @@ import { settingsRoutes } from './routes/settings';
 
 dotenv.config();
 
-const app = fastify();
+const app = fastify({
+    bodyLimit: 10 * 1024 * 1024 // 10MB
+});
 const PORT = process.env.PORT || 4000;
 const DOMAIN = process.env.DOMAIN || '';
 
@@ -58,11 +60,22 @@ const start = async () => {
             return { status: 'alive', message: 'Bot is alive 🚀' };
         });
 
-        // Webhook Route
-        // explicit type casting to any to avoid fastify/grammy type mismatch issues if necessary, 
-        // but try standard way first. 
-        // Grammy's webhookCallback returns a standard handle function.
-        app.post('/webhook', webhookCallback(bot, 'fastify'));
+        // Webhook Route - Optimization for Railway/Telegram timeouts
+        // 1. Respond immediately with 200 OK
+        // 2. Process update asynchronously
+        app.post('/webhook', async (req, reply) => {
+            reply.send(); // Respond 200 OK immediately
+            try {
+                // Determine if we need to await this or strictly fire-and-forget.
+                // Telegram wants 200 OK fast. Processing can happen in background.
+                // Validating req.body is an object before passing
+                if (req.body) {
+                    await bot.handleUpdate(req.body as any);
+                }
+            } catch (err) {
+                console.error('❌ Error in webhook handling:', err);
+            }
+        });
 
         const port = Number(PORT) || 4000;
         await app.listen({ port: port, host: '0.0.0.0' });
