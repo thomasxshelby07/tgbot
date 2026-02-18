@@ -60,6 +60,10 @@ const start = async () => {
             return { status: 'alive', message: 'Bot is alive 🚀' };
         });
 
+        // Initialize Bot (CRITICAL for Webhook Mode)
+        await bot.init();
+        console.log('✅ Bot initialized successfully');
+
         // Webhook Route - Optimization for Railway/Telegram timeouts
         // 1. Respond immediately with 200 OK
         // 2. Process update asynchronously
