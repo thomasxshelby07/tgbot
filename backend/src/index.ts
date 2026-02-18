@@ -78,11 +78,12 @@ const start = async () => {
             webhookScope.post('/webhook', async (req, reply) => {
                 reply.send(); // Respond 200 OK immediately
                 try {
-                    // Determine if we need to await this or strictly fire-and-forget.
-                    // Telegram wants 200 OK fast. Processing can happen in background.
-                    // Validating req.body is an object before passing
+                    console.log('🔹 WEBHOOK HIT');
                     if (req.body) {
+                        console.log('Payload:', JSON.stringify(req.body, null, 2));
                         await bot.handleUpdate(req.body as any);
+                    } else {
+                        console.warn('⚠️ Webhook received but body is empty');
                     }
                 } catch (err) {
                     console.error('❌ Error in webhook handling:', err);

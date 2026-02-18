@@ -47,9 +47,7 @@ async function getSettings() {
 export const initBot = async () => {
     // Debug logging for incoming messages
     bot.on("message", async (ctx, next) => {
-        if (ctx.message?.text) {
-            console.log("MESSAGE:", ctx.message.text);
-        }
+        console.log("📩 MESSAGE RECEIVED:", ctx.message?.text || "Non-text message");
         await next();
     });
 
