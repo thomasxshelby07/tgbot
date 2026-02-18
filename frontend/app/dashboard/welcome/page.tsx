@@ -12,7 +12,8 @@ export default function WelcomeMessagePage() {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const response = await axios.get('http://localhost:4000/api/settings/welcome');
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+                const response = await axios.get(`${apiUrl}/api/settings/welcome`);
                 setMessage(response.data.message);
                 setButtons(response.data.buttons);
             } catch (error) {
@@ -41,7 +42,8 @@ export default function WelcomeMessagePage() {
         setLoading(true);
         setStatus(null);
         try {
-            await axios.post('http://localhost:4000/api/settings/welcome', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            await axios.post(`${apiUrl}/api/settings/welcome`, {
                 message,
                 buttons
             });

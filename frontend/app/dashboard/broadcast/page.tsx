@@ -30,7 +30,8 @@ export default function BroadcastPage() {
         formData.append("file", file);
 
         try {
-            const res = await fetch("http://localhost:4000/api/upload", {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            const res = await fetch(`${apiUrl}/api/upload`, {
                 method: "POST",
                 body: formData,
             });
@@ -72,7 +73,8 @@ export default function BroadcastPage() {
 
         try {
             console.log("Sending broadcast request...");
-            const res = await fetch("http://localhost:4000/api/broadcast", {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            const res = await fetch(`${apiUrl}/api/broadcast`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

@@ -41,7 +41,8 @@ export default function MenuPage() {
 
     const fetchButtons = async () => {
         try {
-            const res = await fetch("http://localhost:4000/api/menu");
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            const res = await fetch(`${apiUrl}/api/menu`);
             if (res.ok) {
                 const data = await res.json();
                 setButtons(data);
@@ -83,9 +84,10 @@ export default function MenuPage() {
     const handleSave = async () => {
         if (!formData.text) return alert("Button name is required");
 
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
         const url = editingId
-            ? `http://localhost:4000/api/menu/${editingId}`
-            : "http://localhost:4000/api/menu";
+            ? `${apiUrl}/api/menu/${editingId}`
+            : `${apiUrl}/api/menu`;
 
         const method = editingId ? "PUT" : "POST";
 
@@ -114,7 +116,8 @@ export default function MenuPage() {
     const handleDelete = async (id: string) => {
         if (!confirm("Delete this button?")) return;
         try {
-            await fetch(`http://localhost:4000/api/menu/${id}`, { method: "DELETE" });
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            await fetch(`${apiUrl}/api/menu/${id}`, { method: "DELETE" });
             fetchButtons();
         } catch (error) {
             console.error("Error deleting:", error);
@@ -127,7 +130,8 @@ export default function MenuPage() {
         setButtons(newButtons);
 
         try {
-            await fetch(`http://localhost:4000/api/menu/${id}/toggle`, { method: "PATCH" });
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            await fetch(`${apiUrl}/api/menu/${id}/toggle`, { method: "PATCH" });
         } catch (error) {
             fetchButtons(); // Revert on error
         }
