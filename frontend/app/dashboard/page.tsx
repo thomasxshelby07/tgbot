@@ -11,8 +11,10 @@ export default function DashboardPage() {
         const fetchStats = async () => {
             try {
                 // For MVP, we calculate stats on the frontend from the /users endpoint.
+                // For MVP, we calculate stats on the frontend from the /users endpoint.
                 // Ideally, backend should have a /api/stats endpoint.
-                const res = await axios.get("http://localhost:4000/api/users");
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+                const res = await axios.get(`${apiUrl}/api/users`);
                 const users = res.data;
                 const total = users.length;
                 const blocked = users.filter((u: any) => u.isBlocked).length;
