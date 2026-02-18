@@ -1,5 +1,8 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { Settings } from '../models/Settings';
+import { cache } from '../utils/cache';
+
+const SETTINGS_KEY = 'bot_settings';
 
 export const settingsRoutes = async (fastify: FastifyInstance) => {
     fastify.get('/api/settings/welcome', async (request: FastifyRequest, reply: FastifyReply) => {
@@ -42,6 +45,9 @@ export const settingsRoutes = async (fastify: FastifyInstance) => {
         } catch (error) {
             console.error('Error updating welcome message:', error);
             return reply.status(500).send({ error: 'Internal Server Error' });
+        } finally {
+            // Invalidate cache so bot picks up changes immediately
+            await cache.del(SETTINGS_KEY);
         }
     });
 };
