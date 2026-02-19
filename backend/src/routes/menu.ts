@@ -5,7 +5,7 @@ interface MenuBody {
     text: string;
     order: number;
     responseMessage?: string;
-    responseMediaUrl?: string;
+    mediaUrl?: string; // Changed from responseMediaUrl to match model
     responseButtons?: { text: string; url: string }[];
 }
 
@@ -25,7 +25,7 @@ export const menuRoutes = async (fastify: FastifyInstance) => {
     // POST add button
     fastify.post<{ Body: MenuBody }>('/api/menu', async (req, reply) => {
         try {
-            const { text, order, responseMessage, responseMediaUrl, responseButtons } = req.body;
+            const { text, order, responseMessage, mediaUrl, responseButtons } = req.body;
             if (!text) {
                 return reply.status(400).send({ error: 'Text is required' });
             }
@@ -33,7 +33,7 @@ export const menuRoutes = async (fastify: FastifyInstance) => {
                 text,
                 order,
                 responseMessage,
-                responseMediaUrl,
+                mediaUrl,
                 responseButtons
             });
             await button.save();
@@ -52,7 +52,15 @@ export const menuRoutes = async (fastify: FastifyInstance) => {
             console.log('PUT /api/menu/:id - Received data:', JSON.stringify(updateData, null, 2));
             console.log('Updating button with ID:', id);
 
-            const button = await MainMenuButton.findByIdAndUpdate(id, updateData, { new: true });
+            // Ensure we are passing the correct fields
+            const button = await MainMenuButton.findByIdAndUpdate(id, {
+                text: updateData.text,
+                order: updateData.order,
+                responseMessage: updateData.responseMessage,
+                mediaUrl: updateData.mediaUrl, // Mapping correctly
+                responseButtons: updateData.responseButtons
+            }, { new: true });
+
             if (!button) {
                 console.error('Button not found with ID:', id);
                 return reply.status(404).send({ error: 'Button not found' });
