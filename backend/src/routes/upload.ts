@@ -11,7 +11,7 @@ const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'tgbot_uploads',
-        allowed_formats: ['jpg', 'png', 'jpeg', 'gif'],
+        allowed_formats: ['jpg', 'png', 'jpeg', 'gif', 'mp4', 'avi', 'mov', 'mkv'],
     } as any,
 });
 

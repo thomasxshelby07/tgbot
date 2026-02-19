@@ -43,6 +43,21 @@ async function getSettings() {
     }
 }
 
+const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string, reply_markup: any) => {
+    try {
+        const isVideo = mediaUrl.match(/\.(mp4|avi|mov|mkv)$/i);
+        if (isVideo) {
+            await ctx.replyWithVideo(mediaUrl, { caption, reply_markup });
+        } else {
+            await ctx.replyWithPhoto(mediaUrl, { caption, reply_markup });
+        }
+    } catch (error) {
+        console.error('Error sending media message:', error);
+        // Fallback to text if media fails
+        await ctx.reply(caption, { reply_markup });
+    }
+};
+
 // Initialize bot logic
 export const initBot = async () => {
     // Debug logging for incoming messages
@@ -103,12 +118,9 @@ export const initBot = async () => {
                 }
             };
 
-            // Send welcome message (Text or Photo)
+            // Send welcome message (Text or Photo/Video)
             if (settings?.welcomeMessageMediaUrl) {
-                await ctx.replyWithPhoto(settings.welcomeMessageMediaUrl, {
-                    caption: welcomeMessage,
-                    reply_markup: inlineKeyboard
-                });
+                await sendMediaMessage(ctx, settings.welcomeMessageMediaUrl, welcomeMessage, inlineKeyboard);
             } else {
                 await ctx.reply(welcomeMessage, { reply_markup: inlineKeyboard });
             }
@@ -166,12 +178,9 @@ export const initBot = async () => {
                     inline_keyboard: responseButtons.map((btn: any) => [{ text: btn.text, url: btn.url }])
                 } : undefined;
 
-                // Send response (Text or Photo)
+                // Send response (Text or Photo/Video)
                 if (button.mediaUrl) {
-                    await ctx.replyWithPhoto(button.mediaUrl, {
-                        caption: responseMessage,
-                        reply_markup: inlineKeyboard
-                    });
+                    await sendMediaMessage(ctx, button.mediaUrl, responseMessage, inlineKeyboard);
                 } else {
                     await ctx.reply(responseMessage, { reply_markup: inlineKeyboard });
                 }
