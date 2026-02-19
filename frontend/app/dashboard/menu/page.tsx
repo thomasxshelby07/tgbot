@@ -94,12 +94,20 @@ export default function MenuPage() {
         const uploadData = new FormData();
         uploadData.append('image', file);
 
+        console.log('Starting upload...');
+
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
             const res = await axios.post(`${apiUrl}/api/upload`, uploadData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            setFormData({ ...formData, mediaUrl: res.data.url });
+            console.log('Upload success, URL:', res.data.url);
+
+            // Use functional update to avoid stale closure
+            setFormData(prev => ({
+                ...prev,
+                mediaUrl: res.data.url
+            }));
         } catch (error) {
             console.error("Upload failed:", error);
             alert("Image upload failed");
@@ -118,6 +126,14 @@ export default function MenuPage() {
 
         try {
             console.log('Sending request:', { url, method, data: formData });
+
+            // Explicitly check if mediaUrl is set
+            if (formData.mediaUrl) {
+                console.log('Including mediaUrl in payload:', formData.mediaUrl);
+            } else {
+                console.warn('Warning: mediaUrl is empty');
+            }
+
             const res = await fetch(url, {
                 method,
                 headers: { "Content-Type": "application/json" },
