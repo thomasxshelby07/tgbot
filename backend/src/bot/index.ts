@@ -45,9 +45,9 @@ async function getSettings() {
 
 const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string, reply_markup: any) => {
     try {
-        const isVideo = mediaUrl.match(/\.(mp4|avi|mov|mkv)$/i);
-        if (isVideo) {
-            await ctx.replyWithVideo(mediaUrl, { caption, reply_markup });
+        const isAudio = mediaUrl.match(/\.(mp3|wav|ogg|m4a)$/i);
+        if (isAudio) {
+            await ctx.replyWithAudio(mediaUrl, { caption, reply_markup });
         } else {
             await ctx.replyWithPhoto(mediaUrl, { caption, reply_markup });
         }
