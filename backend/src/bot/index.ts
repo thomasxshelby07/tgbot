@@ -114,7 +114,7 @@ export const initBot = async () => {
 
             const sendMenu = async () => {
                 if (replyKeyboard) {
-                    await ctx.reply("Menu:", { reply_markup: replyKeyboard });
+                    await ctx.reply("👇", { reply_markup: replyKeyboard });
                 }
             };
 

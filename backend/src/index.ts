@@ -33,11 +33,13 @@ app.register(fastifyStatic, {
 import { broadcastRoutes } from './routes/broadcast';
 import { initWorker } from './worker/broadcastWorker';
 import { menuRoutes } from './routes/menu';
+// import { authRoutes } from './routes/auth';
 
 app.register(settingsRoutes);
 app.register(uploadRoutes);
 app.register(userRoutes);
 app.register(broadcastRoutes);
+// app.register(authRoutes); // Auth disabled
 console.log('Registering menu routes...');
 app.register(menuRoutes);
 console.log('Menu routes registered.');

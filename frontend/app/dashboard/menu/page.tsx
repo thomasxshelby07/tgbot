@@ -103,11 +103,15 @@ export default function MenuPage() {
             });
             console.log('Upload success, URL:', res.data.url);
 
-            // Use functional update to avoid stale closure
-            setFormData(prev => ({
-                ...prev,
-                mediaUrl: res.data.url
-            }));
+            // Force update the state with the new URL
+            setFormData(prev => {
+                const newState = {
+                    ...prev,
+                    mediaUrl: res.data.url
+                };
+                console.log('State updated with mediaUrl:', newState);
+                return newState;
+            });
         } catch (error) {
             console.error("Upload failed:", error);
             alert("Image upload failed");
@@ -227,7 +231,14 @@ export default function MenuPage() {
                                         {btn.order}
                                     </span>
                                     <div>
-                                        <h3 className="font-medium text-zinc-900 dark:text-zinc-100">{btn.text}</h3>
+                                        <h3 className="font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                                            {btn.text}
+                                            {btn.mediaUrl && (
+                                                <span title="Has Image" className="text-blue-500">
+                                                    <Upload size={14} />
+                                                </span>
+                                            )}
+                                        </h3>
                                         <p className="text-sm text-zinc-500 truncate max-w-sm">
                                             {btn.responseMessage ? `Response: ${btn.responseMessage.substring(0, 30)}...` : "No text response"}
                                             {btn.responseButtons && btn.responseButtons.length > 0 && ` • 🔘 ${btn.responseButtons.length} Buttons`}
@@ -339,6 +350,14 @@ export default function MenuPage() {
                                         className="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                     />
                                 </div>
+                                {/* Debug/Verification Input */}
+                                <input
+                                    type="text"
+                                    readOnly
+                                    value={formData.mediaUrl}
+                                    className="w-full mt-2 p-1 text-xs bg-gray-100 dark:bg-zinc-800 text-gray-500 rounded border border-gray-200 dark:border-zinc-700"
+                                    placeholder="Image URL will appear here..."
+                                />
                             </div>
 
 

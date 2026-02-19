@@ -5,7 +5,7 @@ interface MenuBody {
     text: string;
     order: number;
     responseMessage?: string;
-    mediaUrl?: string; // Changed from responseMediaUrl to match model
+    mediaUrl?: string;
     responseButtons?: { text: string; url: string }[];
 }
 
@@ -26,18 +26,25 @@ export const menuRoutes = async (fastify: FastifyInstance) => {
     fastify.post<{ Body: MenuBody }>('/api/menu', async (req, reply) => {
         try {
             const { text, order, responseMessage, mediaUrl, responseButtons } = req.body;
+            console.log('POST /api/menu - Full Body:', JSON.stringify(req.body, null, 2));
+
             if (!text) {
                 return reply.status(400).send({ error: 'Text is required' });
             }
+
+            console.log('Creating button with mediaUrl:', mediaUrl);
             const button = new MainMenuButton({
                 text,
                 order,
                 responseMessage,
-                mediaUrl,
-                responseButtons
+                mediaUrl: mediaUrl || "", // Ensure empty string if undefined
+                responseButtons: responseButtons || []
             });
-            await button.save();
-            return reply.send(button);
+
+            const savedButton = await button.save();
+            console.log('Button saved:', savedButton);
+
+            return reply.send(savedButton);
         } catch (error) {
             console.error('Error creating button:', error);
             return reply.status(500).send({ error: 'Internal Server Error' });
@@ -49,23 +56,26 @@ export const menuRoutes = async (fastify: FastifyInstance) => {
         try {
             const { id } = req.params;
             const updateData = req.body;
-            console.log('PUT /api/menu/:id - Received data:', JSON.stringify(updateData, null, 2));
-            console.log('Updating button with ID:', id);
+            console.log(`PUT /api/menu/${id} - Update Data:`, JSON.stringify(updateData, null, 2));
 
-            // Ensure we are passing the correct fields
-            const button = await MainMenuButton.findByIdAndUpdate(id, {
+            // Explicitly construct update object to ensure fields are passed
+            const updatePayload = {
                 text: updateData.text,
                 order: updateData.order,
                 responseMessage: updateData.responseMessage,
-                mediaUrl: updateData.mediaUrl, // Mapping correctly
+                mediaUrl: updateData.mediaUrl,
                 responseButtons: updateData.responseButtons
-            }, { new: true });
+            };
+
+            console.log('Constructed Update Payload:', updatePayload);
+
+            const button = await MainMenuButton.findByIdAndUpdate(id, updatePayload, { new: true });
 
             if (!button) {
                 console.error('Button not found with ID:', id);
                 return reply.status(404).send({ error: 'Button not found' });
             }
-            console.log('Button updated successfully:', button._id);
+            console.log('Button updated successfully:', button);
             return reply.send(button);
         } catch (error) {
             console.error('Error updating button:', error);
