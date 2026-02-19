@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Edit2, Check, X, Upload, Save } from "lucide-react";
 import Image from "next/image";
+import axios from "axios";
 
 interface InlineButton {
     text: string;
@@ -15,6 +16,7 @@ interface MenuButton {
     order: number;
     active: boolean;
     responseMessage?: string;
+    mediaUrl?: string;
     responseButtons?: InlineButton[];
 }
 
@@ -31,11 +33,13 @@ export default function MenuPage() {
         text: string;
         order: number;
         responseMessage: string;
+        mediaUrl: string;
         responseButtons: InlineButton[];
     }>({
         text: "",
         order: 0,
         responseMessage: "",
+        mediaUrl: "",
         responseButtons: [],
     });
 
@@ -64,6 +68,7 @@ export default function MenuPage() {
             text: "",
             order: maxOrder + 1,
             responseMessage: "",
+            mediaUrl: "",
             responseButtons: [],
         });
         setEditingId(null);
@@ -75,10 +80,30 @@ export default function MenuPage() {
             text: btn.text,
             order: btn.order,
             responseMessage: btn.responseMessage || "",
+            mediaUrl: btn.mediaUrl || "",
             responseButtons: btn.responseButtons || [],
         });
         setEditingId(btn._id);
         setIsModalOpen(true);
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const uploadData = new FormData();
+        uploadData.append('image', file);
+
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            const res = await axios.post(`${apiUrl}/api/upload`, uploadData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setFormData({ ...formData, mediaUrl: res.data.url });
+        } catch (error) {
+            console.error("Upload failed:", error);
+            alert("Image upload failed");
+        }
     };
 
     const handleSave = async () => {
@@ -274,6 +299,30 @@ export default function MenuPage() {
                                     className="w-full p-2 bg-zinc-50 dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 font-mono text-sm"
                                     placeholder="Type the message here..."
                                 />
+                            </div>
+
+                            {/* Image Upload */}
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Response Image (Optional)</label>
+                                <div className="flex items-center gap-4">
+                                    {formData.mediaUrl && (
+                                        <div className="relative w-20 h-20 rounded border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                                            <img src={formData.mediaUrl} alt="Response" className="w-full h-full object-cover" />
+                                            <button
+                                                onClick={() => setFormData({ ...formData, mediaUrl: "" })}
+                                                className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-bl text-xs"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </div>
+                                    )}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleFileUpload}
+                                        className="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                    />
+                                </div>
                             </div>
 
 

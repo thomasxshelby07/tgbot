@@ -6,6 +6,7 @@ export interface IMainMenuButton extends Document {
     active: boolean;
 
     responseMessage?: string;
+    mediaUrl?: string;
     responseButtons?: { text: string; url: string }[];
 
     createdAt: Date;
@@ -17,6 +18,7 @@ const MainMenuButtonSchema = new Schema<IMainMenuButton>({
     active: { type: Boolean, default: true },
 
     responseMessage: { type: String, default: "" },
+    mediaUrl: { type: String, default: "" },
     responseButtons: [{
         text: { type: String },
         url: { type: String }

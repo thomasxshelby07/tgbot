@@ -5,6 +5,7 @@ import axios from 'axios';
 
 export default function WelcomeMessagePage() {
     const [message, setMessage] = useState('');
+    const [mediaUrl, setMediaUrl] = useState('');
     const [buttons, setButtons] = useState<{ text: string; url: string }[]>([]);
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -15,6 +16,7 @@ export default function WelcomeMessagePage() {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
                 const response = await axios.get(`${apiUrl}/api/settings/welcome`);
                 setMessage(response.data.message);
+                setMediaUrl(response.data.mediaUrl || '');
                 setButtons(response.data.buttons);
             } catch (error) {
                 console.error('Error fetching settings:', error);
@@ -38,6 +40,30 @@ export default function WelcomeMessagePage() {
         setButtons(newButtons);
     };
 
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+        setLoading(true);
+
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            const res = await axios.post(`${apiUrl}/api/upload`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setMediaUrl(res.data.url);
+            setStatus({ type: 'success', text: 'Image uploaded successfully!' });
+        } catch (error) {
+            console.error('Upload failed:', error);
+            setStatus({ type: 'error', text: 'Image upload failed' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleSave = async () => {
         setLoading(true);
         setStatus(null);
@@ -45,6 +71,7 @@ export default function WelcomeMessagePage() {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
             await axios.post(`${apiUrl}/api/settings/welcome`, {
                 message,
+                mediaUrl,
                 buttons
             });
             setStatus({ type: 'success', text: 'Welcome message updated successfully!' });

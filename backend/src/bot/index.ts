@@ -103,8 +103,16 @@ export const initBot = async () => {
                 }
             };
 
-            // Send text-only welcome message
-            await ctx.reply(welcomeMessage, { reply_markup: inlineKeyboard });
+            // Send welcome message (Text or Photo)
+            if (settings?.welcomeMessageMediaUrl) {
+                await ctx.replyWithPhoto(settings.welcomeMessageMediaUrl, {
+                    caption: welcomeMessage,
+                    reply_markup: inlineKeyboard
+                });
+            } else {
+                await ctx.reply(welcomeMessage, { reply_markup: inlineKeyboard });
+            }
+
             await sendMenu();
         } catch (error) {
             console.error('Error in /start command:', error);
@@ -158,8 +166,15 @@ export const initBot = async () => {
                     inline_keyboard: responseButtons.map((btn: any) => [{ text: btn.text, url: btn.url }])
                 } : undefined;
 
-                // Send text-only response
-                await ctx.reply(responseMessage, { reply_markup: inlineKeyboard });
+                // Send response (Text or Photo)
+                if (button.mediaUrl) {
+                    await ctx.replyWithPhoto(button.mediaUrl, {
+                        caption: responseMessage,
+                        reply_markup: inlineKeyboard
+                    });
+                } else {
+                    await ctx.reply(responseMessage, { reply_markup: inlineKeyboard });
+                }
             }
         } catch (error) {
             console.error("Error handling text message:", error);
