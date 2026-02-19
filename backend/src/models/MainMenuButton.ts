@@ -27,4 +27,7 @@ const MainMenuButtonSchema = new Schema<IMainMenuButton>({
     createdAt: { type: Date, default: Date.now },
 });
 
+// Index for faster lookups by text (used in bot message handler)
+MainMenuButtonSchema.index({ text: 1 });
+
 export const MainMenuButton = mongoose.model<IMainMenuButton>('MainMenuButton', MainMenuButtonSchema);

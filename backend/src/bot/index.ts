@@ -46,11 +46,43 @@ async function getSettings() {
 const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string, reply_markup: any) => {
     try {
         const isAudio = mediaUrl.match(/\.(mp3|wav|ogg|m4a)$/i);
-        if (isAudio) {
-            await ctx.replyWithAudio(mediaUrl, { caption, reply_markup });
-        } else {
-            await ctx.replyWithPhoto(mediaUrl, { caption, reply_markup });
+
+        // Check cache for existing file_id
+        const cachedFileId = fileIdCache[mediaUrl];
+
+        if (cachedFileId) {
+            console.log(`🚀 Using cached file_id for: ${mediaUrl}`);
+            if (isAudio) {
+                await ctx.replyWithAudio(cachedFileId, { caption, reply_markup });
+            } else {
+                await ctx.replyWithPhoto(cachedFileId, { caption, reply_markup });
+            }
+            return;
         }
+
+        console.log(`📤 Uploading new media: ${mediaUrl}`);
+        let message;
+        if (isAudio) {
+            message = await ctx.replyWithAudio(mediaUrl, { caption, reply_markup });
+        } else {
+            message = await ctx.replyWithPhoto(mediaUrl, { caption, reply_markup });
+        }
+
+        // Cache the file_id from the sent message
+        if (message) {
+            let fileId: string | undefined;
+            if ('audio' in message && message.audio) {
+                fileId = message.audio.file_id;
+            } else if ('photo' in message && message.photo) {
+                fileId = message.photo.pop()?.file_id;
+            }
+
+            if (fileId) {
+                fileIdCache[mediaUrl] = fileId;
+                console.log(`💾 Cached file_id for ${mediaUrl}: ${fileId}`);
+            }
+        }
+
     } catch (error) {
         console.error('Error sending media message:', error);
         // Fallback to text if media fails

@@ -130,13 +130,7 @@ export default function MenuPage() {
 
         try {
             console.log('Sending request:', { url, method, data: formData });
-
-            // Explicitly check if mediaUrl is set
-            if (formData.mediaUrl) {
-                console.log('Including mediaUrl in payload:', formData.mediaUrl);
-            } else {
-                console.warn('Warning: mediaUrl is empty');
-            }
+            console.log('Media URL being saved:', formData.mediaUrl);
 
             const res = await fetch(url, {
                 method,
@@ -145,6 +139,8 @@ export default function MenuPage() {
             });
 
             if (res.ok) {
+                const savedData = await res.json();
+                console.log('Server response success:', savedData);
                 setIsModalOpen(false);
                 fetchButtons();
             } else {
