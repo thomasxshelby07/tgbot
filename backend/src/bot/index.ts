@@ -3,6 +3,8 @@ import { Settings } from '../models/Settings';
 import dotenv from 'dotenv';
 import { User } from '../models/User';
 import { MainMenuButton } from '../models/MainMenuButton';
+import { Channel } from '../models/Channel';
+import { WelcomeMessage } from '../models/WelcomeMessage';
 import fs from 'fs';
 import path from 'path';
 
@@ -219,6 +221,89 @@ export const initBot = async () => {
             }
         } catch (error) {
             console.error("Error handling text message:", error);
+        }
+    });
+
+    // 6. Handle Join Requests
+    bot.on("chat_join_request", async (ctx) => {
+        const chatId = ctx.chat.id.toString();
+        const userId = ctx.from.id; // Keep as number for API calls
+        const userIdStr = userId.toString(); // String for DB
+
+        console.log(`👤 Join Request: User ${userId} -> Channel ${chatId}`);
+
+        try {
+            // 1. Find Channel
+            const channel = await Channel.findOne({ chatId });
+            if (!channel || !channel.active) {
+                console.log(`⚠️ Channel ${chatId} not registered or inactive.`);
+                return;
+            }
+
+            // 2. Approve Request
+            await ctx.approveChatJoinRequest(userId);
+            console.log(`✅ Approved join request for User ${userId}`);
+
+            // 3. Find Welcome Message
+            const welcome = await WelcomeMessage.findOne({ channelId: channel._id });
+            if (!welcome || !welcome.enabled) {
+                console.log(`ℹ️ No enabled welcome message for Channel ${channel.name}`);
+                return;
+            }
+
+            // 4. Personalize Message
+            let text = welcome.messageText
+                .replace("{first_name}", ctx.from.first_name)
+                .replace("{channel_name}", channel.name);
+
+            // 5. Save User
+            await User.findOneAndUpdate(
+                { telegramId: userIdStr },
+                {
+                    firstName: ctx.from.first_name,
+                    lastName: ctx.from.last_name,
+                    username: ctx.from.username,
+                    isBlocked: false,
+                    lastActiveAt: new Date(),
+                    joinedFrom: channel._id,
+                    joinedAt: new Date()
+                },
+                { upsert: true, new: true }
+            );
+
+            // 6. Send Message (with optional buttons and media)
+            const sendWelcome = async () => {
+                const inlineKeyboard = welcome.buttonText && welcome.buttonUrl ? {
+                    inline_keyboard: [[{ text: welcome.buttonText, url: welcome.buttonUrl }]]
+                } : undefined;
+
+                if (welcome.mediaUrl) {
+                    // We need to send DM, so we can't use ctx.reply (which replies to the chat/channel context)
+                    // We use ctx.api.sendPhoto / sendMessage directly to userId
+                    try {
+                        const isAudio = welcome.mediaUrl.match(/\.(mp3|wav|ogg|m4a)$/i);
+                        if (isAudio) {
+                            await ctx.api.sendAudio(userId, welcome.mediaUrl, { caption: text, reply_markup: inlineKeyboard });
+                        } else {
+                            await ctx.api.sendPhoto(userId, welcome.mediaUrl, { caption: text, reply_markup: inlineKeyboard });
+                        }
+                    } catch (mediaErr) {
+                        console.error('Failed to send media DM:', mediaErr);
+                        await ctx.api.sendMessage(userId, text, { reply_markup: inlineKeyboard });
+                    }
+                } else {
+                    await ctx.api.sendMessage(userId, text, { reply_markup: inlineKeyboard });
+                }
+            };
+
+            if (welcome.delaySec > 0) {
+                setTimeout(sendWelcome, welcome.delaySec * 1000);
+            } else {
+                await sendWelcome();
+            }
+
+        } catch (error) {
+            console.error('❌ Error handling join request:', error);
         }
     });
 

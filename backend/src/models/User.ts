@@ -7,6 +7,8 @@ export interface IUser extends Document {
     username?: string;
     isBlocked?: boolean;
     lastActiveAt?: Date;
+    joinedFrom?: mongoose.Types.ObjectId; // Reference to Channel
+    joinedAt: Date;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -18,6 +20,8 @@ const UserSchema: Schema = new Schema({
     username: { type: String },
     isBlocked: { type: Boolean, default: false },
     lastActiveAt: { type: Date },
+    joinedFrom: { type: Schema.Types.ObjectId, ref: 'Channel' },
+    joinedAt: { type: Date, default: Date.now },
 }, { timestamps: true });
 
 // Index for getting latest users efficiently
