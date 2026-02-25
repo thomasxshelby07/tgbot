@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Save, AlertCircle, CheckCircle } from "lucide-react";
+import { Save, AlertCircle, CheckCircle, Upload, Trash2 } from "lucide-react";
+import Image from "next/image";
 
 interface Channel {
     _id: string;
@@ -33,9 +34,39 @@ export default function WelcomeMessagesPage() {
         enabled: true
     });
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        setMessage(null);
+
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", file);
+
+        try {
+            const res = await fetch(`${apiUrl}/api/upload`, {
+                method: "POST",
+                body: uploadFormData,
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setFormData({ ...formData, mediaUrl: data.url });
+                setMessage({ type: 'success', text: 'Image uploaded successfully!' });
+            } else {
+                setMessage({ type: 'error', text: 'Image upload failed' });
+            }
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Error uploading image' });
+        } finally {
+            setUploading(false);
+        }
+    };
 
     useEffect(() => {
         const fetchChannels = async () => {
@@ -117,8 +148,8 @@ export default function WelcomeMessagesPage() {
                                     key={channel._id}
                                     onClick={() => setSelectedChannel(channel._id)}
                                     className={`text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${selectedChannel === channel._id
-                                            ? "bg-blue-600 text-white shadow-md"
-                                            : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800"
+                                        ? "bg-blue-600 text-white shadow-md"
+                                        : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800"
                                         }`}
                                 >
                                     {channel.name}
@@ -187,15 +218,55 @@ export default function WelcomeMessagesPage() {
                                             placeholder="https://..."
                                         />
                                     </div>
-                                    <div>
+                                    <div className="col-span-1 md:col-span-2">
                                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Media URL (Optional)</label>
-                                        <input
-                                            type="text"
-                                            value={formData.mediaUrl}
-                                            onChange={(e) => setFormData({ ...formData, mediaUrl: e.target.value })}
-                                            className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="https://... (Image/Video)"
-                                        />
+                                        <div className="flex flex-col gap-3">
+                                            <input
+                                                type="text"
+                                                value={formData.mediaUrl}
+                                                onChange={(e) => setFormData({ ...formData, mediaUrl: e.target.value })}
+                                                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="https://... (Image/Video URL here or upload below)"
+                                            />
+                                            <div className="flex items-center gap-4">
+                                                <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors shadow-sm">
+                                                    <Upload size={18} />
+                                                    <span className="text-sm font-medium">{uploading ? "Uploading..." : "Upload File"}</span>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*,video/*"
+                                                        className="hidden"
+                                                        onChange={handleImageUpload}
+                                                        disabled={uploading}
+                                                    />
+                                                </label>
+                                                {formData.mediaUrl && (
+                                                    <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700 shadow-sm">
+                                                        {formData.mediaUrl.match(/\.(mp4|webm|ogg)$/i) ? (
+                                                            <video src={formData.mediaUrl} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <Image
+                                                                src={formData.mediaUrl}
+                                                                alt="Media Preview"
+                                                                fill
+                                                                className="object-cover"
+                                                                onError={(e) => {
+                                                                    // Fallback for invalid URLs that are not actual images
+                                                                    e.currentTarget.style.display = 'none';
+                                                                }}
+                                                            />
+                                                        )}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setFormData({ ...formData, mediaUrl: "" })}
+                                                            className="absolute top-0 right-0 p-1 bg-red-500/90 text-white rounded-bl-lg hover:bg-red-600 transition-colors backdrop-blur-sm"
+                                                        >
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Delay (seconds)</label>
