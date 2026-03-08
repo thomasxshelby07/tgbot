@@ -59,8 +59,9 @@ const start = async () => {
         await connectDB();
         await initBot();
 
-        // Start Broadcast Worker ONLY ONCE in the primary process to avoid duplicate processing
-        if (cluster.isPrimary) {
+        // Start Broadcast Worker ONLY ONCE — guard against multiple cluster workers
+        // Must be called AFTER connectDB() and initBot() so bot is ready to send messages
+        if (cluster.isWorker && cluster.worker?.id === 1) {
             initWorker();
         }
 
