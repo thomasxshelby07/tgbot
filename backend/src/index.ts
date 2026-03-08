@@ -69,12 +69,12 @@ const start = async () => {
             return { status: 'alive', message: `Bot is alive on worker ${process.pid} 🚀` };
         });
 
-        // Initialize Bot (CRITICAL for Webhook Mode)
-        // We only init and set webhook from primary so multiple workers don't spam Telegram API
-        if (cluster.isPrimary) {
-            await bot.init();
-            console.log('✅ Bot initialized successfully');
+        // Initialize Bot — MUST run on ALL workers so they can handle webhook updates
+        await bot.init();
+        console.log(`✅ Bot initialized on worker ${process.pid}`);
 
+        // Only the primary process sets the webhook (avoid duplicate Telegram API calls)
+        if (cluster.isPrimary) {
             const BASE_URL = process.env.BASE_URL;
             if (BASE_URL) {
                 const webhookUrl = `${BASE_URL}/webhook`;
