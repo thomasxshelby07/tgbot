@@ -10,20 +10,21 @@ export const uploadRoutes = async (fastify: FastifyInstance) => {
                 return reply.status(400).send({ error: 'No file uploaded' });
             }
 
-            // Validate mime type for Image and Audio only
-            // Note: mime types can be spoofed, but it's a first line of defense
+            // Validate mime type for Image, Audio, and Video
             const allowedMimeTypes = [
                 'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-                'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/x-m4a'
+                'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/x-m4a',
+                'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/mpeg'
             ];
 
             if (!allowedMimeTypes.includes(data.mimetype)) {
-                return reply.status(400).send({ error: 'Invalid file type. Only images and audio are allowed.' });
+                return reply.status(400).send({ error: 'Invalid file type. Only images, audio, and videos are allowed.' });
             }
 
+            // Determine media type for client response
+            const mediaType = data.mimetype.startsWith('video') ? 'video' : 'image';
             // Determine resource type based on mime type
-            // Cloudinary 'auto' is usually best, but we can hint if we know it's audio
-            const resourceType = data.mimetype.startsWith('audio') ? 'video' : 'image';
+            const resourceType = (data.mimetype.startsWith('audio') || data.mimetype.startsWith('video')) ? 'video' : 'image';
 
             return await new Promise((resolve, reject) => {
                 const uploadStream = cloudinary.uploader.upload_stream(
@@ -39,7 +40,7 @@ export const uploadRoutes = async (fastify: FastifyInstance) => {
                         if (!result) {
                             return reply.status(500).send({ error: 'Upload result empty' });
                         }
-                        resolve(reply.send({ url: result.secure_url, type: result.resource_type }));
+                        resolve(reply.send({ url: result.secure_url, type: result.resource_type, mediaType }));
                     }
                 );
 

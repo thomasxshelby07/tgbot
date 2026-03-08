@@ -45,9 +45,10 @@ async function getSettings() {
     }
 }
 
-const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string, reply_markup: any) => {
+const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string, reply_markup: any, mediaType?: string) => {
     try {
         const isAudio = mediaUrl.match(/\.(mp3|wav|ogg|m4a)$/i);
+        const isVideo = mediaType === 'video' || mediaUrl.match(/\.(mp4|webm|mov|avi|mpeg)$/i);
 
         // Check cache for existing file_id
         const cachedFileId = fileIdCache[mediaUrl];
@@ -56,25 +57,31 @@ const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string,
             console.log(`🚀 Using cached file_id for: ${mediaUrl}`);
             if (isAudio) {
                 await ctx.replyWithAudio(cachedFileId, { caption, reply_markup });
+            } else if (isVideo) {
+                await ctx.replyWithVideo(cachedFileId, { caption, reply_markup });
             } else {
                 await ctx.replyWithPhoto(cachedFileId, { caption, reply_markup });
             }
             return;
         }
 
-        console.log(`📤 Uploading new media: ${mediaUrl}`);
+        console.log(`📤 Uploading new media: ${mediaUrl} (type: ${isVideo ? 'video' : isAudio ? 'audio' : 'image'})`);
         let message;
         if (isAudio) {
             message = await ctx.replyWithAudio(mediaUrl, { caption, reply_markup });
+        } else if (isVideo) {
+            message = await ctx.replyWithVideo(mediaUrl, { caption, reply_markup });
         } else {
             message = await ctx.replyWithPhoto(mediaUrl, { caption, reply_markup });
         }
 
-        // Cache the file_id from the sent message
+        // Cache the file_id from the sent message for super-fast future sends
         if (message) {
             let fileId: string | undefined;
             if ('audio' in message && message.audio) {
                 fileId = message.audio.file_id;
+            } else if ('video' in message && message.video) {
+                fileId = message.video.file_id;
             } else if ('photo' in message && message.photo) {
                 fileId = message.photo.pop()?.file_id;
             }
@@ -214,7 +221,7 @@ export const initBot = async () => {
 
                 // Send response (Text or Photo/Video)
                 if (button.mediaUrl) {
-                    await sendMediaMessage(ctx, button.mediaUrl, responseMessage, inlineKeyboard);
+                    await sendMediaMessage(ctx, button.mediaUrl, responseMessage, inlineKeyboard, button.mediaType);
                 } else {
                     await ctx.reply(responseMessage, { reply_markup: inlineKeyboard });
                 }

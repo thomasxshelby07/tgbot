@@ -6,6 +6,7 @@ interface MenuBody {
     order: number;
     responseMessage?: string;
     mediaUrl?: string;
+    mediaType?: string;
     responseButtons?: { text: string; url: string }[];
 }
 
@@ -25,19 +26,20 @@ export const menuRoutes = async (fastify: FastifyInstance) => {
     // POST add button
     fastify.post<{ Body: MenuBody }>('/api/menu', async (req, reply) => {
         try {
-            const { text, order, responseMessage, mediaUrl, responseButtons } = req.body;
+            const { text, order, responseMessage, mediaUrl, mediaType, responseButtons } = req.body;
             console.log('POST /api/menu - Full Body:', JSON.stringify(req.body, null, 2));
 
             if (!text) {
                 return reply.status(400).send({ error: 'Text is required' });
             }
 
-            console.log('Creating button with mediaUrl:', mediaUrl);
+            console.log('Creating button with mediaUrl:', mediaUrl, 'mediaType:', mediaType);
             const button = new MainMenuButton({
                 text,
                 order,
                 responseMessage,
-                mediaUrl: mediaUrl || "", // Ensure empty string if undefined
+                mediaUrl: mediaUrl || "",
+                mediaType: mediaType || "image",
                 responseButtons: responseButtons || []
             });
 
@@ -64,6 +66,7 @@ export const menuRoutes = async (fastify: FastifyInstance) => {
                 order: updateData.order,
                 responseMessage: updateData.responseMessage,
                 mediaUrl: updateData.mediaUrl,
+                mediaType: updateData.mediaType || "image",
                 responseButtons: updateData.responseButtons
             };
 

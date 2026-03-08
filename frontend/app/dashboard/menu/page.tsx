@@ -17,6 +17,7 @@ interface MenuButton {
     active: boolean;
     responseMessage?: string;
     mediaUrl?: string;
+    mediaType?: string;
     responseButtons?: InlineButton[];
 }
 
@@ -34,12 +35,14 @@ export default function MenuPage() {
         order: number;
         responseMessage: string;
         mediaUrl: string;
+        mediaType: string;
         responseButtons: InlineButton[];
     }>({
         text: "",
         order: 0,
         responseMessage: "",
         mediaUrl: "",
+        mediaType: "",
         responseButtons: [],
     });
 
@@ -69,6 +72,7 @@ export default function MenuPage() {
             order: maxOrder + 1,
             responseMessage: "",
             mediaUrl: "",
+            mediaType: "",
             responseButtons: [],
         });
         setEditingId(null);
@@ -81,6 +85,7 @@ export default function MenuPage() {
             order: btn.order,
             responseMessage: btn.responseMessage || "",
             mediaUrl: btn.mediaUrl || "",
+            mediaType: btn.mediaType || "",
             responseButtons: btn.responseButtons || [],
         });
         setEditingId(btn._id);
@@ -94,27 +99,23 @@ export default function MenuPage() {
         const uploadData = new FormData();
         uploadData.append('image', file);
 
-        console.log('Starting upload...');
+        console.log('Starting upload...', file.type);
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
             const res = await axios.post(`${apiUrl}/api/upload`, uploadData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            console.log('Upload success, URL:', res.data.url);
+            console.log('Upload success, URL:', res.data.url, 'mediaType:', res.data.mediaType);
 
-            // Force update the state with the new URL
-            setFormData(prev => {
-                const newState = {
-                    ...prev,
-                    mediaUrl: res.data.url
-                };
-                console.log('State updated with mediaUrl:', newState);
-                return newState;
-            });
+            setFormData(prev => ({
+                ...prev,
+                mediaUrl: res.data.url,
+                mediaType: res.data.mediaType || 'image',
+            }));
         } catch (error) {
             console.error("Upload failed:", error);
-            alert("Image upload failed");
+            alert("Media upload failed");
         }
     };
 
@@ -230,7 +231,7 @@ export default function MenuPage() {
                                         <h3 className="font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                                             {btn.text}
                                             {btn.mediaUrl && (
-                                                <span title="Has Image" className="text-blue-500">
+                                                <span title={btn.mediaType === 'video' ? 'Has Video' : 'Has Image'} className={btn.mediaType === 'video' ? 'text-purple-500' : 'text-blue-500'}>
                                                     <Upload size={14} />
                                                 </span>
                                             )}
@@ -324,35 +325,48 @@ export default function MenuPage() {
                                 />
                             </div>
 
-                            {/* Image Upload */}
+                            {/* Media Upload */}
                             <div>
-                                <label className="block text-sm font-medium mb-1">Response Image (Optional)</label>
+                                <label className="block text-sm font-medium mb-1">Response Media — Image or Video (Optional)</label>
                                 <div className="flex items-center gap-4">
                                     {formData.mediaUrl && (
-                                        <div className="relative w-20 h-20 rounded border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-                                            <img src={formData.mediaUrl} alt="Response" className="w-full h-full object-cover" />
+                                        <div className="relative w-24 h-20 rounded border border-zinc-200 dark:border-zinc-800 overflow-hidden bg-black flex items-center justify-center">
+                                            {formData.mediaType === 'video' ? (
+                                                <video
+                                                    src={formData.mediaUrl}
+                                                    className="w-full h-full object-cover"
+                                                    muted
+                                                    playsInline
+                                                    controls
+                                                />
+                                            ) : (
+                                                <img src={formData.mediaUrl} alt="Response" className="w-full h-full object-cover" />
+                                            )}
                                             <button
-                                                onClick={() => setFormData({ ...formData, mediaUrl: "" })}
+                                                onClick={() => setFormData({ ...formData, mediaUrl: "", mediaType: "" })}
                                                 className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-bl text-xs"
                                             >
                                                 <X size={12} />
                                             </button>
                                         </div>
                                     )}
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleFileUpload}
-                                        className="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                    />
+                                    <div className="flex-1">
+                                        <input
+                                            type="file"
+                                            accept="image/*,video/mp4,video/webm,video/quicktime"
+                                            onChange={handleFileUpload}
+                                            className="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                        />
+                                        <p className="text-xs text-zinc-400 mt-1">Supported: JPG, PNG, GIF, WebP, MP4, WebM, MOV</p>
+                                    </div>
                                 </div>
-                                {/* Debug/Verification Input */}
+                                {/* URL Display */}
                                 <input
                                     type="text"
                                     readOnly
                                     value={formData.mediaUrl}
                                     className="w-full mt-2 p-1 text-xs bg-gray-100 dark:bg-zinc-800 text-gray-500 rounded border border-gray-200 dark:border-zinc-700"
-                                    placeholder="Image URL will appear here..."
+                                    placeholder="Media URL will appear here..."
                                 />
                             </div>
 

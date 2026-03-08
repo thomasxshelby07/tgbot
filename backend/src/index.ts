@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 import { connectDB } from './config/db';
 import { bot, initBot } from './bot';
 import { settingsRoutes } from './routes/settings';
+import cluster from 'cluster';
+import os from 'os';
 
 dotenv.config();
 
@@ -57,22 +59,34 @@ const start = async () => {
         await connectDB();
         await initBot();
 
-        // Start Broadcast Worker
-        initWorker();
+        // Start Broadcast Worker ONLY ONCE in the primary process to avoid duplicate processing
+        if (cluster.isPrimary) {
+            initWorker();
+        }
 
         // Health Check Route (for Railway)
         app.get('/', async (request, reply) => {
-            return { status: 'alive', message: 'Bot is alive 🚀' };
+            return { status: 'alive', message: `Bot is alive on worker ${process.pid} 🚀` };
         });
 
         // Initialize Bot (CRITICAL for Webhook Mode)
-        await bot.init();
-        console.log('✅ Bot initialized successfully');
+        // We only init and set webhook from primary so multiple workers don't spam Telegram API
+        if (cluster.isPrimary) {
+            await bot.init();
+            console.log('✅ Bot initialized successfully');
 
-        // Webhook Route - Optimization for Railway/Telegram timeouts
-        // 1. Respond immediately with 200 OK
-        // 2. Process update asynchronously
-        // 3. Manual raw body parsing to avoid Fastify/Railway JSON issues
+            const BASE_URL = process.env.BASE_URL;
+            if (BASE_URL) {
+                const webhookUrl = `${BASE_URL}/webhook`;
+                console.log(`Configuring webhook to: ${webhookUrl}`);
+                await bot.api.setWebhook(webhookUrl);
+                console.log(`✅ Webhook set successfully`);
+            } else {
+                console.warn('⚠️ BASE_URL not set. Webhook NOT registered automatically. Please set via API or env var.');
+            }
+        }
+
+        // Webhook Route handled by ALL workers for maximum throughput
         app.register(async (webhookScope) => {
             webhookScope.addContentTypeParser('application/json', { parseAs: 'string' }, (req, body, done) => {
                 try {
@@ -87,33 +101,21 @@ const start = async () => {
             webhookScope.post('/webhook', async (req, reply) => {
                 reply.send(); // Respond 200 OK immediately
                 try {
-                    console.log('🔹 WEBHOOK HIT');
+                    // console.log(`🔹 WEBHOOK HIT ON WORKER ${process.pid}`);
                     if (req.body) {
-                        console.log('Payload:', JSON.stringify(req.body, null, 2));
                         await bot.handleUpdate(req.body as any);
                     } else {
                         console.warn('⚠️ Webhook received but body is empty');
                     }
                 } catch (err) {
-                    console.error('❌ Error in webhook handling:', err);
+                    console.error(`❌ Error in webhook handling on worker ${process.pid}:`, err);
                 }
             });
         });
 
         const port = Number(PORT) || 4000;
         await app.listen({ port: port, host: '0.0.0.0' });
-        console.log(`✅ Server running at http://localhost:${port}`);
-
-        // Set Webhook
-        const BASE_URL = process.env.BASE_URL;
-        if (BASE_URL) {
-            const webhookUrl = `${BASE_URL}/webhook`;
-            console.log(`Configuring webhook to: ${webhookUrl}`);
-            await bot.api.setWebhook(webhookUrl);
-            console.log(`✅ Webhook set successfully`);
-        } else {
-            console.warn('⚠️ BASE_URL not set. Webhook NOT registered automatically. Please set via API or env var.');
-        }
+        console.log(`✅ Server running at http://localhost:${port} on worker ${process.pid}`);
 
     } catch (err) {
         console.error(err);
@@ -121,4 +123,21 @@ const start = async () => {
     }
 };
 
-start();
+// --- CLUSTER LOGIC FOR 10X PERFORMANCE ---
+if (cluster.isPrimary) {
+    const numCPUs = os.cpus().length;
+    console.log(`🚀 Primary process ${process.pid} is running. Setting up ${numCPUs} workers.`);
+
+    // Fork workers for each CPU core
+    for (let i = 0; i < numCPUs; i++) {
+        cluster.fork();
+    }
+
+    cluster.on('exit', (worker, code, signal) => {
+        console.log(`⚠️ Worker ${worker.process.pid} died. Restarting...`);
+        cluster.fork(); // Auto-restart dead workers
+    });
+} else {
+    // Workers share the TCP connection
+    start();
+}

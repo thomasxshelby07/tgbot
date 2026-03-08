@@ -7,6 +7,7 @@ export interface IMainMenuButton extends Document {
 
     responseMessage?: string;
     mediaUrl?: string;
+    mediaType?: string; // 'image' | 'video'
     responseButtons?: { text: string; url: string }[];
 
     createdAt: Date;
@@ -19,6 +20,7 @@ const MainMenuButtonSchema = new Schema<IMainMenuButton>({
 
     responseMessage: { type: String, default: "" },
     mediaUrl: { type: String, default: "" },
+    mediaType: { type: String, default: "image" },
     responseButtons: [{
         text: { type: String },
         url: { type: String }
