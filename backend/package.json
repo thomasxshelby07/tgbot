@@ -15,6 +15,7 @@
     "@fastify/cors": "^9.0.1",
     "@fastify/multipart": "^8.3.0",
     "@fastify/static": "^7.0.4",
+    "@grammyjs/storage-redis": "^2.5.1",
     "bullmq": "^5.69.3",
     "cloudinary": "^1.41.3",
     "cluster": "^0.7.7",

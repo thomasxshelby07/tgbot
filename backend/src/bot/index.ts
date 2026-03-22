@@ -1,4 +1,6 @@
 import { Bot, Context, InputFile, Keyboard, session, SessionFlavor, InlineKeyboard } from 'grammy';
+import { RedisAdapter } from "@grammyjs/storage-redis";
+import { redis } from "../config/redis";
 import { Settings } from '../models/Settings';
 import dotenv from 'dotenv';
 import { User } from '../models/User';
@@ -111,12 +113,13 @@ const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string,
 
 // Initialize bot logic
 export const initBot = async () => {
-    // 0. Use session middleware
-    bot.use(session({ initial: (): SessionData => ({}) }));
+    // 0. Use session middleware with Redis Storage (Persistent across clusters)
+    const storage = new RedisAdapter({ instance: redis });
+    bot.use(session({ initial: (): SessionData => ({}), storage }));
 
     // Debug logging for incoming messages
     bot.on("message", async (ctx, next) => {
-        console.log("📩 MESSAGE RECEIVED:", ctx.message?.text || "Non-text message");
+        console.log("📩 MESSAGE RECEIVED:", ctx.message?.text || "Non-text message", "| Step:", ctx.session?.step || "none");
         await next();
     });
 
