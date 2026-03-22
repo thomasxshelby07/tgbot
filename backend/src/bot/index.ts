@@ -220,7 +220,7 @@ export const initBot = async () => {
             if (ctx.session.step === 'name') {
                 ctx.session.vipName = text;
                 ctx.session.step = 'number';
-                return await ctx.reply("Great! Now please enter your Mobile Number:");
+                return await ctx.reply("✅ Name received! Now please enter your Mobile Number:");
             }
 
             if (ctx.session.step === 'number') {
@@ -228,17 +228,21 @@ export const initBot = async () => {
                 ctx.session.step = 'interest';
 
                 const keyboard = new InlineKeyboard()
-                    .text("Cricket", "vip_interest_Cricket")
-                    .text("Casino", "vip_interest_Casino").row()
-                    .text("Both", "vip_interest_Both");
+                    .text("1. Cricket", "vip_interest_Cricket")
+                    .text("2. Casino", "vip_interest_Casino").row()
+                    .text("3. Both", "vip_interest_Both");
 
-                return await ctx.reply("What are you interested in?", { reply_markup: keyboard });
+                return await ctx.reply("Please select your Interest:", { reply_markup: keyboard });
             }
 
             // Check if this text matches the VIP Button
             if (settings?.vipActive && text === settings.vipButtonText) {
+                // Send Welcome Message first
+                await ctx.reply(settings.vipWelcomeMessage || "Welcome to VIP Registration!");
+                
+                // Then ask for Name immediately
                 ctx.session.step = 'name';
-                return await ctx.reply(settings.vipWelcomeMessage || "Welcome! Please enter your Name to join VIP:");
+                return await ctx.reply("Please enter your Full Name:");
             }
 
             // --- Standard Menu Buttons ---
