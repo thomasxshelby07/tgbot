@@ -37,13 +37,15 @@ import { initWorker } from './worker/broadcastWorker';
 import { menuRoutes } from './routes/menu';
 import { channelRoutes } from './routes/channels';
 import { welcomeMessageRoutes } from './routes/welcomeMessages';
+import vipRoutes from './routes/vip';
 
 app.register(settingsRoutes);
 app.register(uploadRoutes);
-app.register(userRoutes);
+app.register(userRoutes, { prefix: '/api' });
 app.register(broadcastRoutes);
 app.register(channelRoutes);
 app.register(welcomeMessageRoutes);
+app.register(vipRoutes, { prefix: '/api/vip' });
 
 console.log('Registering menu routes...');
 app.register(menuRoutes);

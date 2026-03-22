@@ -1,10 +1,19 @@
-import { Bot, Context, InputFile, Keyboard } from 'grammy';
+import { Bot, Context, InputFile, Keyboard, session, SessionFlavor, InlineKeyboard } from 'grammy';
 import { Settings } from '../models/Settings';
 import dotenv from 'dotenv';
 import { User } from '../models/User';
 import { MainMenuButton } from '../models/MainMenuButton';
+import { VipMember } from '../models/VipMember';
 import { Channel } from '../models/Channel';
 import { WelcomeMessage } from '../models/WelcomeMessage';
+
+// --- Session Logic ---
+interface SessionData {
+    step?: 'name' | 'number' | 'interest';
+    vipName?: string;
+    vipNumber?: string;
+}
+type MyContext = Context & SessionFlavor<SessionData>;
 import fs from 'fs';
 import path from 'path';
 
@@ -16,7 +25,7 @@ if (!BOT_TOKEN) {
     throw new Error('BOT_TOKEN is not defined in environment variables');
 }
 
-export const bot = new Bot(BOT_TOKEN);
+export const bot = new Bot<MyContext>(BOT_TOKEN);
 
 // --- Redis Cache System ---
 import { cache } from '../utils/cache';
@@ -101,15 +110,17 @@ const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string,
 
 // Initialize bot logic
 export const initBot = async () => {
+    // 0. Use session middleware
+    bot.use(session({ initial: (): SessionData => ({}) }));
+
     // Debug logging for incoming messages
     bot.on("message", async (ctx, next) => {
         console.log("📩 MESSAGE RECEIVED:", ctx.message?.text || "Non-text message");
         await next();
     });
 
-    bot.command('start', async (ctx: Context) => {
-        // 1. Fire-and-Forget User Tracking (Zero Latency Impact)
-        // We do NOT await this.
+    bot.command('start', async (ctx: MyContext) => {
+        // ... (User tracking logic)
         if (ctx.from) {
             User.findOneAndUpdate(
                 { telegramId: ctx.from.id.toString() },
@@ -117,7 +128,7 @@ export const initBot = async () => {
                     firstName: ctx.from.first_name,
                     lastName: ctx.from.last_name,
                     username: ctx.from.username,
-                    isBlocked: false, // Reset blocked status if they restart
+                    isBlocked: false,
                     lastActiveAt: new Date(),
                 },
                 { upsert: true, new: true }
@@ -125,24 +136,23 @@ export const initBot = async () => {
         }
 
         try {
-            // 2. fast settings fetch (from cache)
             const settings = await getSettings();
-
-            // 2b. Fetch Main Menu Buttons (Active Only)
             const menuButtons = await MainMenuButton.find({ active: true }).sort({ order: 1 });
 
-            // Build Reply Keyboard
             let replyKeyboard: Keyboard | undefined;
-            if (menuButtons.length > 0) {
+            if (menuButtons.length > 0 || settings?.vipActive) {
                 const keyboard = new Keyboard();
+                
+                // Add VIP Button at the Top if Active
+                if (settings?.vipActive) {
+                    keyboard.text(settings.vipButtonText || "🌟 JOIN VIP").row();
+                }
+
                 menuButtons.forEach((btn, index) => {
                     keyboard.text(btn.text);
-                    // 2 buttons per row
-                    if ((index + 1) % 2 === 0) {
-                        keyboard.row();
-                    }
+                    if ((index + 1) % 2 === 0) keyboard.row();
                 });
-                keyboard.resized(); // Resize to fit
+                keyboard.resized();
                 replyKeyboard = keyboard;
             }
 
@@ -201,33 +211,95 @@ export const initBot = async () => {
     // 5. Handle Menu Button Clicks (General Text Handler)
     bot.on("message:text", async (ctx) => {
         const text = ctx.message.text;
-
-        // Ignore commands
         if (text.startsWith('/')) return;
 
         try {
-            // Check if this text matches a menu button
+            const settings = await getSettings();
+
+            // --- VIP Registration Flow ---
+            if (ctx.session.step === 'name') {
+                ctx.session.vipName = text;
+                ctx.session.step = 'number';
+                return await ctx.reply("Great! Now please enter your Mobile Number:");
+            }
+
+            if (ctx.session.step === 'number') {
+                ctx.session.vipNumber = text;
+                ctx.session.step = 'interest';
+
+                const keyboard = new InlineKeyboard()
+                    .text("Cricket", "vip_interest_Cricket")
+                    .text("Casino", "vip_interest_Casino").row()
+                    .text("Both", "vip_interest_Both");
+
+                return await ctx.reply("What are you interested in?", { reply_markup: keyboard });
+            }
+
+            // Check if this text matches the VIP Button
+            if (settings?.vipActive && text === settings.vipButtonText) {
+                ctx.session.step = 'name';
+                return await ctx.reply(settings.vipWelcomeMessage || "Welcome! Please enter your Name to join VIP:");
+            }
+
+            // --- Standard Menu Buttons ---
             const button = await MainMenuButton.findOne({ text: text, active: true });
 
             if (button) {
-                // Use dynamic response from database
                 const responseMessage = button.responseMessage || `You selected: ${text}`;
                 const responseButtons = button.responseButtons || [];
-
-                // Build inline keyboard if buttons exist
                 const inlineKeyboard = responseButtons.length > 0 ? {
                     inline_keyboard: responseButtons.map((btn: any) => [{ text: btn.text, url: btn.url }])
                 } : undefined;
 
-                // Send response (Text or Photo/Video)
                 if (button.mediaUrl) {
-                    await sendMediaMessage(ctx, button.mediaUrl, responseMessage, inlineKeyboard, button.mediaType);
+                    await sendMediaMessage(ctx, button.mediaUrl, responseMessage, inlineKeyboard as any, button.mediaType);
                 } else {
-                    await ctx.reply(responseMessage, { reply_markup: inlineKeyboard });
+                    await ctx.reply(responseMessage, { reply_markup: inlineKeyboard as any });
                 }
             }
         } catch (error) {
             console.error("Error handling text message:", error);
+        }
+    });
+
+    // 5b. Handle VIP Interest Selection (Callback Query)
+    bot.callbackQuery(/^vip_interest_(.+)$/, async (ctx) => {
+        const interest = ctx.match[1] as 'Cricket' | 'Casino' | 'Both';
+        
+        if (ctx.session.step !== 'interest') return await ctx.answerCallbackQuery("Expired session. Please start again.");
+
+        try {
+            const name = ctx.session.vipName || "Unknown";
+            const number = ctx.session.vipNumber || "N/A";
+            const telegramId = ctx.from.id.toString();
+
+            // Save to Database
+            await VipMember.findOneAndUpdate(
+                { telegramId },
+                { name, phoneNumber: number, interest },
+                { upsert: true, new: true }
+            );
+
+            // Clear Session
+            ctx.session.step = undefined;
+            ctx.session.vipName = undefined;
+            ctx.session.vipNumber = undefined;
+
+            await ctx.answerCallbackQuery("Details submitted successfully!");
+            
+            // Send final message with channel link
+            const settings = await getSettings();
+            const channelLink = settings?.vipChannelLink || "";
+
+            const keyboard = channelLink ? new InlineKeyboard().url("🚀 Join VIP Channel", channelLink) : undefined;
+
+            await ctx.editMessageText(`✅ Thank you, ${name}! Your details have been submitted.\n\nNow you can join our VIP channel below:`, {
+                reply_markup: keyboard
+            });
+
+        } catch (error) {
+            console.error("Error saving VIP member:", error);
+            await ctx.answerCallbackQuery("Something went wrong. Please try again later.");
         }
     });
 

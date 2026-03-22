@@ -11,7 +11,8 @@ import {
     LogOut,
     MessageSquare,
     MenuSquare,
-    Radio
+    Radio,
+    Star
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -22,6 +23,7 @@ const Sidebar = () => {
         { name: 'Channels', href: '/dashboard/channels', icon: Radio },
         { name: 'Channel Welcome', href: '/dashboard/welcome-messages', icon: MessageSquare },
         { name: 'Default Welcome', href: '/dashboard/welcome', icon: MessageSquare },
+        { name: 'VIP Members', href: '/dashboard/vip', icon: Star },
         { name: 'Menu Buttons', href: '/dashboard/menu', icon: MessageSquare },
         { name: 'Broadcast', href: '/dashboard/broadcast', icon: Send },
         { name: 'Users', href: '/dashboard/users', icon: Users },
