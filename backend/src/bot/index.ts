@@ -9,9 +9,10 @@ import { WelcomeMessage } from '../models/WelcomeMessage';
 
 // --- Session Logic ---
 interface SessionData {
-    step?: 'name' | 'number' | 'interest';
+    step?: 'name' | 'number' | 'interest' | 'review';
     vipName?: string;
     vipNumber?: string;
+    vipInterest?: 'Cricket' | 'Casino' | 'Both';
 }
 type MyContext = Context & SessionFlavor<SessionData>;
 import fs from 'fs';
@@ -272,9 +273,32 @@ export const initBot = async () => {
         
         if (ctx.session.step !== 'interest') return await ctx.answerCallbackQuery("Expired session. Please start again.");
 
+        ctx.session.vipInterest = interest;
+        ctx.session.step = 'review';
+
+        const name = ctx.session.vipName;
+        const number = ctx.session.vipNumber;
+
+        await ctx.answerCallbackQuery(`Selected: ${interest}`);
+
+        const summary = `📝 *Registration Summary*\n\n👤 Name: ${name}\n📞 Number: ${number}\n🎯 Interest: ${interest}\n\nClick below to submit your details and get the VIP link!`;
+
+        const keyboard = new InlineKeyboard().text("✅ Submit Details", "vip_submit");
+
+        await ctx.editMessageText(summary, {
+            parse_mode: "Markdown",
+            reply_markup: keyboard
+        });
+    });
+
+    // 5c. Final VIP Submission
+    bot.callbackQuery("vip_submit", async (ctx) => {
+        if (ctx.session.step !== 'review') return await ctx.answerCallbackQuery("Invalid request.");
+
         try {
             const name = ctx.session.vipName || "Unknown";
             const number = ctx.session.vipNumber || "N/A";
+            const interest = ctx.session.vipInterest as 'Cricket' | 'Casino' | 'Both';
             const telegramId = ctx.from.id.toString();
 
             // Save to Database
@@ -288,6 +312,7 @@ export const initBot = async () => {
             ctx.session.step = undefined;
             ctx.session.vipName = undefined;
             ctx.session.vipNumber = undefined;
+            ctx.session.vipInterest = undefined;
 
             await ctx.answerCallbackQuery("Details submitted successfully!");
             
@@ -295,15 +320,15 @@ export const initBot = async () => {
             const settings = await getSettings();
             const channelLink = settings?.vipChannelLink || "";
 
-            const keyboard = channelLink ? new InlineKeyboard().url("🚀 Join VIP Channel", channelLink) : undefined;
+            const keyboard = channelLink ? new InlineKeyboard().url("🚀 Join VIP Channel नाउ", channelLink) : undefined;
 
-            await ctx.editMessageText(`✅ Thank you, ${name}! Your details have been submitted.\n\nNow you can join our VIP channel below:`, {
+            await ctx.editMessageText(`✅ Success! Your details are saved.\n\nAb niche button pe click karke VIP join karein:`, {
                 reply_markup: keyboard
             });
 
         } catch (error) {
             console.error("Error saving VIP member:", error);
-            await ctx.answerCallbackQuery("Something went wrong. Please try again later.");
+            await ctx.answerCallbackQuery("Error occurred. Please try again.");
         }
     });
 
