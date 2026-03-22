@@ -158,56 +158,67 @@ export default function SupportPage() {
                 </form>
             </div>
 
-            {/* Filter & Search Bar */}
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-zinc-50 dark:bg-zinc-950/50 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-                <div className="flex flex-wrap gap-4 items-center w-full md:w-auto">
-                    <div className="relative w-full md:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Search by name, phone or ID..."
-                            className="w-full pl-10 pr-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <select
-                        value={filterType}
-                        onChange={(e) => setFilterType(e.target.value)}
-                        className="px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm"
-                    >
-                        <option value="all">All Issues</option>
-                        <option value="Withdrawal">Withdrawal</option>
-                        <option value="Deposit">Deposit</option>
-                        <option value="ID">ID Issue</option>
-                        <option value="Other">Other</option>
-                    </select>
-                    <select
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        className="px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm"
-                    >
-                        <option value="open">Open Only</option>
-                        <option value="resolved">Resolved</option>
-                        <option value="all">All Status</option>
-                    </select>
+            {/* Filter & Status Tabs */}
+            <div className="flex flex-col gap-6">
+                <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800/50 p-1 rounded-2xl w-fit border border-zinc-200 dark:border-zinc-800">
+                    {['open', 'resolved', 'all'].map((status) => (
+                        <button
+                            key={status}
+                            onClick={() => setFilterStatus(status)}
+                            className={`px-6 py-2 rounded-xl text-sm font-semibold transition-all duration-200 capitalize ${
+                                filterStatus === status 
+                                ? 'bg-white dark:bg-zinc-900 text-blue-600 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-700' 
+                                : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                            }`}
+                        >
+                            {status}
+                        </button>
+                    ))}
                 </div>
-                <div className="text-xs text-zinc-500 font-medium">
-                    Total: {filteredTickets.length} Tickets
+
+                <div className="flex flex-col md:flex-row gap-4 items-center justify-between ">
+                    <div className="flex flex-wrap gap-4 items-center w-full md:w-auto">
+                        <div className="relative w-full md:w-80">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Search by name, phone or ID..."
+                                className="w-full pl-12 pr-4 py-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div className="relative">
+                            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                            <select
+                                value={filterType}
+                                onChange={(e) => setFilterType(e.target.value)}
+                                className="pl-10 pr-8 py-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm appearance-none outline-none focus:ring-2 focus:ring-blue-500/20"
+                            >
+                                <option value="all">Issue Type: All</option>
+                                <option value="Withdrawal">Withdrawal</option>
+                                <option value="Deposit">Deposit</option>
+                                <option value="ID">ID Issue</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-bold bg-zinc-100 dark:bg-zinc-800/50 px-4 py-2 rounded-full border border-zinc-200 dark:border-zinc-800">
+                        Total {filteredTickets.length} Tickets
+                    </div>
                 </div>
             </div>
 
-            {/* Tickets Table */}
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
+            {/* Tickets List */}
+            <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-zinc-50 dark:bg-zinc-950/50 border-b border-zinc-200 dark:border-zinc-800">
+                    <table className="w-full text-left text-sm border-separate border-spacing-0">
+                        <thead className="bg-zinc-50/50 dark:bg-zinc-950/20">
                             <tr>
-                                <th className="px-6 py-4 font-semibold">User Details</th>
-                                <th className="px-6 py-4 font-semibold">ID / Issue Type</th>
-                                <th className="px-6 py-4 font-semibold w-1/3">Problem</th>
-                                <th className="px-6 py-4 font-semibold">Status</th>
-                                <th className="px-6 py-4 font-semibold text-right">Actions</th>
+                                <th className="px-8 py-5 font-bold text-zinc-400 text-[10px] uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800">User Information</th>
+                                <th className="px-8 py-5 font-bold text-zinc-400 text-[10px] uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800">Ticket Detail</th>
+                                <th className="px-8 py-5 font-bold text-zinc-400 text-[10px] uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800 w-1/3">Issue Description</th>
+                                <th className="px-8 py-5 font-bold text-zinc-400 text-[10px] uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
@@ -218,47 +229,67 @@ export default function SupportPage() {
                             ) : (
                                 filteredTickets.map((ticket) => (
                                     <tr key={ticket._id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/20 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col gap-1">
-                                                <div className="font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
-                                                    <User size={14} className="text-zinc-400" />
+                                        <td className="px-8 py-6">
+                                            <div className="flex flex-col gap-1.5">
+                                                <div className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center text-xs font-black">
+                                                        {ticket.name.charAt(0).toUpperCase()}
+                                                    </div>
                                                     {ticket.name}
                                                 </div>
-                                                <div className="text-xs text-zinc-500 flex items-center gap-1.5">
-                                                    <Smartphone size={14} className="text-zinc-400" />
-                                                    {ticket.phoneNumber}
-                                                </div>
-                                                <div className="text-[10px] text-zinc-400 mt-1">
-                                                    {new Date(ticket.createdAt).toLocaleString()}
+                                                <div className="flex items-center gap-4 text-xs font-medium text-zinc-500">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Smartphone size={14} className="text-zinc-400" />
+                                                        {ticket.phoneNumber}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Hash size={14} className="text-zinc-400" />
+                                                        {ticket.telegramId}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col gap-1">
-                                                <div className="text-xs font-mono font-bold bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded w-fit flex items-center gap-1">
-                                                    <Hash size={12} className="text-zinc-400" />
-                                                    {ticket.dafabetId}
+                                        <td className="px-8 py-6">
+                                            <div className="flex flex-col gap-2">
+                                                <div className="text-xs font-mono font-bold bg-zinc-100 dark:bg-zinc-800/80 px-2.5 py-1 rounded-lg w-fit text-zinc-700 dark:text-zinc-300 border border-zinc-200/50 dark:border-zinc-700/50">
+                                                    ID: {ticket.dafabetId}
                                                 </div>
-                                                <span className={`text-[10px] font-bold uppercase tracking-wider ${
-                                                    ticket.issueType === 'Withdrawal' ? 'text-orange-500' :
-                                                    ticket.issueType === 'Deposit' ? 'text-green-500' :
-                                                    ticket.issueType === 'ID' ? 'text-blue-500' : 'text-zinc-500'
-                                                }`}>
-                                                    {ticket.issueType}
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`w-2 h-2 rounded-full ${
+                                                        ticket.issueType === 'Withdrawal' ? 'bg-orange-500' :
+                                                        ticket.issueType === 'Deposit' ? 'bg-green-500' :
+                                                        ticket.issueType === 'ID' ? 'bg-blue-500' : 'bg-zinc-500'
+                                                    }`} />
+                                                    <span className={`text-[10px] font-bold uppercase tracking-widest ${
+                                                        ticket.issueType === 'Withdrawal' ? 'text-orange-500' :
+                                                        ticket.issueType === 'Deposit' ? 'text-green-500' :
+                                                        ticket.issueType === 'ID' ? 'text-blue-500' : 'text-zinc-500'
+                                                    }`}>
+                                                        {ticket.issueType}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className={`text-zinc-600 dark:text-zinc-400 text-xs bg-zinc-50 dark:bg-zinc-950/50 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800/50 italic leading-relaxed relative group/problem ${expandedTickets[ticket._id] ? '' : 'max-h-24 overflow-hidden'}`}>
+                                        <td className="px-8 py-6 relative">
+                                            <div 
+                                                className={`text-zinc-600 dark:text-zinc-400 text-[13px] bg-zinc-50 dark:bg-zinc-950/30 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800/50 leading-relaxed transition-all duration-300 ${
+                                                    expandedTickets[ticket._id] ? 'ring-2 ring-blue-500/10' : 'max-h-24 overflow-hidden mask-fade-bottom'
+                                                }`}
+                                            >
                                                 {ticket.problem}
-                                                {ticket.problem.length > 100 && (
-                                                    <button 
-                                                        onClick={() => toggleExpand(ticket._id)}
-                                                        className="mt-2 text-blue-500 hover:text-blue-600 font-semibold flex items-center gap-1 transition-colors"
-                                                    >
-                                                        {expandedTickets[ticket._id] ? 'Show Less' : 'Read More...'}
-                                                    </button>
-                                                )}
+                                                <div className="mt-3 flex items-center justify-between">
+                                                    <span className="text-[10px] text-zinc-400 font-medium">
+                                                        {new Date(ticket.createdAt).toLocaleString()}
+                                                    </span>
+                                                    {ticket.problem.length > 80 && (
+                                                        <button 
+                                                            onClick={() => toggleExpand(ticket._id)}
+                                                            className="text-[11px] font-bold text-blue-500 hover:text-blue-600 flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-blue-500/5 transition-all"
+                                                        >
+                                                            {expandedTickets[ticket._id] ? 'Show Less' : 'Read More'}
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -270,20 +301,26 @@ export default function SupportPage() {
                                                 {ticket.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                {ticket.status === 'open' && (
+                                        <td className="px-8 py-6 text-right">
+                                            <div className="flex items-center justify-end gap-3">
+                                                {ticket.status === 'open' ? (
                                                     <button
                                                         onClick={() => handleResolve(ticket._id)}
-                                                        className="p-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg transition-all"
+                                                        className="flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-xl transition-all font-bold text-xs uppercase tracking-wider"
                                                         title="Mark as Resolved"
                                                     >
-                                                        <CheckCircle size={18} />
+                                                        <CheckCircle size={14} />
+                                                        Resolve
                                                     </button>
+                                                ) : (
+                                                    <div className="flex items-center gap-2 px-4 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-400 rounded-xl font-bold text-xs uppercase tracking-wider opacity-60">
+                                                        <CheckCircle size={14} />
+                                                        Resolved
+                                                    </div>
                                                 )}
                                                 <button
                                                     onClick={() => handleDelete(ticket._id)}
-                                                    className="p-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 rounded-lg transition-all"
+                                                    className="p-2.5 bg-zinc-100 hover:bg-red-50 dark:bg-zinc-800 dark:hover:bg-red-900/20 text-zinc-400 hover:text-red-500 rounded-xl transition-all"
                                                     title="Delete Ticket"
                                                 >
                                                     <Trash2 size={18} />

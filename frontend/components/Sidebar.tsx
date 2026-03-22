@@ -13,7 +13,8 @@ import {
     Radio,
     Star,
     LifeBuoy,
-    Menu
+    Menu,
+    Tv
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -22,11 +23,11 @@ const Sidebar = () => {
     const navigation = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'Channels', href: '/dashboard/channels', icon: Radio },
-        { name: 'Channel Welcome', href: '/dashboard/welcome-messages', icon: MessageSquare },
+        { name: 'Channel Welcome', href: '/dashboard/welcome-messages', icon: Tv },
         { name: 'Default Welcome', href: '/dashboard/welcome', icon: MessageSquare },
         { name: 'VIP Members', href: '/dashboard/vip', icon: Star },
-        { name: 'Support Tickets', href: '/dashboard/support', icon: LifeBuoy }, // Added Support Tickets
-        { name: 'Menu Buttons', href: '/dashboard/menu-buttons', icon: Menu }, // Modified Menu Buttons
+        { name: 'Support Tickets', href: '/dashboard/support', icon: LifeBuoy },
+        { name: 'Menu Buttons', href: '/dashboard/menu', icon: Menu },
         { name: 'Broadcast', href: '/dashboard/broadcast', icon: Send },
         { name: 'Users', href: '/dashboard/users', icon: Users },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings },
