@@ -13,11 +13,17 @@ import {
     Radio,
     Star,
     LifeBuoy,
-    Menu,
-    Tv
+    Menu as MenuIcon,
+    Tv,
+    X
 } from 'lucide-react';
 
-const Sidebar = () => {
+interface SidebarProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+}
+
+const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     const pathname = usePathname();
 
     const navigation = [
@@ -27,7 +33,7 @@ const Sidebar = () => {
         { name: 'Default Welcome', href: '/dashboard/welcome', icon: MessageSquare },
         { name: 'VIP Members', href: '/dashboard/vip', icon: Star },
         { name: 'Support Tickets', href: '/dashboard/support', icon: LifeBuoy },
-        { name: 'Menu Buttons', href: '/dashboard/menu', icon: Menu },
+        { name: 'Menu Buttons', href: '/dashboard/menu', icon: MenuIcon },
         { name: 'Broadcast', href: '/dashboard/broadcast', icon: Send },
         { name: 'Users', href: '/dashboard/users', icon: Users },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings },
@@ -35,8 +41,13 @@ const Sidebar = () => {
     ];
 
     return (
-        <aside className="h-screen w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col fixed left-0 top-0 overflow-y-auto">
-            <div className="p-6 flex items-center justify-start border-b border-zinc-800/50">
+        <aside 
+            className={`
+                h-screen w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col fixed left-0 top-0 overflow-y-auto z-50 transition-transform duration-300
+                ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+            `}
+        >
+            <div className="p-6 flex items-center justify-between border-b border-zinc-800/50">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
                         <Send size={16} className="text-white ml-0.5" />
@@ -45,6 +56,10 @@ const Sidebar = () => {
                         Bot Admin
                     </h1>
                 </div>
+                {/* Mobile Close Button */}
+                <button onClick={onClose} className="lg:hidden p-2 text-zinc-500 hover:text-white">
+                    <X size={20} />
+                </button>
             </div>
 
             <nav className="flex-1 px-3 py-6">
@@ -58,6 +73,7 @@ const Sidebar = () => {
                             <li key={item.name}>
                                 <Link
                                     href={item.href}
+                                    onClick={onClose}
                                     className={`
                                         flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group
                                         ${isActive

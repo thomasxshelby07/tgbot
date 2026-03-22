@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Trash2 } from 'lucide-react';
 
 export default function WelcomeMessagePage() {
     const [message, setMessage] = useState('');
@@ -85,9 +86,11 @@ export default function WelcomeMessagePage() {
 
     return (
         <div className="w-full max-w-4xl mx-auto pb-10">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-zinc-900 dark:text-white tracking-tight">Welcome Message</h1>
-                <p className="text-zinc-500 dark:text-zinc-400 mt-2">Configure the automatic message sent to new users.</p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 px-1">
+                <div>
+                    <h1 className="text-3xl font-bold text-zinc-900 dark:text-white tracking-tight italic">Welcome Message</h1>
+                    <p className="text-zinc-500 dark:text-zinc-400 mt-2 text-sm">Configure the automatic message sent to new users.</p>
+                </div>
             </div>
 
             <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-8">
@@ -133,21 +136,23 @@ export default function WelcomeMessagePage() {
                             </div>
                         )}
                         {buttons.map((btn, index) => (
-                            <div key={index} className="flex gap-3 items-center group">
-                                <div className="flex-1">
+                            <div key={index} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center p-4 bg-zinc-50 dark:bg-zinc-950/30 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm relative group">
+                                <div className="flex-1 w-full">
+                                    <label className="block text-[10px] uppercase font-black tracking-widest text-zinc-400 mb-1 sm:hidden">Label</label>
                                     <input
                                         type="text"
-                                        placeholder="Label"
-                                        className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                                        placeholder="Button Label"
+                                        className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-bold"
                                         value={btn.text}
                                         onChange={(e) => handleButtonChange(index, 'text', e.target.value)}
                                     />
                                 </div>
-                                <div className="flex-[2]">
+                                <div className="flex-[2] w-full">
+                                    <label className="block text-[10px] uppercase font-black tracking-widest text-zinc-400 mb-1 sm:hidden">URL</label>
                                     <input
                                         type="text"
                                         placeholder="URL (https://...)"
-                                        className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-mono text-sm"
+                                        className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-mono text-xs"
                                         value={btn.url}
                                         onChange={(e) => handleButtonChange(index, 'url', e.target.value)}
                                     />
@@ -155,24 +160,24 @@ export default function WelcomeMessagePage() {
                                 <button
                                     type="button"
                                     onClick={() => handleRemoveButton(index)}
-                                    className="p-3 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                                    className="absolute -top-2 -right-2 sm:static p-2.5 text-white sm:text-zinc-400 bg-red-500 sm:bg-transparent sm:hover:text-red-500 sm:hover:bg-red-500/10 rounded-xl transition-all shadow-lg sm:shadow-none"
                                     title="Remove Button"
                                 >
-                                    🗑️
+                                    <Trash2 size={18} />
                                 </button>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                <div className="flex items-center justify-end pt-6 border-t border-zinc-100 dark:border-zinc-800">
+                <div className="flex items-center justify-center sm:justify-end pt-6 border-t border-zinc-100 dark:border-zinc-800">
                     <button
-                        className={`bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 px-8 rounded-xl shadow-lg shadow-blue-500/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-900 transition-all transform active:scale-95 ${loading ? 'opacity-70 cursor-wait' : ''}`}
+                        className={`w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-xs py-4 px-10 rounded-2xl shadow-xl shadow-blue-500/20 transition-all active:scale-95 ${loading ? 'opacity-70 cursor-wait' : ''}`}
                         type="button"
                         onClick={handleSave}
                         disabled={loading}
                     >
-                        {loading ? 'Saving Changes...' : 'Save Settings'}
+                        {loading ? 'Saving Changes...' : 'Save Welcome Config'}
                     </button>
                 </div>
 

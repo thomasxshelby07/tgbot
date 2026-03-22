@@ -202,14 +202,14 @@ export default function MenuPage() {
 
     return (
         <div className="max-w-5xl mx-auto pb-20">
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">Menu Configuration</h1>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 px-1">
+                <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 italic tracking-tight underline decoration-blue-500/30 decoration-4 underline-offset-8">Menu Config</h1>
                 <button
                     onClick={openCreateModal}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2"
+                    className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 font-bold transition-all active:scale-95"
                 >
-                    <Plus size={20} />
-                    <span>New Menu Button</span>
+                    <Plus size={20} className="stroke-[3]" />
+                    <span>NEW BUTTON</span>
                 </button>
             </div>
 
@@ -220,48 +220,48 @@ export default function MenuPage() {
                 ) : buttons.length === 0 ? (
                     <div className="p-8 text-center text-zinc-500">No buttons found. Create one to get started.</div>
                 ) : (
-                    <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
                         {buttons.sort((a, b) => a.order - b.order).map((btn) => (
-                            <div key={btn._id} className="p-4 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                            <div key={btn._id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-all gap-4">
                                 <div className="flex items-center gap-4">
-                                    <span className="w-8 h-8 flex items-center justify-center bg-gray-100 dark:bg-zinc-800 rounded text-sm text-zinc-500 font-mono">
+                                    <span className="w-10 h-10 flex items-center justify-center bg-zinc-100 dark:bg-zinc-950 rounded-xl text-sm text-blue-500 font-bold shadow-inner">
                                         {btn.order}
                                     </span>
-                                    <div>
-                                        <h3 className="font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2 truncate">
                                             {btn.text}
                                             {btn.mediaUrl && (
-                                                <span title={btn.mediaType === 'video' ? 'Has Video' : 'Has Image'} className={btn.mediaType === 'video' ? 'text-purple-500' : 'text-blue-500'}>
-                                                    <Upload size={14} />
+                                                <span title={btn.mediaType === 'video' ? 'Has Video' : 'Has Image'} className={btn.mediaType === 'video' ? 'text-purple-500' : 'text-cyan-500'}>
+                                                    <Upload size={14} className="animate-pulse" />
                                                 </span>
                                             )}
                                         </h3>
-                                        <p className="text-sm text-zinc-500 truncate max-w-sm">
-                                            {btn.responseMessage ? `Response: ${btn.responseMessage.substring(0, 30)}...` : "No text response"}
-                                            {btn.responseButtons && btn.responseButtons.length > 0 && ` • 🔘 ${btn.responseButtons.length} Buttons`}
+                                        <p className="text-xs text-zinc-500 truncate max-w-[200px] sm:max-w-xs mt-0.5">
+                                            {btn.responseMessage ? btn.responseMessage : "No text response"}
+                                            {btn.responseButtons && btn.responseButtons.length > 0 && ` • ${btn.responseButtons.length} Actions`}
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center justify-end gap-2 shrink-0 bg-zinc-50 dark:bg-zinc-950/50 sm:bg-transparent p-2 sm:p-0 rounded-lg">
                                     <button
                                         onClick={() => handleToggle(btn._id, btn.active)}
-                                        className={`p-2 rounded-lg transition-colors ${btn.active
-                                            ? "text-green-500 bg-green-50 dark:bg-green-900/10"
-                                            : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800"}`}
+                                        className={`p-2.5 rounded-xl transition-all shadow-sm ${btn.active
+                                            ? "text-green-500 bg-green-50 dark:bg-green-900/20 border border-green-500/20"
+                                            : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800 border border-transparent"}`}
                                         title="Toggle Status"
                                     >
-                                        {btn.active ? <Check size={18} /> : <X size={18} />}
+                                        {btn.active ? <Check size={18} className="stroke-[3]" /> : <X size={18} className="stroke-[3]" />}
                                     </button>
                                     <button
                                         onClick={() => openEditModal(btn)}
-                                        className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-lg transition-colors"
+                                        className="p-2.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all border border-transparent hover:border-blue-500/20"
                                         title="Edit"
                                     >
                                         <Edit2 size={18} />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(btn._id)}
-                                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
+                                        className="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all border border-transparent hover:border-red-500/20"
                                         title="Delete"
                                     >
                                         <Trash2 size={18} />
@@ -286,24 +286,24 @@ export default function MenuPage() {
 
                         <div className="p-6 space-y-6">
                             {/* Main Config */}
-                            <div className="grid grid-cols-4 gap-4">
-                                <div className="col-span-3">
-                                    <label className="block text-sm font-medium mb-1">Button Label (Keyboard)</label>
+                            <div className="flex flex-col sm:grid sm:grid-cols-4 gap-4">
+                                <div className="sm:col-span-3">
+                                    <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-zinc-500">Button Label (Keyboard)</label>
                                     <input
                                         type="text"
                                         value={formData.text}
                                         onChange={(e) => setFormData({ ...formData, text: e.target.value })}
-                                        className="w-full p-2 bg-zinc-50 dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700"
+                                        className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
                                         placeholder="e.g. VIP Plan"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Order</label>
+                                    <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-zinc-500">Order</label>
                                     <input
                                         type="number"
                                         value={formData.order}
                                         onChange={(e) => setFormData({ ...formData, order: Number(e.target.value) })}
-                                        className="w-full p-2 bg-zinc-50 dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700"
+                                        className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
                                     />
                                 </div>
                             </div>
@@ -327,10 +327,10 @@ export default function MenuPage() {
 
                             {/* Media Upload */}
                             <div>
-                                <label className="block text-sm font-medium mb-1">Response Media — Image or Video (Optional)</label>
-                                <div className="flex items-center gap-4">
+                                <label className="block text-sm font-bold mb-2 uppercase tracking-wider text-zinc-500">Media — Image or Video (Optional)</label>
+                                <div className="flex flex-col sm:flex-row items-center gap-4">
                                     {formData.mediaUrl && (
-                                        <div className="relative w-24 h-20 rounded border border-zinc-200 dark:border-zinc-800 overflow-hidden bg-black flex items-center justify-center">
+                                        <div className="relative w-full sm:w-32 h-32 sm:h-24 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden bg-black flex items-center justify-center shadow-md">
                                             {formData.mediaType === 'video' ? (
                                                 <video
                                                     src={formData.mediaUrl}
@@ -344,20 +344,20 @@ export default function MenuPage() {
                                             )}
                                             <button
                                                 onClick={() => setFormData({ ...formData, mediaUrl: "", mediaType: "" })}
-                                                className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-bl text-xs"
+                                                className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-lg shadow-lg active:scale-90 transition-all"
                                             >
-                                                <X size={12} />
+                                                <X size={14} />
                                             </button>
                                         </div>
                                     )}
-                                    <div className="flex-1">
+                                    <div className="flex-1 w-full">
                                         <input
                                             type="file"
                                             accept="image/*,video/mp4,video/webm,video/quicktime"
                                             onChange={handleFileUpload}
-                                            className="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                            className="block w-full text-sm text-zinc-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
                                         />
-                                        <p className="text-xs text-zinc-400 mt-1">Supported: JPG, PNG, GIF, WebP, MP4, WebM, MOV</p>
+                                        <p className="text-[10px] text-zinc-400 mt-2 font-medium tracking-wide">JPG, PNG, WebP, MP4, MOV</p>
                                     </div>
                                 </div>
                                 {/* URL Display */}
@@ -365,7 +365,7 @@ export default function MenuPage() {
                                     type="text"
                                     readOnly
                                     value={formData.mediaUrl}
-                                    className="w-full mt-2 p-1 text-xs bg-gray-100 dark:bg-zinc-800 text-gray-500 rounded border border-gray-200 dark:border-zinc-700"
+                                    className="w-full mt-3 p-2 text-[10px] bg-zinc-100 dark:bg-zinc-950/50 text-zinc-500 rounded-lg border border-zinc-200 dark:border-zinc-800 font-mono truncate"
                                     placeholder="Media URL will appear here..."
                                 />
                             </div>
@@ -380,28 +380,28 @@ export default function MenuPage() {
                                         <Plus size={14} /> Add Button
                                     </button>
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-4">
                                     {formData.responseButtons.map((btn, idx) => (
-                                        <div key={idx} className="flex gap-2">
+                                        <div key={idx} className="flex flex-col sm:flex-row gap-2 bg-zinc-50 dark:bg-zinc-950/30 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800">
                                             <input
-                                                placeholder="Button Text"
+                                                placeholder="Button Label"
                                                 value={btn.text}
                                                 onChange={(e) => updateInlineButton(idx, 'text', e.target.value)}
-                                                className="flex-1 p-2 bg-zinc-50 dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 text-sm"
+                                                className="flex-1 p-2.5 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm focus:ring-2 focus:ring-blue-500 transition-all outline-none"
                                             />
                                             <input
                                                 placeholder="URL (https://...)"
                                                 value={btn.url}
                                                 onChange={(e) => updateInlineButton(idx, 'url', e.target.value)}
-                                                className="flex-1 p-2 bg-zinc-50 dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 text-sm"
+                                                className="flex-1 p-2.5 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm focus:ring-2 focus:ring-blue-500 transition-all outline-none"
                                             />
-                                            <button onClick={() => removeInlineButton(idx)} className="p-2 text-red-500 hover:bg-red-50 rounded">
-                                                <Trash2 size={16} />
+                                            <button onClick={() => removeInlineButton(idx)} className="self-end sm:self-auto p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all active:scale-95">
+                                                <Trash2 size={18} />
                                             </button>
                                         </div>
                                     ))}
                                     {formData.responseButtons.length === 0 && (
-                                        <p className="text-xs text-zinc-400 italic">No inline buttons added.</p>
+                                        <p className="text-xs text-zinc-400 italic bg-zinc-50 dark:bg-zinc-950/30 p-4 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 text-center uppercase tracking-widest font-black">No buttons added.</p>
                                     )}
                                 </div>
                             </div>

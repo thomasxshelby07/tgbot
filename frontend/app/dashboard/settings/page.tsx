@@ -124,12 +124,12 @@ export default function SettingsPage() {
 
     return (
         <div className="max-w-4xl mx-auto pb-20">
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">Bot Settings</h1>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 italic tracking-tight">Bot Settings</h1>
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 font-medium disabled:opacity-50"
+                    className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center gap-2 font-medium disabled:opacity-50 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
                 >
                     {saving ? (
                         <>
@@ -152,10 +152,10 @@ export default function SettingsPage() {
 
                     {/* Media Upload */}
                     <div className="mb-6">
-                        <label className="block text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">Welcome Image / Video (Optional)</label>
-                        <div className="flex items-start gap-6">
+                        <label className="block text-sm font-medium mb-3 text-zinc-700 dark:text-zinc-300">Welcome Image / Video (Optional)</label>
+                        <div className="flex flex-col md:flex-row items-start gap-6">
                             {formData.welcomeMessageMediaUrl ? (
-                                <div className="relative w-40 h-40 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden bg-zinc-50 dark:bg-zinc-800">
+                                <div className="relative w-full md:w-48 h-48 md:h-40 rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden bg-zinc-50 dark:bg-zinc-800 shadow-md">
                                     <img
                                         src={formData.welcomeMessageMediaUrl}
                                         alt="Welcome Media"
@@ -163,33 +163,35 @@ export default function SettingsPage() {
                                     />
                                     <button
                                         onClick={() => setFormData(prev => ({ ...prev, welcomeMessageMediaUrl: "" }))}
-                                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded hover:bg-red-600 transition-colors"
+                                        className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-lg hover:bg-red-600 shadow-lg transition-all active:scale-90"
                                     >
                                         <X size={16} />
                                     </button>
                                 </div>
                             ) : (
-                                <div className="w-40 h-40 rounded-lg border-2 border-dashed border-zinc-300 dark:border-zinc-700 flex flex-col items-center justify-center text-zinc-400 gap-2 bg-zinc-50 dark:bg-zinc-800/50">
+                                <div className="w-full md:w-40 h-40 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 flex flex-col items-center justify-center text-zinc-400 gap-2 bg-zinc-50 dark:bg-zinc-800/50">
                                     <Upload size={24} />
-                                    <span className="text-xs">No media</span>
+                                    <span className="text-xs font-medium uppercase tracking-wider">No media</span>
                                 </div>
                             )}
 
-                            <div className="flex-1">
-                                <input
-                                    type="file"
-                                    accept="image/*,video/*"
-                                    onChange={handleFileUpload}
-                                    className="block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
-                                />
-                                <p className="mt-2 text-xs text-zinc-500">
-                                    Supports Images and Videos. This media will be sent with the welcome caption.
-                                </p>
+                            <div className="flex-1 w-full">
+                                <div className="bg-zinc-50 dark:bg-zinc-950/30 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
+                                    <input
+                                        type="file"
+                                        accept="image/*,video/*"
+                                        onChange={handleFileUpload}
+                                        className="block w-full text-sm text-zinc-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
+                                    />
+                                    <p className="mt-3 text-xs text-zinc-500 leading-relaxed">
+                                        ✨ Supports Images and Videos. High quality recommended.
+                                    </p>
+                                </div>
                                 <input
                                     type="text"
                                     readOnly
                                     value={formData.welcomeMessageMediaUrl}
-                                    className="w-full mt-3 p-2 text-xs bg-gray-100 dark:bg-zinc-800 text-gray-500 rounded border border-gray-200 dark:border-zinc-700 font-mono"
+                                    className="w-full mt-3 p-3 text-[10px] bg-zinc-100 dark:bg-zinc-950/50 text-zinc-500 rounded-lg border border-zinc-200 dark:border-zinc-800 font-mono tracking-tighter"
                                     placeholder="Media URL will appear here..."
                                 />
                             </div>
@@ -220,25 +222,27 @@ export default function SettingsPage() {
                             </button>
                         </div>
 
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {formData.welcomeMessageButtons.map((btn, idx) => (
-                                <div key={idx} className="flex gap-3 items-center bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800">
-                                    <span className="text-zinc-400 font-mono text-sm w-6">{idx + 1}.</span>
-                                    <input
-                                        placeholder="Button Text"
-                                        value={btn.text}
-                                        onChange={(e) => updateInlineButton(idx, 'text', e.target.value)}
-                                        className="flex-1 p-2 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 text-sm"
-                                    />
+                                <div key={idx} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md">
+                                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                                        <span className="text-zinc-400 font-mono text-xs font-bold w-6 uppercase tracking-widest">{idx + 1}.</span>
+                                        <input
+                                            placeholder="Button Text"
+                                            value={btn.text}
+                                            onChange={(e) => updateInlineButton(idx, 'text', e.target.value)}
+                                            className="flex-1 sm:w-40 p-2.5 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                                        />
+                                    </div>
                                     <input
                                         placeholder="URL (https://...)"
                                         value={btn.url}
                                         onChange={(e) => updateInlineButton(idx, 'url', e.target.value)}
-                                        className="flex-1 p-2 bg-white dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 text-sm"
+                                        className="flex-1 w-full p-2.5 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
                                     />
                                     <button
                                         onClick={() => removeInlineButton(idx)}
-                                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded transition-colors"
+                                        className="self-end sm:self-auto p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all active:scale-90"
                                         title="Remove Button"
                                     >
                                         <Trash2 size={18} />

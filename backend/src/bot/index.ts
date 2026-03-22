@@ -240,7 +240,7 @@ export const initBot = async () => {
                 ctx.session.supportName = text;
                 ctx.session.step = 'support_number';
                 const msg = ctx.session.language === 'hi' 
-                    ? "✅ नाम मिल गया!\n\nअब अपना मोबाइल नंबर दर्ज करें:" 
+                    ? "✅ Naam mil gaya!\n\nAb apna mobile number daalo:" 
                     : "✅ Name received!\n\nNow please enter your Mobile Number:";
                 return await ctx.reply(msg);
             }
@@ -249,7 +249,7 @@ export const initBot = async () => {
                 ctx.session.supportNumber = text;
                 ctx.session.step = 'support_id';
                 const msg = ctx.session.language === 'hi' 
-                    ? "✅ नंबर मिल गया!\n\nकृपया अपनी Dafabet ID दर्ज करें:" 
+                    ? "✅ Number mil gaya!\n\nAb apni Dafabet ID batao:" 
                     : "✅ Number received!\n\nPlease enter your Dafabet ID:";
                 return await ctx.reply(msg);
             }
@@ -258,7 +258,7 @@ export const initBot = async () => {
                 ctx.session.supportId = text;
                 ctx.session.step = 'support_problem';
                 const msg = ctx.session.language === 'hi' 
-                    ? "✅ ID मिल गई!\n\nकृपया अपनी समस्या का वर्णन करें (यहाँ टाइप करें):" 
+                    ? "✅ ID mil gayi!\n\nAb batao aapko kya dikkat aa rahi hai (Yaha type karo):" 
                     : "✅ ID received!\n\nPlease describe your problem (Type here):";
                 return await ctx.reply(msg);
             }
@@ -269,10 +269,10 @@ export const initBot = async () => {
 
                 const isHi = ctx.session.language === 'hi';
                 const summary = isHi 
-                    ? `📝 *Support Request Summary*\n\n📋 समस्या प्रकार: ${ctx.session.supportType}\n👤 नाम: ${ctx.session.supportName}\n📞 नंबर: ${ctx.session.supportNumber}\n🆔 Dafabet ID: ${ctx.session.supportId}\n❓ समस्या: ${text}\n\nसबमिट करने के लिए नीचे क्लिक करें!`
+                    ? `📝 *Aapki Details*\n\n📋 Issue: ${ctx.session.supportType}\n👤 Naam: ${ctx.session.supportName}\n📞 Number: ${ctx.session.supportNumber}\n🆔 ID: ${ctx.session.supportId}\n❓ Problem: ${text}\n\nSubmit karne ke liye niche click karein!`
                     : `📝 *Support Request Summary*\n\n📋 Issue Type: ${ctx.session.supportType}\n👤 Name: ${ctx.session.supportName}\n📞 Number: ${ctx.session.supportNumber}\n🆔 Dafabet ID: ${ctx.session.supportId}\n❓ Problem: ${text}\n\nClick below to submit!`;
 
-                const btnText = isHi ? "✅ टिकट जमा करें" : "✅ Submit Ticket";
+                const btnText = isHi ? "✅ Submit Karein" : "✅ Submit Ticket";
                 const keyboard = new InlineKeyboard().text(btnText, "support_submit");
                 return await ctx.reply(summary, { parse_mode: "Markdown", reply_markup: keyboard });
             }
@@ -281,7 +281,7 @@ export const initBot = async () => {
                 ctx.session.vipName = text;
                 ctx.session.step = 'number';
                 console.log(`➡️ Moving to Number step for User ${ctx.from?.id}`);
-                return await ctx.reply("✅ Name received! / नाम मिल गया!\n\nNow please enter your Mobile Number: / अब अपना मोबाइल नंबर दर्ज करें:");
+                return await ctx.reply("✅ Naam mil gaya! Ab apna mobile number daalo:");
             }
 
             if (step === 'number') {
@@ -292,9 +292,9 @@ export const initBot = async () => {
                 const keyboard = new InlineKeyboard()
                     .text("1. Cricket 🏏", "vip_interest_Cricket")
                     .text("2. Casino 🎰", "vip_interest_Casino").row()
-                    .text("3. Both / दोनों 🏏🎰", "vip_interest_Both");
+                    .text("3. Both / Dono 🏏🎰", "vip_interest_Both");
 
-                return await ctx.reply("Please select your Interest: / अपनी रुचि चुनें:", { reply_markup: keyboard });
+                return await ctx.reply("Apna interest select karo:", { reply_markup: keyboard });
             }
 
             // Check if this text matches the VIP Button
@@ -309,17 +309,17 @@ export const initBot = async () => {
                     const keyboard = channelLink ? new InlineKeyboard().url("🚀 Join VIP Channel Now / अभी VIP चैनल से जुड़ें", channelLink) : undefined;
                     
                     return await ctx.reply(
-                        "✅ You are already a VIP member! / आप पहले से ही एक VIP सदस्य हैं!\n\nClick below to join: / शामिल होने के लिए नीचे क्लिक करें:",
+                        "✅ Aap pehle se hi VIP member hain!\n\nJoin karne ke liye niche click karein:",
                         { reply_markup: keyboard }
                     );
                 }
 
                 // Send Welcome Message first
-                await ctx.reply(settings.vipWelcomeMessage || "Welcome to VIP Registration! / VIP पंजीकरण में आपका स्वागत है!");
+                await ctx.reply(settings.vipWelcomeMessage || "VIP Registration me aapka swagat hai!");
                 
                 // Then ask for Name immediately
                 ctx.session.step = 'name';
-                return await ctx.reply("Please enter your Full Name: / अपना पूरा नाम दर्ज करें:");
+                return await ctx.reply("Apna full name batayein:");
             }
 
             // Check if this text matches the Help & Support Button
@@ -331,7 +331,7 @@ export const initBot = async () => {
                     .text("English 🇺🇸", "support_lang_en")
                     .text("Hindi 🇮🇳", "support_lang_hi");
 
-                return await ctx.reply("Please select your language: / अपनी भाषा चुनें:", { reply_markup: keyboard });
+                return await ctx.reply("Apni language select karo:", { reply_markup: keyboard });
             }
 
             // --- Standard Menu Buttons ---
@@ -369,9 +369,9 @@ export const initBot = async () => {
 
         await ctx.answerCallbackQuery(`Selected: ${interest}`);
 
-        const summary = `📝 *Registration Summary / पंजीकरण सारांश*\n\n👤 Name / नाम: ${name}\n📞 Number / नंबर: ${number}\n🎯 Interest / रुचि: ${interest}\n\nClick below to submit your details and get the VIP link! / अपने विवरण जमा करने और VIP लिंक प्राप्त करने के लिए नीचे क्लिक करें!`;
+        const summary = `📝 *Aapki Details*\n\n👤 Naam: ${name}\n📞 Number: ${number}\n🎯 Interest: ${interest}\n\nNiche button pe click karke submit karein aur VIP link payein!`;
 
-        const keyboard = new InlineKeyboard().text("✅ Submit Details / विवरण जमा करें", "vip_submit");
+        const keyboard = new InlineKeyboard().text("✅ Submit Karein", "vip_submit");
 
         await ctx.editMessageText(summary, {
             parse_mode: "Markdown",
@@ -410,7 +410,7 @@ export const initBot = async () => {
 
             const keyboard = channelLink ? new InlineKeyboard().url("🚀 Join VIP Channel Now / अभी VIP चैनल से जुड़ें", channelLink) : undefined;
 
-            await ctx.editMessageText(`✅ Success! Your details are saved. / सफलता! आपके विवरण सहेज लिए गए हैं।\n\nAb niche button pe click karke VIP join karein: / अब नीचे दिए गए बटन पर क्लिक करके VIP में शामिल हों:`, {
+            await ctx.editMessageText(`✅ Kaamyabi! Aapki details save ho gayi hain.\n\nAb niche button pe click karke VIP join kar lo:`, {
                 reply_markup: keyboard
             });
 
@@ -429,7 +429,7 @@ export const initBot = async () => {
         ctx.session.step = 'support_type';
         
         const isHi = lang === 'hi';
-        const msg = isHi ? "आपको किस तरह की समस्या हो रही है?" : "What issue are you facing?";
+        const msg = isHi ? "Aapko kis tarah ki dikkat aa rahi hai?" : "What issue are you facing?";
         
         const keyboard = new InlineKeyboard()
             .text("Withdrawal 💳", "support_type_Withdrawal")
@@ -451,7 +451,7 @@ export const initBot = async () => {
         
         const isHi = ctx.session.language === 'hi';
         const msg = isHi 
-            ? `✅ समस्या प्रकार: ${type}\n\nकृपया अपना पूरा नाम दर्ज करें:` 
+            ? `✅ Issue Type: ${type}\n\nApna full name batao:` 
             : `✅ Issue Type: ${type}\n\nPlease enter your Full Name:`;
 
         await ctx.answerCallbackQuery(`Selected: ${type}`);
@@ -487,7 +487,7 @@ export const initBot = async () => {
 
             const isHi = language === 'hi';
             const successMsg = isHi 
-                ? "✅ आपका मुद्दा पंजीकृत हो गया है। 30 मिनट के भीतर हमारी सहायता टीम आपसे कॉल या व्हाट्सएप पर संपर्क करेगी। धन्यवाद और आपका मुद्दा जल्द ही हल कर दिया जाएगा।"
+                ? "✅ Aapka ticket register ho gaya hai! 30 minute ke andar hamari team aapse connect karegi. Thank you!"
                 : "✅ Your support ticket has been submitted. Our team will connect with you via call or WhatsApp within 30 minutes. Thank you!";
             
             await ctx.answerCallbackQuery(isHi ? "टिकट जमा हो गया!" : "Ticket submitted!");

@@ -127,47 +127,49 @@ export default function SupportPage() {
                     <LifeBuoy className="text-blue-500" size={20} />
                     Support Configuration
                 </h2>
-                <form onSubmit={handleUpdateSettings} className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Support Button Text</label>
-                        <input
-                            type="text"
-                            value={settings.supportButtonText}
-                            onChange={(e) => setSettings({ ...settings, supportButtonText: e.target.value })}
-                            className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 focus:ring-2 focus:ring-blue-500/20"
-                        />
-                    </div>
-                    <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-2">
+                <form onSubmit={handleUpdateSettings} className="flex flex-col gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                        <div className="space-y-2">
+                            <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Support Button Text</label>
                             <input
-                                type="checkbox"
-                                id="supportActive"
-                                checked={settings.supportActive}
-                                onChange={(e) => setSettings({ ...settings, supportActive: e.target.checked })}
-                                className="w-5 h-5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                                type="text"
+                                value={settings.supportButtonText}
+                                onChange={(e) => setSettings({ ...settings, supportButtonText: e.target.value })}
+                                className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 focus:ring-2 focus:ring-blue-500/20 font-bold transition-all outline-none"
                             />
-                            <label htmlFor="supportActive" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Active</label>
                         </div>
-                        <button
-                            type="submit"
-                            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20"
-                        >
-                            Save Settings
-                        </button>
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
+                            <div className="flex items-center gap-3 bg-zinc-100 dark:bg-zinc-800 px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 w-full sm:w-auto">
+                                <input
+                                    type="checkbox"
+                                    id="supportActive"
+                                    checked={settings.supportActive}
+                                    onChange={(e) => setSettings({ ...settings, supportActive: e.target.checked })}
+                                    className="w-5 h-5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <label htmlFor="supportActive" className="text-xs font-bold uppercase tracking-widest text-zinc-700 dark:text-zinc-300">Active</label>
+                            </div>
+                            <button
+                                type="submit"
+                                className="w-full sm:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+                            >
+                                Save Config
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
 
             {/* Filter & Status Tabs */}
             <div className="flex flex-col gap-6">
-                <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800/50 p-1 rounded-2xl w-fit border border-zinc-200 dark:border-zinc-800">
+                <div className="flex flex-wrap items-center gap-1 bg-zinc-100 dark:bg-zinc-800/50 p-1.5 rounded-2xl w-full sm:w-fit border border-zinc-200 dark:border-zinc-800">
                     {['open', 'resolved', 'all'].map((status) => (
                         <button
                             key={status}
                             onClick={() => setFilterStatus(status)}
-                            className={`px-6 py-2 rounded-xl text-sm font-semibold transition-all duration-200 capitalize ${
+                            className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${
                                 filterStatus === status 
-                                ? 'bg-white dark:bg-zinc-900 text-blue-600 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-700' 
+                                ? 'bg-white dark:bg-zinc-900 text-blue-600 shadow-xl ring-1 ring-zinc-200/50 dark:ring-zinc-700/50' 
                                 : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
                             }`}
                         >
@@ -217,15 +219,16 @@ export default function SupportPage() {
                             <tr>
                                 <th className="px-8 py-5 font-bold text-zinc-400 text-[10px] uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800">User Information</th>
                                 <th className="px-8 py-5 font-bold text-zinc-400 text-[10px] uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800">Ticket Detail</th>
-                                <th className="px-8 py-5 font-bold text-zinc-400 text-[10px] uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800 w-1/3">Issue Description</th>
+                                <th className="px-8 py-5 font-bold text-zinc-400 text-[10px] uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800 w-1/4">Issue Description</th>
+                                <th className="px-8 py-5 font-bold text-zinc-400 text-[10px] uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800">Status</th>
                                 <th className="px-8 py-5 font-bold text-zinc-400 text-[10px] uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
                             {loading ? (
-                                <tr><td colSpan={5} className="px-6 py-12 text-center text-zinc-500">Loading tickets...</td></tr>
+                                <tr><td colSpan={5} className="px-6 py-12 text-center text-zinc-500 font-medium">Loading tickets...</td></tr>
                             ) : filteredTickets.length === 0 ? (
-                                <tr><td colSpan={5} className="px-6 py-12 text-center text-zinc-500">No support tickets found.</td></tr>
+                                <tr><td colSpan={5} className="px-6 py-12 text-center text-zinc-500 font-medium">No support tickets found.</td></tr>
                             ) : (
                                 filteredTickets.map((ticket) => (
                                     <tr key={ticket._id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/20 transition-colors">

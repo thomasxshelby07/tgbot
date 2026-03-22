@@ -134,8 +134,8 @@ export default function BroadcastPage() {
                 {/* Image Upload */}
                 <div>
                     <label className="block text-sm font-medium mb-2">Attach Image (Optional)</label>
-                    <div className="flex items-center gap-4">
-                        <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-zinc-800 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <label className="cursor-pointer flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-zinc-800 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors w-full sm:w-auto">
                             <Upload size={20} />
                             <span>{uploading ? "Uploading..." : "Upload Image"}</span>
                             <input
@@ -147,7 +147,7 @@ export default function BroadcastPage() {
                             />
                         </label>
                         {mediaUrl && (
-                            <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700">
+                            <div className="relative w-full sm:w-24 h-24 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700">
                                 <Image
                                     src={mediaUrl}
                                     alt="Preview"
@@ -156,9 +156,9 @@ export default function BroadcastPage() {
                                 />
                                 <button
                                     onClick={() => setMediaUrl("")}
-                                    className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-bl-lg hover:bg-red-600"
+                                    className="absolute top-0 right-0 p-1.5 bg-red-500 text-white rounded-bl-lg hover:bg-red-600 shadow-lg"
                                 >
-                                    <Trash2 size={12} />
+                                    <Trash2 size={14} />
                                 </button>
                             </div>
                         )}
@@ -177,26 +177,26 @@ export default function BroadcastPage() {
                         </button>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-4 sm:space-y-3">
                         {buttons.map((btn, index) => (
-                            <div key={index} className="flex gap-2">
+                            <div key={index} className="flex flex-col sm:flex-row gap-2 bg-gray-50 dark:bg-zinc-950/30 p-3 sm:p-0 rounded-lg sm:bg-transparent border border-gray-100 dark:border-zinc-800 sm:border-0">
                                 <input
                                     type="text"
                                     placeholder="Button Label"
                                     value={btn.text}
                                     onChange={(e) => updateButton(index, "text", e.target.value)}
-                                    className="flex-1 p-2 bg-gray-50 dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="flex-1 p-2 bg-white sm:bg-gray-50 dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                                 />
                                 <input
                                     type="url"
                                     placeholder="URL (https://...)"
                                     value={btn.url}
                                     onChange={(e) => updateButton(index, "url", e.target.value)}
-                                    className="flex-1 p-2 bg-gray-50 dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="flex-1 p-2 bg-white sm:bg-gray-50 dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                                 />
                                 <button
                                     onClick={() => removeButton(index)}
-                                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                    className="self-end sm:self-auto p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                 >
                                     <Trash2 size={20} />
                                 </button>

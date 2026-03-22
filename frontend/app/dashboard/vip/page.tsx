@@ -62,19 +62,19 @@ export default function VipManagementPage() {
     };
 
     return (
-        <div className="w-full max-w-6xl mx-auto pb-10">
-            <div className="flex items-center justify-between mb-8">
+        <div className="w-full max-w-6xl mx-auto pb-20 px-1">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-zinc-900 dark:text-white tracking-tight flex items-center gap-2">
-                        <Star className="text-yellow-500 fill-yellow-500" /> VIP Management
+                    <h1 className="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter flex items-center gap-3 italic underline decoration-yellow-500/50 decoration-8 underline-offset-8">
+                        <Star className="text-yellow-500 fill-yellow-500 animate-pulse" size={32} /> VIP CLUB
                     </h1>
-                    <p className="text-zinc-500 dark:text-zinc-400 mt-2">Manage VIP registration flow and view members.</p>
+                    <p className="text-zinc-500 dark:text-zinc-400 mt-4 font-medium uppercase tracking-[0.2em] text-[10px]">Membership Control & Analytics</p>
                 </div>
                 <button
                     onClick={handleExport}
-                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 px-5 rounded-xl transition-all shadow-lg shadow-emerald-500/10"
+                    className="w-full sm:w-auto flex items-center justify-center gap-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black uppercase text-xs tracking-widest py-4 px-8 rounded-2xl transition-all shadow-xl hover:scale-[1.02] active:scale-95 border-b-4 border-zinc-700 dark:border-zinc-200"
                 >
-                    <Download size={18} /> Download Excel
+                    <Download size={18} className="stroke-[3]" /> Export Excel
                 </button>
             </div>
 
