@@ -219,34 +219,40 @@ export const initBot = async () => {
 
         try {
             const settings = await getSettings();
+            const step = ctx.session?.step;
+
+            console.log(`🤖 BOT LOGIC: Text: "${text}" | Current Step: "${step}"`);
 
             // --- VIP Registration Flow ---
-            if (ctx.session.step === 'name') {
+            if (step === 'name') {
                 ctx.session.vipName = text;
                 ctx.session.step = 'number';
-                return await ctx.reply("✅ Name received! Now please enter your Mobile Number:");
+                console.log(`➡️ Moving to Number step for User ${ctx.from?.id}`);
+                return await ctx.reply("✅ Name received! / नाम मिल गया!\n\nNow please enter your Mobile Number: / अब अपना मोबाइल नंबर दर्ज करें:");
             }
 
-            if (ctx.session.step === 'number') {
+            if (step === 'number') {
                 ctx.session.vipNumber = text;
                 ctx.session.step = 'interest';
+                console.log(`➡️ Moving to Interest step for User ${ctx.from?.id}`);
 
                 const keyboard = new InlineKeyboard()
-                    .text("1. Cricket", "vip_interest_Cricket")
-                    .text("2. Casino", "vip_interest_Casino").row()
-                    .text("3. Both", "vip_interest_Both");
+                    .text("1. Cricket 🏏", "vip_interest_Cricket")
+                    .text("2. Casino 🎰", "vip_interest_Casino").row()
+                    .text("3. Both / दोनों 🏏🎰", "vip_interest_Both");
 
-                return await ctx.reply("Please select your Interest:", { reply_markup: keyboard });
+                return await ctx.reply("Please select your Interest: / अपनी रुचि चुनें:", { reply_markup: keyboard });
             }
 
             // Check if this text matches the VIP Button
             if (settings?.vipActive && text === settings.vipButtonText) {
+                console.log(`🌟 VIP Button Clicked by User ${ctx.from?.id}`);
                 // Send Welcome Message first
-                await ctx.reply(settings.vipWelcomeMessage || "Welcome to VIP Registration!");
+                await ctx.reply(settings.vipWelcomeMessage || "Welcome to VIP Registration! / VIP पंजीकरण में आपका स्वागत है!");
                 
                 // Then ask for Name immediately
                 ctx.session.step = 'name';
-                return await ctx.reply("Please enter your Full Name:");
+                return await ctx.reply("Please enter your Full Name: / अपना पूरा नाम दर्ज करें:");
             }
 
             // --- Standard Menu Buttons ---
@@ -284,9 +290,9 @@ export const initBot = async () => {
 
         await ctx.answerCallbackQuery(`Selected: ${interest}`);
 
-        const summary = `📝 *Registration Summary*\n\n👤 Name: ${name}\n📞 Number: ${number}\n🎯 Interest: ${interest}\n\nClick below to submit your details and get the VIP link!`;
+        const summary = `📝 *Registration Summary / पंजीकरण सारांश*\n\n👤 Name / नाम: ${name}\n📞 Number / नंबर: ${number}\n🎯 Interest / रुचि: ${interest}\n\nClick below to submit your details and get the VIP link! / अपने विवरण जमा करने और VIP लिंक प्राप्त करने के लिए नीचे क्लिक करें!`;
 
-        const keyboard = new InlineKeyboard().text("✅ Submit Details", "vip_submit");
+        const keyboard = new InlineKeyboard().text("✅ Submit Details / विवरण जमा करें", "vip_submit");
 
         await ctx.editMessageText(summary, {
             parse_mode: "Markdown",
@@ -317,15 +323,15 @@ export const initBot = async () => {
             ctx.session.vipNumber = undefined;
             ctx.session.vipInterest = undefined;
 
-            await ctx.answerCallbackQuery("Details submitted successfully!");
+            await ctx.answerCallbackQuery("Submitted! / जमा हो गया!");
             
             // Send final message with channel link
             const settings = await getSettings();
             const channelLink = settings?.vipChannelLink || "";
 
-            const keyboard = channelLink ? new InlineKeyboard().url("🚀 Join VIP Channel नाउ", channelLink) : undefined;
+            const keyboard = channelLink ? new InlineKeyboard().url("🚀 Join VIP Channel Now / अभी VIP चैनल से जुड़ें", channelLink) : undefined;
 
-            await ctx.editMessageText(`✅ Success! Your details are saved.\n\nAb niche button pe click karke VIP join karein:`, {
+            await ctx.editMessageText(`✅ Success! Your details are saved. / सफलता! आपके विवरण सहेज लिए गए हैं।\n\nAb niche button pe click karke VIP join karein: / अब नीचे दिए गए बटन पर क्लिक करके VIP में शामिल हों:`, {
                 reply_markup: keyboard
             });
 
