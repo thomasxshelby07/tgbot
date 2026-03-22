@@ -247,6 +247,20 @@ export const initBot = async () => {
             // Check if this text matches the VIP Button
             if (settings?.vipActive && text === settings.vipButtonText) {
                 console.log(`🌟 VIP Button Clicked by User ${ctx.from?.id}`);
+
+                // Check if already a member
+                const existingMember = await VipMember.findOne({ telegramId: ctx.from?.id.toString() });
+                if (existingMember) {
+                    console.log(`✅ User ${ctx.from?.id} is already a VIP member. Sending link directly.`);
+                    const channelLink = settings?.vipChannelLink || "";
+                    const keyboard = channelLink ? new InlineKeyboard().url("🚀 Join VIP Channel Now / अभी VIP चैनल से जुड़ें", channelLink) : undefined;
+                    
+                    return await ctx.reply(
+                        "✅ You are already a VIP member! / आप पहले से ही एक VIP सदस्य हैं!\n\nClick below to join: / शामिल होने के लिए नीचे क्लिक करें:",
+                        { reply_markup: keyboard }
+                    );
+                }
+
                 // Send Welcome Message first
                 await ctx.reply(settings.vipWelcomeMessage || "Welcome to VIP Registration! / VIP पंजीकरण में आपका स्वागत है!");
                 
