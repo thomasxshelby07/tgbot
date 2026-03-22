@@ -10,6 +10,10 @@ export interface ISettings extends Document {
     vipWelcomeMessage: string;
     vipChannelLink: string;
     vipActive: boolean;
+
+    // Support Settings
+    supportButtonText: string;
+    supportActive: boolean;
 }
 
 const SettingsSchema: Schema = new Schema({
@@ -24,6 +28,10 @@ const SettingsSchema: Schema = new Schema({
     vipButtonText: { type: String, default: "🌟 JOIN VIP" },
     vipWelcomeMessage: { type: String, default: "Welcome to VIP Registration! Please provide your details." },
     vipChannelLink: { type: String, default: "" },
-    vipActive: { type: Boolean, default: true }
+    vipActive: { type: Boolean, default: true },
+
+    // Support Settings
+    supportButtonText: { type: String, default: "🆘 Help & Support" },
+    supportActive: { type: Boolean, default: true }
 });
 export const Settings = mongoose.model<ISettings>('Settings', SettingsSchema);

@@ -38,6 +38,7 @@ import { menuRoutes } from './routes/menu';
 import { channelRoutes } from './routes/channels';
 import { welcomeMessageRoutes } from './routes/welcomeMessages';
 import vipRoutes from './routes/vip';
+import { supportRoutes } from './routes/support';
 
 app.register(settingsRoutes);
 app.register(uploadRoutes);
@@ -46,6 +47,7 @@ app.register(broadcastRoutes);
 app.register(channelRoutes);
 app.register(welcomeMessageRoutes);
 app.register(vipRoutes, { prefix: '/api/vip' });
+app.register(supportRoutes, { prefix: '/api/support' });
 
 console.log('Registering menu routes...');
 app.register(menuRoutes);

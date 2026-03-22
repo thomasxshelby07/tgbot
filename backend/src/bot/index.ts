@@ -6,15 +6,24 @@ import dotenv from 'dotenv';
 import { User } from '../models/User';
 import { MainMenuButton } from '../models/MainMenuButton';
 import { VipMember } from '../models/VipMember';
+import { SupportTicket } from '../models/SupportTicket';
 import { Channel } from '../models/Channel';
 import { WelcomeMessage } from '../models/WelcomeMessage';
 
 // --- Session Logic ---
 interface SessionData {
-    step?: 'name' | 'number' | 'interest' | 'review';
+    step?: 'name' | 'number' | 'interest' | 'review' | 
+           'support_type' | 'support_name' | 'support_number' | 'support_id' | 'support_problem' | 'support_review';
     vipName?: string;
     vipNumber?: string;
     vipInterest?: 'Cricket' | 'Casino' | 'Both';
+    
+    // Support Data
+    supportType?: string;
+    supportName?: string;
+    supportNumber?: string;
+    supportId?: string;
+    supportProblem?: string;
 }
 type MyContext = Context & SessionFlavor<SessionData>;
 import fs from 'fs';
@@ -144,12 +153,14 @@ export const initBot = async () => {
             const menuButtons = await MainMenuButton.find({ active: true }).sort({ order: 1 });
 
             let replyKeyboard: Keyboard | undefined;
-            if (menuButtons.length > 0 || settings?.vipActive) {
-                const keyboard = new Keyboard();
+            if (menuButtons.length > 0 || settings?.vipActive || settings?.supportActive) {
+                const keyboard = new Keyboard().resized();
                 
-                // Add VIP Button at the Top if Active
-                if (settings?.vipActive) {
-                    keyboard.text(settings.vipButtonText || "🌟 JOIN VIP").row();
+                // Add VIP and Support buttons in one row if both active
+                if (settings?.vipActive || settings?.supportActive) {
+                    if (settings?.vipActive) keyboard.text(settings.vipButtonText || "🌟 JOIN VIP");
+                    if (settings?.supportActive) keyboard.text(settings.supportButtonText || "🆘 Help & Support");
+                    keyboard.row();
                 }
 
                 menuButtons.forEach((btn, index) => {
@@ -223,6 +234,35 @@ export const initBot = async () => {
 
             console.log(`🤖 BOT LOGIC: Text: "${text}" | Current Step: "${step}"`);
 
+            // --- Help & Support Flow ---
+            if (step === 'support_name') {
+                ctx.session.supportName = text;
+                ctx.session.step = 'support_number';
+                return await ctx.reply("✅ Name received! / नाम मिल गया!\n\nNow please enter your Mobile Number: / अब अपना मोबाइल नंबर दर्ज करें:");
+            }
+
+            if (step === 'support_number') {
+                ctx.session.supportNumber = text;
+                ctx.session.step = 'support_id';
+                return await ctx.reply("✅ Number received! / नंबर मिल गया!\n\nPlease enter your Dafabet ID: / कृपया अपनी Dafabet ID दर्ज करें:");
+            }
+
+            if (step === 'support_id') {
+                ctx.session.supportId = text;
+                ctx.session.step = 'support_problem';
+                return await ctx.reply("✅ ID received! / ID मिल गई!\n\nPlease describe your problem: / कृपया अपनी समस्या का वर्णन करें (Type here):");
+            }
+
+            if (step === 'support_problem') {
+                ctx.session.supportProblem = text;
+                ctx.session.step = 'support_review';
+
+                const summary = `📝 *Support Request Summary*\n\n📋 Issue Type: ${ctx.session.supportType}\n👤 Name: ${ctx.session.supportName}\n📞 Number: ${ctx.session.supportNumber}\n🆔 Dafabet ID: ${ctx.session.supportId}\n❓ Problem: ${text}\n\nClick below to submit! / सबमिट करने के लिए नीचे क्लिक करें!`;
+
+                const keyboard = new InlineKeyboard().text("✅ Submit Ticket / टिकट जमा करें", "support_submit");
+                return await ctx.reply(summary, { parse_mode: "Markdown", reply_markup: keyboard });
+            }
+
             // --- VIP Registration Flow ---
             if (step === 'name') {
                 ctx.session.vipName = text;
@@ -267,6 +307,20 @@ export const initBot = async () => {
                 // Then ask for Name immediately
                 ctx.session.step = 'name';
                 return await ctx.reply("Please enter your Full Name: / अपना पूरा नाम दर्ज करें:");
+            }
+
+            // Check if this text matches the Help & Support Button
+            if (settings?.supportActive && text === settings.supportButtonText) {
+                console.log(`🆘 Help & Support Button Clicked by User ${ctx.from?.id}`);
+                ctx.session.step = 'support_type';
+
+                const keyboard = new InlineKeyboard()
+                    .text("Withdrawal 💳", "support_type_Withdrawal")
+                    .text("Deposit 📥", "support_type_Deposit").row()
+                    .text("ID Issue 🆔", "support_type_ID")
+                    .text("Other ❓", "support_type_Other");
+
+                return await ctx.reply("What issue are you facing? / आपको किस तरह की समस्या हो रही है?", { reply_markup: keyboard });
             }
 
             // --- Standard Menu Buttons ---
@@ -352,6 +406,54 @@ export const initBot = async () => {
         } catch (error) {
             console.error("Error saving VIP member:", error);
             await ctx.answerCallbackQuery("Error occurred. Please try again.");
+        }
+    });
+
+    // 5d. Handle Support Type Selection
+    bot.callbackQuery(/^support_type_(.+)$/, async (ctx) => {
+        const type = ctx.match[1];
+        if (ctx.session.step !== 'support_type') return await ctx.answerCallbackQuery("Expired session. / सत्र समाप्त हो गया।");
+
+        ctx.session.supportType = type;
+        ctx.session.step = 'support_name';
+        
+        await ctx.answerCallbackQuery(`Selected: ${type}`);
+        await ctx.editMessageText(`✅ Issue Type: ${type}\n\nPlease enter your Full Name: / अपना पूरा नाम दर्ज करें:`);
+    });
+
+    // 5e. Final Support Ticket Submission
+    bot.callbackQuery("support_submit", async (ctx) => {
+        if (ctx.session.step !== 'support_review') return await ctx.answerCallbackQuery("Invalid request.");
+
+        try {
+            const { supportName, supportNumber, supportId, supportType, supportProblem } = ctx.session;
+            const telegramId = ctx.from.id.toString();
+
+            // Save to Database
+            await SupportTicket.create({
+                telegramId,
+                name: supportName,
+                phoneNumber: supportNumber,
+                dafabetId: supportId,
+                issueType: supportType,
+                problem: supportProblem
+            });
+
+            // Clear Session
+            ctx.session.step = undefined;
+            ctx.session.supportName = undefined;
+            ctx.session.supportNumber = undefined;
+            ctx.session.supportId = undefined;
+            ctx.session.supportProblem = undefined;
+            ctx.session.supportType = undefined;
+
+            await ctx.answerCallbackQuery("Ticket submitted! / टिकट जमा हो गया!");
+            
+            await ctx.editMessageText("✅ Aapka issue register ho gaya hai. 30 minute ke andar humari support team aapse call ya WhatsApp pe connect karegi. Dhanyawad aur aapka issue jaldi hi solve kar diya jayega.");
+
+        } catch (error) {
+            console.error("Error saving support ticket:", error);
+            await ctx.answerCallbackQuery("Error occurred. Try again.");
         }
     });
 

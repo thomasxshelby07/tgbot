@@ -4,15 +4,16 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
     LayoutDashboard,
-    Send,
     Users,
+    Send,
     Settings,
     FileText,
     LogOut,
     MessageSquare,
-    MenuSquare,
     Radio,
-    Star
+    Star,
+    LifeBuoy,
+    Menu
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -24,7 +25,8 @@ const Sidebar = () => {
         { name: 'Channel Welcome', href: '/dashboard/welcome-messages', icon: MessageSquare },
         { name: 'Default Welcome', href: '/dashboard/welcome', icon: MessageSquare },
         { name: 'VIP Members', href: '/dashboard/vip', icon: Star },
-        { name: 'Menu Buttons', href: '/dashboard/menu', icon: MessageSquare },
+        { name: 'Support Tickets', href: '/dashboard/support', icon: LifeBuoy }, // Added Support Tickets
+        { name: 'Menu Buttons', href: '/dashboard/menu-buttons', icon: Menu }, // Modified Menu Buttons
         { name: 'Broadcast', href: '/dashboard/broadcast', icon: Send },
         { name: 'Users', href: '/dashboard/users', icon: Users },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings },
