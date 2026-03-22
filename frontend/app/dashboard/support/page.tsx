@@ -29,6 +29,12 @@ export default function SupportPage() {
         supportActive: true
     });
 
+    const [expandedTickets, setExpandedTickets] = useState<Record<string, boolean>>({});
+
+    const toggleExpand = (id: string) => {
+        setExpandedTickets(prev => ({ ...prev, [id]: !prev[id] }));
+    };
+
     const fetchTickets = async () => {
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -243,8 +249,16 @@ export default function SupportPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-zinc-600 dark:text-zinc-400 text-xs bg-zinc-50 dark:bg-zinc-950/50 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800/50 italic leading-relaxed">
-                                                "{ticket.problem}"
+                                            <div className={`text-zinc-600 dark:text-zinc-400 text-xs bg-zinc-50 dark:bg-zinc-950/50 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800/50 italic leading-relaxed relative group/problem ${expandedTickets[ticket._id] ? '' : 'max-h-24 overflow-hidden'}`}>
+                                                {ticket.problem}
+                                                {ticket.problem.length > 100 && (
+                                                    <button 
+                                                        onClick={() => toggleExpand(ticket._id)}
+                                                        className="mt-2 text-blue-500 hover:text-blue-600 font-semibold flex items-center gap-1 transition-colors"
+                                                    >
+                                                        {expandedTickets[ticket._id] ? 'Show Less' : 'Read More...'}
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">

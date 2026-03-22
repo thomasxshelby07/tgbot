@@ -13,7 +13,8 @@ import { WelcomeMessage } from '../models/WelcomeMessage';
 // --- Session Logic ---
 interface SessionData {
     step?: 'name' | 'number' | 'interest' | 'review' | 
-           'support_type' | 'support_name' | 'support_number' | 'support_id' | 'support_problem' | 'support_review';
+           'support_lang' | 'support_type' | 'support_name' | 'support_number' | 'support_id' | 'support_problem' | 'support_review';
+    language?: 'en' | 'hi';
     vipName?: string;
     vipNumber?: string;
     vipInterest?: 'Cricket' | 'Casino' | 'Both';
@@ -238,31 +239,43 @@ export const initBot = async () => {
             if (step === 'support_name') {
                 ctx.session.supportName = text;
                 ctx.session.step = 'support_number';
-                return await ctx.reply("✅ Name received! / नाम मिल गया!\n\nNow please enter your Mobile Number: / अब अपना मोबाइल नंबर दर्ज करें:");
+                const msg = ctx.session.language === 'hi' 
+                    ? "✅ नाम मिल गया!\n\nअब अपना मोबाइल नंबर दर्ज करें:" 
+                    : "✅ Name received!\n\nNow please enter your Mobile Number:";
+                return await ctx.reply(msg);
             }
 
             if (step === 'support_number') {
                 ctx.session.supportNumber = text;
                 ctx.session.step = 'support_id';
-                return await ctx.reply("✅ Number received! / नंबर मिल गया!\n\nPlease enter your Dafabet ID: / कृपया अपनी Dafabet ID दर्ज करें:");
+                const msg = ctx.session.language === 'hi' 
+                    ? "✅ नंबर मिल गया!\n\nकृपया अपनी Dafabet ID दर्ज करें:" 
+                    : "✅ Number received!\n\nPlease enter your Dafabet ID:";
+                return await ctx.reply(msg);
             }
 
             if (step === 'support_id') {
                 ctx.session.supportId = text;
                 ctx.session.step = 'support_problem';
-                return await ctx.reply("✅ ID received! / ID मिल गई!\n\nPlease describe your problem: / कृपया अपनी समस्या का वर्णन करें (Type here):");
+                const msg = ctx.session.language === 'hi' 
+                    ? "✅ ID मिल गई!\n\nकृपया अपनी समस्या का वर्णन करें (यहाँ टाइप करें):" 
+                    : "✅ ID received!\n\nPlease describe your problem (Type here):";
+                return await ctx.reply(msg);
             }
 
             if (step === 'support_problem') {
                 ctx.session.supportProblem = text;
                 ctx.session.step = 'support_review';
 
-                const summary = `📝 *Support Request Summary*\n\n📋 Issue Type: ${ctx.session.supportType}\n👤 Name: ${ctx.session.supportName}\n📞 Number: ${ctx.session.supportNumber}\n🆔 Dafabet ID: ${ctx.session.supportId}\n❓ Problem: ${text}\n\nClick below to submit! / सबमिट करने के लिए नीचे क्लिक करें!`;
+                const isHi = ctx.session.language === 'hi';
+                const summary = isHi 
+                    ? `📝 *Support Request Summary*\n\n📋 समस्या प्रकार: ${ctx.session.supportType}\n👤 नाम: ${ctx.session.supportName}\n📞 नंबर: ${ctx.session.supportNumber}\n🆔 Dafabet ID: ${ctx.session.supportId}\n❓ समस्या: ${text}\n\nसबमिट करने के लिए नीचे क्लिक करें!`
+                    : `📝 *Support Request Summary*\n\n📋 Issue Type: ${ctx.session.supportType}\n👤 Name: ${ctx.session.supportName}\n📞 Number: ${ctx.session.supportNumber}\n🆔 Dafabet ID: ${ctx.session.supportId}\n❓ Problem: ${text}\n\nClick below to submit!`;
 
-                const keyboard = new InlineKeyboard().text("✅ Submit Ticket / टिकट जमा करें", "support_submit");
+                const btnText = isHi ? "✅ टिकट जमा करें" : "✅ Submit Ticket";
+                const keyboard = new InlineKeyboard().text(btnText, "support_submit");
                 return await ctx.reply(summary, { parse_mode: "Markdown", reply_markup: keyboard });
             }
-
             // --- VIP Registration Flow ---
             if (step === 'name') {
                 ctx.session.vipName = text;
@@ -312,15 +325,13 @@ export const initBot = async () => {
             // Check if this text matches the Help & Support Button
             if (settings?.supportActive && text === settings.supportButtonText) {
                 console.log(`🆘 Help & Support Button Clicked by User ${ctx.from?.id}`);
-                ctx.session.step = 'support_type';
+                ctx.session.step = 'support_lang';
 
                 const keyboard = new InlineKeyboard()
-                    .text("Withdrawal 💳", "support_type_Withdrawal")
-                    .text("Deposit 📥", "support_type_Deposit").row()
-                    .text("ID Issue 🆔", "support_type_ID")
-                    .text("Other ❓", "support_type_Other");
+                    .text("English 🇺🇸", "support_lang_en")
+                    .text("Hindi 🇮🇳", "support_lang_hi");
 
-                return await ctx.reply("What issue are you facing? / आपको किस तरह की समस्या हो रही है?", { reply_markup: keyboard });
+                return await ctx.reply("Please select your language: / अपनी भाषा चुनें:", { reply_markup: keyboard });
             }
 
             // --- Standard Menu Buttons ---
@@ -409,24 +420,50 @@ export const initBot = async () => {
         }
     });
 
-    // 5d. Handle Support Type Selection
+    // 5d. Handle Support Language Selection
+    bot.callbackQuery(/^support_lang_(.+)$/, async (ctx) => {
+        const lang = ctx.match[1] as 'en' | 'hi';
+        if (ctx.session.step !== 'support_lang') return await ctx.answerCallbackQuery("Expired session.");
+
+        ctx.session.language = lang;
+        ctx.session.step = 'support_type';
+        
+        const isHi = lang === 'hi';
+        const msg = isHi ? "आपको किस तरह की समस्या हो रही है?" : "What issue are you facing?";
+        
+        const keyboard = new InlineKeyboard()
+            .text("Withdrawal 💳", "support_type_Withdrawal")
+            .text("Deposit 📥", "support_type_Deposit").row()
+            .text("ID Issue 🆔", "support_type_ID")
+            .text("Other ❓", "support_type_Other");
+
+        await ctx.answerCallbackQuery(isHi ? "भाषा चुनी गई: हिंदी" : "Language selected: English");
+        await ctx.editMessageText(msg, { reply_markup: keyboard });
+    });
+
+    // 5e. Handle Support Type Selection
     bot.callbackQuery(/^support_type_(.+)$/, async (ctx) => {
         const type = ctx.match[1];
-        if (ctx.session.step !== 'support_type') return await ctx.answerCallbackQuery("Expired session. / सत्र समाप्त हो गया।");
+        if (ctx.session.step !== 'support_type') return await ctx.answerCallbackQuery("Expired session.");
 
         ctx.session.supportType = type;
         ctx.session.step = 'support_name';
         
+        const isHi = ctx.session.language === 'hi';
+        const msg = isHi 
+            ? `✅ समस्या प्रकार: ${type}\n\nकृपया अपना पूरा नाम दर्ज करें:` 
+            : `✅ Issue Type: ${type}\n\nPlease enter your Full Name:`;
+
         await ctx.answerCallbackQuery(`Selected: ${type}`);
-        await ctx.editMessageText(`✅ Issue Type: ${type}\n\nPlease enter your Full Name: / अपना पूरा नाम दर्ज करें:`);
+        await ctx.editMessageText(msg);
     });
 
-    // 5e. Final Support Ticket Submission
+    // 5f. Final Support Ticket Submission
     bot.callbackQuery("support_submit", async (ctx) => {
         if (ctx.session.step !== 'support_review') return await ctx.answerCallbackQuery("Invalid request.");
 
         try {
-            const { supportName, supportNumber, supportId, supportType, supportProblem } = ctx.session;
+            const { supportName, supportNumber, supportId, supportType, supportProblem, language } = ctx.session;
             const telegramId = ctx.from.id.toString();
 
             // Save to Database
@@ -446,10 +483,15 @@ export const initBot = async () => {
             ctx.session.supportId = undefined;
             ctx.session.supportProblem = undefined;
             ctx.session.supportType = undefined;
+            // ctx.session.language = undefined; // Keep language for future if needed? User might prefer to keep it.
 
-            await ctx.answerCallbackQuery("Ticket submitted! / टिकट जमा हो गया!");
+            const isHi = language === 'hi';
+            const successMsg = isHi 
+                ? "✅ आपका मुद्दा पंजीकृत हो गया है। 30 मिनट के भीतर हमारी सहायता टीम आपसे कॉल या व्हाट्सएप पर संपर्क करेगी। धन्यवाद और आपका मुद्दा जल्द ही हल कर दिया जाएगा।"
+                : "✅ Your support ticket has been submitted. Our team will connect with you via call or WhatsApp within 30 minutes. Thank you!";
             
-            await ctx.editMessageText("✅ Aapka issue register ho gaya hai. 30 minute ke andar humari support team aapse call ya WhatsApp pe connect karegi. Dhanyawad aur aapka issue jaldi hi solve kar diya jayega.");
+            await ctx.answerCallbackQuery(isHi ? "टिकट जमा हो गया!" : "Ticket submitted!");
+            await ctx.editMessageText(successMsg);
 
         } catch (error) {
             console.error("Error saving support ticket:", error);
