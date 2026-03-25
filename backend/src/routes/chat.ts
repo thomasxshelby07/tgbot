@@ -78,7 +78,13 @@ export const chatRoutes = async (fastify: FastifyInstance) => {
 
             // Send message back to Telegram User
             try {
-                await bot.api.sendMessage(session.telegramId, `👨‍💻 *Admin:*\n${content}`, { parse_mode: "Markdown" });
+                await bot.api.sendMessage(session.telegramId, `👨‍💻 *Admin:*\n${content}`, { 
+                    parse_mode: "Markdown",
+                    reply_markup: {
+                        keyboard: [[{ text: "❌ End Chat" }]],
+                        resize_keyboard: true
+                    }
+                });
             } catch (tgError) {
                 console.error(`Failed to send message to Telegram User ${session.telegramId}:`, tgError);
                 return reply.status(500).send({ error: 'Message saved but failed to deliver to Telegram' });
@@ -91,7 +97,35 @@ export const chatRoutes = async (fastify: FastifyInstance) => {
         }
     });
 
-    // 4. Get Chat Settings
+    // 4. Start New Chat Session (Proactive Admin Message)
+    fastify.post('/api/chat/sessions', async (request: FastifyRequest<{ Body: { telegramId: string; userId?: string } }>, reply) => {
+        try {
+            const { telegramId, userId } = request.body;
+            if (!telegramId) return reply.status(400).send({ error: 'Telegram ID is required' });
+
+            // Check if active session already exists
+            const existingSession = await ChatSession.findOne({ telegramId, status: 'active' }).populate('userId', 'firstName lastName username');
+            if (existingSession) {
+                return reply.send(existingSession);
+            }
+
+            // Create new session
+            const newSession = await ChatSession.create({
+                telegramId,
+                userId: userId || undefined,
+                status: 'active'
+            });
+
+            // Re-fetch to populate
+            const populatedSession = await ChatSession.findById(newSession._id).populate('userId', 'firstName lastName username');
+            return reply.send(populatedSession);
+        } catch (error) {
+            console.error('Error creating chat session:', error);
+            return reply.status(500).send({ error: 'Failed to create chat session' });
+        }
+    });
+
+    // 5. Get Chat Settings
     fastify.get('/api/chat/settings', async (request, reply) => {
         try {
             const settings = await Settings.findOne();

@@ -1,8 +1,6 @@
-'use client';
-
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { MessageCircle, Send, CheckCircle, Hash, User, Smartphone } from 'lucide-react';
+import { MessageCircle, Send, CheckCircle, Hash, User as UserIcon, Smartphone, Plus, X, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface UserDetail {
@@ -36,6 +34,11 @@ export default function ChatPage() {
     const [inputMessage, setInputMessage] = useState('');
     const [sending, setSending] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // New Chat State
+    const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
+    const [allUsers, setAllUsers] = useState<any[]>([]);
+    const [userSearchTerm, setUserSearchTerm] = useState('');
 
     const [settings, setSettings] = useState({
         chatButtonText: '💬 Live Chat',
@@ -73,6 +76,17 @@ export default function ChatPage() {
             setMessages(response.data);
         } catch (error) {
             console.error('Error fetching messages:', error);
+        }
+    };
+
+    const fetchAllUsers = async () => {
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            const response = await axios.get(`${apiUrl}/api/users`);
+            setAllUsers(response.data);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            toast.error('Failed to load users for new chat');
         }
     };
 
@@ -156,6 +170,29 @@ export default function ChatPage() {
         }
     };
 
+    const handleStartNewChat = async (user: any) => {
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            const res = await axios.post(`${apiUrl}/api/chat/sessions`, {
+                telegramId: user.telegramId,
+                userId: user._id
+            });
+            setSelectedSession(res.data);
+            setIsNewChatModalOpen(false);
+            setUserSearchTerm('');
+            toast.success('Chat session started');
+            fetchSessions(false);
+        } catch (err) {
+            console.error('Error starting new chat:', err);
+            toast.error('Failed to start new chat');
+        }
+    };
+
+    const filteredUsers = allUsers.filter(u => {
+        const term = userSearchTerm.toLowerCase();
+        return (u.firstName?.toLowerCase().includes(term) || u.lastName?.toLowerCase().includes(term) || u.telegramId.includes(term));
+    });
+
     return (
         <div className="w-full mx-auto pb-10 space-y-6 h-[calc(100vh-8rem)] flex flex-col">
             {/* Header */}
@@ -205,8 +242,15 @@ export default function ChatPage() {
             <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
                 {/* Users List Sidebar */}
                 <div className="w-full lg:w-1/3 bg-white dark:bg-zinc-900 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm flex flex-col">
-                    <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 shrink-0 bg-zinc-50/50 dark:bg-zinc-950/20">
+                    <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 shrink-0 bg-zinc-50/50 dark:bg-zinc-950/20 flex justify-between items-center">
                         <h2 className="font-bold text-lg dark:text-white uppercase tracking-widest text-xs text-zinc-500">Recent Chats</h2>
+                        <button 
+                            onClick={() => { fetchAllUsers(); setIsNewChatModalOpen(true); }}
+                            className="bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded-lg transition-colors shadow-sm"
+                            title="Start New Chat"
+                        >
+                            <Plus size={16} />
+                        </button>
                     </div>
                     <div className="overflow-y-auto flex-1 p-2 space-y-1">
                         {loadingSessions ? (
@@ -342,6 +386,60 @@ export default function ChatPage() {
                     )}
                 </div>
             </div>
+
+            {/* New Chat Modal */}
+            {isNewChatModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-zinc-900 rounded-3xl w-full max-w-md border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+                        <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-950/50">
+                            <h3 className="font-bold text-lg dark:text-white">Start New Chat</h3>
+                            <button onClick={() => setIsNewChatModalOpen(false)} className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-4 border-b border-zinc-100 dark:border-zinc-800">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                                <input 
+                                    type="text" 
+                                    autoFocus
+                                    placeholder="Search users by name or ID..."
+                                    value={userSearchTerm}
+                                    onChange={(e) => setUserSearchTerm(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-2">
+                            {filteredUsers.length === 0 ? (
+                                <p className="text-center p-8 text-zinc-500 text-sm">No users found.</p>
+                            ) : (
+                                filteredUsers.map(user => (
+                                    <div 
+                                        key={user._id}
+                                        onClick={() => handleStartNewChat(user)}
+                                        className="flex items-center justify-between p-3 border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 cursor-pointer transition-colors rounded-xl"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold text-sm">
+                                                {(user.firstName || 'U').charAt(0)}
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-sm dark:text-white">
+                                                    {[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Unknown'}
+                                                </div>
+                                                <div className="text-xs text-zinc-500 flex items-center gap-1 mt-0.5">
+                                                    <Hash size={12}/> {user.telegramId}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

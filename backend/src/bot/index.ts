@@ -160,11 +160,15 @@ export const initBot = async () => {
             if (menuButtons.length > 0 || settings?.vipActive || settings?.supportActive || settings?.chatActive) {
                 const keyboard = new Keyboard().resized();
                 
-                // Add VIP, Support, and Chat buttons
-                if (settings?.vipActive || settings?.supportActive || settings?.chatActive) {
+                // Add Chat button on top
+                if (settings?.chatActive) {
+                    keyboard.text(settings.chatButtonText || "💬 Live Chat").row();
+                }
+                
+                // Add VIP and Support buttons
+                if (settings?.vipActive || settings?.supportActive) {
                     if (settings?.vipActive) keyboard.text(settings.vipButtonText || "🌟 JOIN VIP");
                     if (settings?.supportActive) keyboard.text(settings.supportButtonText || "🆘 Help & Support");
-                    if (settings?.chatActive) keyboard.text(settings.chatButtonText || "💬 Live Chat");
                     keyboard.row();
                 }
 
@@ -240,22 +244,29 @@ export const initBot = async () => {
             console.log(`🤖 BOT LOGIC: Text: "${text}" | Current Step: "${step}"`);
 
             // --- Live Chat Handling ---
-            if (step === 'chatting') {
+            const activeSession = await ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' });
+
+            if (ctx.session?.step === 'chatting' || activeSession) {
                 if (text === "❌ End Chat") {
                     ctx.session.step = undefined;
-                    // Close session
-                    await ChatSession.findOneAndUpdate(
-                        { telegramId: ctx.from.id.toString(), status: 'active' },
-                        { status: 'closed' }
-                    );
+                    
+                    if (activeSession) {
+                        activeSession.status = 'closed';
+                        await activeSession.save();
+                    }
 
                     // Re-send main menu
                     const menuButtons = await MainMenuButton.find({ active: true }).sort({ order: 1 });
                     const keyboard = new Keyboard().resized();
-                    if (settings?.vipActive) keyboard.text(settings.vipButtonText || "🌟 JOIN VIP");
-                    if (settings?.supportActive) keyboard.text(settings.supportButtonText || "🆘 Help & Support");
-                    if (settings?.chatActive) keyboard.text(settings.chatButtonText || "💬 Live Chat");
-                    keyboard.row();
+                    
+                    if (settings?.chatActive) {
+                        keyboard.text(settings.chatButtonText || "💬 Live Chat").row();
+                    }
+                    if (settings?.vipActive || settings?.supportActive) {
+                        if (settings?.vipActive) keyboard.text(settings.vipButtonText || "🌟 JOIN VIP");
+                        if (settings?.supportActive) keyboard.text(settings.supportButtonText || "🆘 Help & Support");
+                        keyboard.row();
+                    }
                     menuButtons.forEach((btn, index) => {
                         keyboard.text(btn.text);
                         if ((index + 1) % 2 === 0) keyboard.row();
@@ -265,17 +276,27 @@ export const initBot = async () => {
                 }
 
                 // If not ending chat, assume it's a message to admin
-                // Find active session
-                const session = await ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' });
-                if (session) {
+                if (activeSession) {
                     await ChatMessage.create({
-                        sessionId: session._id,
+                        sessionId: activeSession._id,
                         sender: 'user',
                         content: text,
                         messageType: 'text'
                     });
-                    session.updatedAt = new Date();
-                    await session.save();
+                    activeSession.updatedAt = new Date();
+                    await activeSession.save();
+                } else {
+                    // Fallback to create session just in case
+                    const newSession = await ChatSession.create({
+                        telegramId: ctx.from.id.toString(),
+                        status: 'active'
+                    });
+                    await ChatMessage.create({
+                        sessionId: newSession._id,
+                        sender: 'user',
+                        content: text,
+                        messageType: 'text'
+                    });
                 }
                 return; // Do not process further commands
             }
