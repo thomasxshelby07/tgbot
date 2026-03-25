@@ -11,10 +11,16 @@ export const chatRoutes = async (fastify: FastifyInstance) => {
         try {
             const sessions = await ChatSession.find()
                 .populate('userId', 'firstName lastName username')
+                .lean()
                 .sort({ status: 1, updatedAt: -1 })
                 .limit(50); // Get top 50 sessions (active and recent)
 
-            return reply.send(sessions);
+            const populatedSessions = await Promise.all(sessions.map(async (s) => {
+                const unreadCount = await ChatMessage.countDocuments({ sessionId: s._id, sender: 'user', isRead: false });
+                return { ...s, unreadCount };
+            }));
+
+            return reply.send(populatedSessions);
         } catch (error) {
             console.error('Error fetching chat sessions:', error);
             return reply.status(500).send({ error: 'Failed to fetch sessions' });
@@ -27,6 +33,13 @@ export const chatRoutes = async (fastify: FastifyInstance) => {
             const { id } = request.params;
             const messages = await ChatMessage.find({ sessionId: id })
                 .sort({ createdAt: 1 }); // Oldest first
+
+            // Mark unread user messages as read since admin fetched them
+            await ChatMessage.updateMany(
+                { sessionId: id, sender: 'user', isRead: false },
+                { $set: { isRead: true } }
+            );
+
             return reply.send(messages);
         } catch (error) {
             console.error('Error fetching chat messages:', error);

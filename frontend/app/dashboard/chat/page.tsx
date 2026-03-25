@@ -16,6 +16,7 @@ interface ChatSession {
     telegramId: string;
     userId?: UserDetail;
     status: 'active' | 'closed';
+    unreadCount?: number;
     updatedAt: string;
 }
 
@@ -280,7 +281,11 @@ export default function ChatPage() {
                                 return (
                                     <div 
                                         key={session._id}
-                                        onClick={() => setSelectedSession(session)}
+                                        onClick={() => {
+                                            setSelectedSession(session);
+                                            // Optimistically clear the unread badge visually
+                                            setSessions(prev => prev.map(s => s._id === session._id ? { ...s, unreadCount: 0 } : s));
+                                        }}
                                         className={`p-2.5 rounded-lg cursor-pointer transition-all flex items-center gap-3 ${
                                             isSelected 
                                                 ? 'bg-blue-50 dark:bg-blue-900/20' 
@@ -303,7 +308,14 @@ export default function ChatPage() {
                                                 <span className="text-[11px] text-zinc-500 font-medium truncate flex items-center gap-1">
                                                     <Hash size={10}/>{session.telegramId}
                                                 </span>
-                                                <span className={`w-2 h-2 rounded-full ${session.status === 'active' ? 'bg-green-500' : 'bg-red-500/50'}`}></span>
+                                                <div className="flex items-center gap-2">
+                                                    {!!session.unreadCount && session.unreadCount > 0 && (
+                                                        <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                                                            {session.unreadCount}
+                                                        </span>
+                                                    )}
+                                                    <span className={`w-2 h-2 rounded-full ${session.status === 'active' ? 'bg-green-500' : 'bg-red-500/50'}`}></span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
