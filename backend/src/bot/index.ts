@@ -243,38 +243,47 @@ export const initBot = async () => {
 
             console.log(`🤖 BOT LOGIC: Text: "${text}" | Current Step: "${step}"`);
 
+            const isLiveChatBtn = settings?.chatActive && text === (settings.chatButtonText || "💬 Live Chat");
+            const isVipBtn = settings?.vipActive && text === (settings.vipButtonText || "🌟 JOIN VIP");
+            const isSupportBtn = settings?.supportActive && text === (settings.supportButtonText || "🆘 Help & Support");
+            
+            // Re-fetch standard menu button check early
+            const menuButton = await MainMenuButton.findOne({ text: text, active: true });
+            const isMenuBtn = !!menuButton;
+            const isAnyBotMenuButton = isLiveChatBtn || isVipBtn || isSupportBtn || isMenuBtn;
+
             // --- Live Chat Handling ---
             const activeSession = await ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' });
 
-            if (ctx.session?.step === 'chatting' || activeSession) {
-                if (text === "❌ End Chat") {
-                    ctx.session.step = undefined;
-                    
-                    if (activeSession) {
-                        activeSession.status = 'closed';
-                        await activeSession.save();
-                    }
-
-                    // Re-send main menu
-                    const menuButtons = await MainMenuButton.find({ active: true }).sort({ order: 1 });
-                    const keyboard = new Keyboard().resized();
-                    
-                    if (settings?.chatActive) {
-                        keyboard.text(settings.chatButtonText || "💬 Live Chat").row();
-                    }
-                    if (settings?.vipActive || settings?.supportActive) {
-                        if (settings?.vipActive) keyboard.text(settings.vipButtonText || "🌟 JOIN VIP");
-                        if (settings?.supportActive) keyboard.text(settings.supportButtonText || "🆘 Help & Support");
-                        keyboard.row();
-                    }
-                    menuButtons.forEach((btn, index) => {
-                        keyboard.text(btn.text);
-                        if ((index + 1) % 2 === 0) keyboard.row();
-                    });
-                    
-                    return await ctx.reply("✅ Chat ended. Returning to Main Menu.", { reply_markup: keyboard.resized() });
+            if (text === "❌ End Chat") {
+                ctx.session.step = undefined;
+                
+                if (activeSession) {
+                    activeSession.status = 'closed';
+                    await activeSession.save();
                 }
 
+                // Re-send main menu
+                const menuButtons = await MainMenuButton.find({ active: true }).sort({ order: 1 });
+                const keyboard = new Keyboard().resized();
+                
+                if (settings?.chatActive) {
+                    keyboard.text(settings.chatButtonText || "💬 Live Chat").row();
+                }
+                if (settings?.vipActive || settings?.supportActive) {
+                    if (settings?.vipActive) keyboard.text(settings.vipButtonText || "🌟 JOIN VIP");
+                    if (settings?.supportActive) keyboard.text(settings.supportButtonText || "🆘 Help & Support");
+                    keyboard.row();
+                }
+                menuButtons.forEach((btn, index) => {
+                    keyboard.text(btn.text);
+                    if ((index + 1) % 2 === 0) keyboard.row();
+                });
+                
+                return await ctx.reply("✅ Chat ended. Returning to Main Menu.", { reply_markup: keyboard.resized() });
+            }
+
+            if ((ctx.session?.step === 'chatting' || activeSession) && !isAnyBotMenuButton) {
                 // If not ending chat, assume it's a message to admin
                 if (activeSession) {
                     await ChatMessage.create({
@@ -287,10 +296,13 @@ export const initBot = async () => {
                     await activeSession.save();
                 } else {
                     // Fallback to create session just in case
+                    const dbUser = await User.findOne({ telegramId: ctx.from.id.toString() });
                     const newSession = await ChatSession.create({
                         telegramId: ctx.from.id.toString(),
+                        userId: dbUser?._id,
                         status: 'active'
                     });
+                    ctx.session.step = 'chatting';
                     await ChatMessage.create({
                         sessionId: newSession._id,
                         sender: 'user',
@@ -301,8 +313,13 @@ export const initBot = async () => {
                 return; // Do not process further commands
             }
 
+            // If it is a menu button, make sure chatting step is cleared to sync state
+            if (isAnyBotMenuButton && ctx.session?.step === 'chatting' && !activeSession) {
+                ctx.session.step = undefined;
+            }
+
             // --- Live Chat Button Entry ---
-            if (settings?.chatActive && text === (settings.chatButtonText || "💬 Live Chat")) {
+            if (isLiveChatBtn) {
                 console.log(`💬 Live Chat Button Clicked by User ${ctx.from.id}`);
                 ctx.session.step = 'chatting';
 
@@ -391,7 +408,7 @@ export const initBot = async () => {
             }
 
             // Check if this text matches the VIP Button
-            if (settings?.vipActive && text === settings.vipButtonText) {
+            if (isVipBtn) {
                 console.log(`🌟 VIP Button Clicked by User ${ctx.from?.id}`);
 
                 // Check if already a member
@@ -416,7 +433,7 @@ export const initBot = async () => {
             }
 
             // Check if this text matches the Help & Support Button
-            if (settings?.supportActive && text === settings.supportButtonText) {
+            if (isSupportBtn) {
                 console.log(`🆘 Help & Support Button Clicked by User ${ctx.from?.id}`);
                 ctx.session.step = 'support_lang';
 
@@ -428,17 +445,15 @@ export const initBot = async () => {
             }
 
             // --- Standard Menu Buttons ---
-            const button = await MainMenuButton.findOne({ text: text, active: true });
-
-            if (button) {
-                const responseMessage = button.responseMessage || `You selected: ${text}`;
-                const responseButtons = button.responseButtons || [];
+            if (menuButton) {
+                const responseMessage = menuButton.responseMessage || `You selected: ${text}`;
+                const responseButtons = menuButton.responseButtons || [];
                 const inlineKeyboard = responseButtons.length > 0 ? {
                     inline_keyboard: responseButtons.map((btn: any) => [{ text: btn.text, url: btn.url }])
                 } : undefined;
 
-                if (button.mediaUrl) {
-                    await sendMediaMessage(ctx, button.mediaUrl, responseMessage, inlineKeyboard as any, button.mediaType);
+                if (menuButton.mediaUrl) {
+                    await sendMediaMessage(ctx, menuButton.mediaUrl, responseMessage, inlineKeyboard as any, menuButton.mediaType);
                 } else {
                     await ctx.reply(responseMessage, { reply_markup: inlineKeyboard as any });
                 }

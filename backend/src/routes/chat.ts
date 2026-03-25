@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest } from 'fastify';
 import { ChatSession } from '../models/ChatSession';
 import { ChatMessage } from '../models/ChatMessage';
 import { Settings } from '../models/Settings';
+import { MainMenuButton } from '../models/MainMenuButton';
 import { bot } from '../bot';
 
 export const chatRoutes = async (fastify: FastifyInstance) => {
@@ -50,8 +51,30 @@ export const chatRoutes = async (fastify: FastifyInstance) => {
                 
                 // Notify user gracefully
                 try {
+                    const menuButtons = await MainMenuButton.find({ active: true }).sort({ order: 1 });
+                    const settings = await Settings.findOne();
+                    const keyboard = { keyboard: [] as any[], resize_keyboard: true };
+                    
+                    if (settings?.chatActive) {
+                        keyboard.keyboard.push([{ text: settings.chatButtonText || "💬 Live Chat" }]);
+                    }
+                    
+                    const row2 = [];
+                    if (settings?.vipActive) row2.push({ text: settings.vipButtonText || "🌟 JOIN VIP" });
+                    if (settings?.supportActive) row2.push({ text: settings.supportButtonText || "🆘 Help & Support" });
+                    if (row2.length > 0) keyboard.keyboard.push(row2);
+                    
+                    let currentRow: any[] = [];
+                    menuButtons.forEach((btn, idx) => {
+                        currentRow.push({ text: btn.text });
+                        if (currentRow.length === 2 || idx === menuButtons.length - 1) {
+                            keyboard.keyboard.push(currentRow);
+                            currentRow = [];
+                        }
+                    });
+
                     await bot.api.sendMessage(session.telegramId, "✅ The admin has ended the chat.", {
-                        reply_markup: { remove_keyboard: true } // Assuming we used a custom keyboard for "End Chat", remove it.
+                        reply_markup: keyboard.keyboard.length > 0 ? keyboard : undefined
                     });
                 } catch (e) {
                     console.error("Failed to notify user about chat end:", e);
