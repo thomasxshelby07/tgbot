@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Send, Hash, X, Search, ArrowLeft, Settings as SettingsIcon, PlusCircle } from 'lucide-react';
+import { Send, Hash, X, Search, ArrowLeft, Settings as SettingsIcon, PlusCircle, Trash2, Filter } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface UserDetail {
@@ -42,6 +42,7 @@ export default function ChatPage() {
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
     const [allUsers, setAllUsers] = useState<any[]>([]);
     const [userSearchTerm, setUserSearchTerm] = useState('');
+    const [sessionFilter, setSessionFilter] = useState<'all' | 'active' | 'closed'>('all');
 
     const [settings, setSettings] = useState({
         chatButtonText: '💬 Live Chat',
@@ -195,6 +196,20 @@ export default function ChatPage() {
         }
     };
 
+    const handleDeleteChat = async () => {
+        if (!selectedSession || !confirm('Are you sure you want to delete this session AND all messages? This cannot be undone.')) return;
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            await axios.delete(`${apiUrl}/api/chat/sessions/${selectedSession._id}`);
+            toast.success('Chat deleted');
+            setSelectedSession(null);
+            fetchSessions(false);
+        } catch (error) {
+            console.error('Error deleting chat:', error);
+            toast.error('Failed to delete chat');
+        }
+    };
+
     const filteredUsers = allUsers.filter(u => {
         const term = userSearchTerm.toLowerCase();
         return (u.firstName?.toLowerCase().includes(term) || u.lastName?.toLowerCase().includes(term) || u.telegramId.includes(term));
@@ -231,13 +246,24 @@ export default function ChatPage() {
                 <div className="w-[300px] shrink-0 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col">
                     <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-950/50">
                         <span className="text-xs font-bold text-zinc-500 tracking-wider">CHATS</span>
-                        <button 
-                            onClick={() => { fetchAllUsers(); setIsNewChatModalOpen(true); }}
-                            className="bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 p-1.5 rounded-lg transition-colors flex items-center gap-1 text-[11px] font-bold"
-                            title="Start New Chat"
-                        >
-                            <PlusCircle size={14} /> NEW
-                        </button>
+                        <div className="flex gap-2">
+                            <select 
+                                value={sessionFilter} 
+                                onChange={(e) => setSessionFilter(e.target.value as any)}
+                                className="bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 px-2 py-1.5 rounded-lg text-[11px] font-bold outline-none border border-zinc-200 dark:border-zinc-700 cursor-pointer"
+                            >
+                                <option value="all">All</option>
+                                <option value="active">Active</option>
+                                <option value="closed">Closed</option>
+                            </select>
+                            <button 
+                                onClick={() => { fetchAllUsers(); setIsNewChatModalOpen(true); }}
+                                className="bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 p-1.5 rounded-lg transition-colors flex items-center gap-1 text-[11px] font-bold"
+                                title="Start New Chat"
+                            >
+                                <PlusCircle size={14} /> NEW
+                            </button>
+                        </div>
                     </div>
                     <div className="flex-1 overflow-y-auto p-2 space-y-0.5 custom-scrollbar">
                         {loadingSessions ? (
@@ -245,7 +271,7 @@ export default function ChatPage() {
                         ) : sessions.length === 0 ? (
                             <p className="p-4 text-center text-[12px] text-zinc-400">No chats yet.</p>
                         ) : (
-                            sessions.map(session => {
+                            sessions.filter(s => sessionFilter === 'all' || s.status === sessionFilter).map(session => {
                                 const isSelected = selectedSession?._id === session._id;
                                 const titleName = session.userId?.firstName 
                                     ? `${session.userId.firstName} ${session.userId.lastName || ''}`.trim() 
@@ -309,14 +335,24 @@ export default function ChatPage() {
                                         </p>
                                     </div>
                                 </div>
-                                {selectedSession.status === 'active' && (
+                                <div className="flex items-center gap-2">
+                                    {selectedSession.status === 'active' && (
+                                        <button 
+                                            onClick={handleEndChat}
+                                            className="text-[11px] text-orange-600 hover:text-orange-700 dark:text-orange-400 bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/40 px-3 py-1.5 rounded-md font-bold transition-colors"
+                                            title="End this session"
+                                        >
+                                            End Chat
+                                        </button>
+                                    )}
                                     <button 
-                                        onClick={handleEndChat}
-                                        className="text-[11px] text-red-600 hover:text-red-700 dark:text-red-400 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 px-3 py-1.5 rounded-md font-bold transition-colors"
+                                        onClick={handleDeleteChat}
+                                        className="text-red-500 hover:text-red-600 dark:text-red-400 bg-zinc-50 hover:bg-red-50 dark:bg-zinc-800 dark:hover:bg-red-900/20 p-1.5 rounded-md transition-colors"
+                                        title="Delete completely"
                                     >
-                                        End Chat
+                                        <Trash2 size={16} />
                                     </button>
-                                )}
+                                </div>
                             </div>
 
                             {/* Message List */}

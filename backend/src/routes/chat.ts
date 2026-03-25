@@ -178,8 +178,20 @@ export const chatRoutes = async (fastify: FastifyInstance) => {
 
             return reply.send(updated);
         } catch (error) {
-            console.error('Error updating chat settings:', error);
             return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
+    // 6. Delete Chat Session
+    fastify.delete('/api/chat/sessions/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply) => {
+        try {
+            const { id } = request.params;
+            await ChatSession.findByIdAndDelete(id);
+            await ChatMessage.deleteMany({ sessionId: id });
+            return reply.send({ success: true, message: 'Session deleted' });
+        } catch (error) {
+            console.error('Error deleting chat session:', error);
+            return reply.status(500).send({ error: 'Failed to delete session' });
         }
     });
 
