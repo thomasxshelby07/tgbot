@@ -139,21 +139,23 @@ export const chatRoutes = async (fastify: FastifyInstance) => {
             const { telegramId, userId } = request.body;
             if (!telegramId) return reply.status(400).send({ error: 'Telegram ID is required' });
 
-            // Check if active session already exists
-            const existingSession = await ChatSession.findOne({ telegramId, status: 'active' }).populate('userId', 'firstName lastName username');
-            if (existingSession) {
-                return reply.send(existingSession);
+            // Find any existing session and make it active, or create a new one
+            let session = await ChatSession.findOneAndUpdate(
+                { telegramId },
+                { $set: { userId: userId || undefined, status: 'active', updatedAt: new Date() } },
+                { new: true }
+            );
+
+            if (!session) {
+                session = await ChatSession.create({
+                    telegramId,
+                    userId: userId || undefined,
+                    status: 'active'
+                });
             }
 
-            // Create new session
-            const newSession = await ChatSession.create({
-                telegramId,
-                userId: userId || undefined,
-                status: 'active'
-            });
-
             // Re-fetch to populate
-            const populatedSession = await ChatSession.findById(newSession._id).populate('userId', 'firstName lastName username');
+            const populatedSession = await ChatSession.findById(session._id).populate('userId', 'firstName lastName username');
             return reply.send(populatedSession);
         } catch (error) {
             console.error('Error creating chat session:', error);

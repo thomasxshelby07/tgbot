@@ -295,13 +295,13 @@ export const initBot = async () => {
                     activeSession.updatedAt = new Date();
                     await activeSession.save();
                 } else {
-                    // Fallback to create session just in case
+                    // Fallback to create or reuse session just in case
                     const dbUser = await User.findOne({ telegramId: ctx.from.id.toString() });
-                    const newSession = await ChatSession.create({
-                        telegramId: ctx.from.id.toString(),
-                        userId: dbUser?._id,
-                        status: 'active'
-                    });
+                    const newSession = await ChatSession.findOneAndUpdate(
+                        { telegramId: ctx.from.id.toString() },
+                        { $set: { userId: dbUser?._id, status: 'active', updatedAt: new Date() } },
+                        { new: true, upsert: true }
+                    );
                     ctx.session.step = 'chatting';
                     await ChatMessage.create({
                         sessionId: newSession._id,
@@ -324,19 +324,12 @@ export const initBot = async () => {
                 ctx.session.step = 'chatting';
 
                 // Find or create active session
-                let session = await ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' });
-                if (!session) {
-                    // Get user _id from telegramId
-                    const user = await User.findOne({ telegramId: ctx.from.id.toString() });
-                    session = await ChatSession.create({
-                        telegramId: ctx.from.id.toString(),
-                        userId: user?._id,
-                        status: 'active'
-                    });
-                } else {
-                    session.updatedAt = new Date(); // bump
-                    await session.save();
-                }
+                const user = await User.findOne({ telegramId: ctx.from.id.toString() });
+                await ChatSession.findOneAndUpdate(
+                    { telegramId: ctx.from.id.toString() },
+                    { $set: { userId: user?._id, status: 'active', updatedAt: new Date() } },
+                    { new: true, upsert: true }
+                );
 
                 const keyboard = new Keyboard().text("❌ End Chat").resized();
                 return await ctx.reply("💬 *Live Chat Started*\n\nSend your messages below. An admin will reply to you shortly.\n\nClick 'End Chat' when you are done.", {
