@@ -10,6 +10,7 @@ import {
     FileText,
     LogOut,
     MessageSquare,
+    MessageCircle,
     Radio,
     Star,
     LifeBuoy,
@@ -28,6 +29,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
     const navigation = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+        { name: 'Live Chat', href: '/dashboard/chat', icon: MessageCircle },
         { name: 'Channels', href: '/dashboard/channels', icon: Radio },
         { name: 'Channel Welcome', href: '/dashboard/welcome-messages', icon: Tv },
         { name: 'Default Welcome', href: '/dashboard/welcome', icon: MessageSquare },

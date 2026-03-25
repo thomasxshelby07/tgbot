@@ -9,11 +9,14 @@ import { VipMember } from '../models/VipMember';
 import { SupportTicket } from '../models/SupportTicket';
 import { Channel } from '../models/Channel';
 import { WelcomeMessage } from '../models/WelcomeMessage';
+import { ChatSession } from '../models/ChatSession';
+import { ChatMessage } from '../models/ChatMessage';
 
 // --- Session Logic ---
 interface SessionData {
     step?: 'name' | 'number' | 'interest' | 'review' | 
-           'support_lang' | 'support_type' | 'support_name' | 'support_number' | 'support_id' | 'support_problem' | 'support_review';
+           'support_lang' | 'support_type' | 'support_name' | 'support_number' | 'support_id' | 'support_problem' | 'support_review' |
+           'chatting';
     language?: 'en' | 'hi';
     vipName?: string;
     vipNumber?: string;
@@ -154,13 +157,14 @@ export const initBot = async () => {
             const menuButtons = await MainMenuButton.find({ active: true }).sort({ order: 1 });
 
             let replyKeyboard: Keyboard | undefined;
-            if (menuButtons.length > 0 || settings?.vipActive || settings?.supportActive) {
+            if (menuButtons.length > 0 || settings?.vipActive || settings?.supportActive || settings?.chatActive) {
                 const keyboard = new Keyboard().resized();
                 
-                // Add VIP and Support buttons in one row if both active
-                if (settings?.vipActive || settings?.supportActive) {
+                // Add VIP, Support, and Chat buttons
+                if (settings?.vipActive || settings?.supportActive || settings?.chatActive) {
                     if (settings?.vipActive) keyboard.text(settings.vipButtonText || "🌟 JOIN VIP");
                     if (settings?.supportActive) keyboard.text(settings.supportButtonText || "🆘 Help & Support");
+                    if (settings?.chatActive) keyboard.text(settings.chatButtonText || "💬 Live Chat");
                     keyboard.row();
                 }
 
@@ -234,6 +238,74 @@ export const initBot = async () => {
             const step = ctx.session?.step;
 
             console.log(`🤖 BOT LOGIC: Text: "${text}" | Current Step: "${step}"`);
+
+            // --- Live Chat Handling ---
+            if (step === 'chatting') {
+                if (text === "❌ End Chat") {
+                    ctx.session.step = undefined;
+                    // Close session
+                    await ChatSession.findOneAndUpdate(
+                        { telegramId: ctx.from.id.toString(), status: 'active' },
+                        { status: 'closed' }
+                    );
+
+                    // Re-send main menu
+                    const menuButtons = await MainMenuButton.find({ active: true }).sort({ order: 1 });
+                    const keyboard = new Keyboard().resized();
+                    if (settings?.vipActive) keyboard.text(settings.vipButtonText || "🌟 JOIN VIP");
+                    if (settings?.supportActive) keyboard.text(settings.supportButtonText || "🆘 Help & Support");
+                    if (settings?.chatActive) keyboard.text(settings.chatButtonText || "💬 Live Chat");
+                    keyboard.row();
+                    menuButtons.forEach((btn, index) => {
+                        keyboard.text(btn.text);
+                        if ((index + 1) % 2 === 0) keyboard.row();
+                    });
+                    
+                    return await ctx.reply("✅ Chat ended. Returning to Main Menu.", { reply_markup: keyboard.resized() });
+                }
+
+                // If not ending chat, assume it's a message to admin
+                // Find active session
+                const session = await ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' });
+                if (session) {
+                    await ChatMessage.create({
+                        sessionId: session._id,
+                        sender: 'user',
+                        content: text,
+                        messageType: 'text'
+                    });
+                    session.updatedAt = new Date();
+                    await session.save();
+                }
+                return; // Do not process further commands
+            }
+
+            // --- Live Chat Button Entry ---
+            if (settings?.chatActive && text === (settings.chatButtonText || "💬 Live Chat")) {
+                console.log(`💬 Live Chat Button Clicked by User ${ctx.from.id}`);
+                ctx.session.step = 'chatting';
+
+                // Find or create active session
+                let session = await ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' });
+                if (!session) {
+                    // Get user _id from telegramId
+                    const user = await User.findOne({ telegramId: ctx.from.id.toString() });
+                    session = await ChatSession.create({
+                        telegramId: ctx.from.id.toString(),
+                        userId: user?._id,
+                        status: 'active'
+                    });
+                } else {
+                    session.updatedAt = new Date(); // bump
+                    await session.save();
+                }
+
+                const keyboard = new Keyboard().text("❌ End Chat").resized();
+                return await ctx.reply("💬 *Live Chat Started*\n\nSend your messages below. An admin will reply to you shortly.\n\nClick 'End Chat' when you are done.", {
+                    parse_mode: "Markdown",
+                    reply_markup: keyboard
+                });
+            }
 
             // --- Help & Support Flow ---
             if (step === 'support_name') {
