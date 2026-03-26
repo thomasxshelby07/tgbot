@@ -4,21 +4,36 @@ import { ChatMessage } from '../models/ChatMessage';
 import { Settings } from '../models/Settings';
 import { MainMenuButton } from '../models/MainMenuButton';
 import { bot } from '../bot';
+import { cache } from '../utils/cache';
 
 export const chatRoutes = async (fastify: FastifyInstance) => {
     // 1. Get List of Sessions (Active first, then recently closed)
     fastify.get('/api/chat/sessions', async (request, reply) => {
         try {
+            const cacheKey = 'chat_sessions_admin';
+            const cached = await cache.get(cacheKey);
+            if (cached) return reply.send(cached);
+
             const sessions = await ChatSession.find()
                 .populate('userId', 'firstName lastName username')
                 .lean()
                 .sort({ status: 1, updatedAt: -1 })
                 .limit(50); // Get top 50 sessions (active and recent)
 
-            const populatedSessions = await Promise.all(sessions.map(async (s) => {
-                const unreadCount = await ChatMessage.countDocuments({ sessionId: s._id, sender: 'user', isRead: false });
-                return { ...s, unreadCount };
+            const sessionIds = sessions.map(s => s._id);
+            const unreadCounts = await ChatMessage.aggregate([
+                { $match: { sessionId: { $in: sessionIds }, sender: 'user', isRead: false } },
+                { $group: { _id: '$sessionId', unreadCount: { $sum: 1 } } }
+            ]);
+            
+            const unreadMap = new Map(unreadCounts.map(u => [u._id.toString(), u.unreadCount]));
+
+            const populatedSessions = sessions.map((s) => ({
+                ...s,
+                unreadCount: unreadMap.get(s._id.toString()) || 0
             }));
+
+            await cache.set(cacheKey, populatedSessions, 5); // cache for 5 seconds
 
             return reply.send(populatedSessions);
         } catch (error) {
@@ -31,14 +46,25 @@ export const chatRoutes = async (fastify: FastifyInstance) => {
     fastify.get('/api/chat/sessions/:id/messages', async (request: FastifyRequest<{ Params: { id: string } }>, reply) => {
         try {
             const { id } = request.params;
-            const messages = await ChatMessage.find({ sessionId: id })
-                .sort({ createdAt: 1 }); // Oldest first
+            const cacheKey = `chat_messages_${id}`;
+            const cached = await cache.get(cacheKey);
 
             // Mark unread user messages as read since admin fetched them
-            await ChatMessage.updateMany(
+            const updateResult = await ChatMessage.updateMany(
                 { sessionId: id, sender: 'user', isRead: false },
                 { $set: { isRead: true } }
             );
+
+            if (updateResult.modifiedCount > 0) {
+                await cache.del('chat_sessions_admin'); // unread count changed
+            } else if (cached) {
+                return reply.send(cached);
+            }
+
+            const messages = await ChatMessage.find({ sessionId: id })
+                .sort({ createdAt: 1 }); // Oldest first
+
+            await cache.set(cacheKey, messages, 5); // cache for 5 seconds
 
             return reply.send(messages);
         } catch (error) {
@@ -48,10 +74,10 @@ export const chatRoutes = async (fastify: FastifyInstance) => {
     });
 
     // 3. Send Message as Admin
-    fastify.post('/api/chat/sessions/:id/messages', async (request: FastifyRequest<{ Params: { id: string }, Body: { content: string, action?: 'close' } }>, reply) => {
+    fastify.post('/api/chat/sessions/:id/messages', async (request: FastifyRequest<{ Params: { id: string }, Body: { content?: string, action?: 'close', messageType?: string, mediaUrl?: string } }>, reply) => {
         try {
             const { id } = request.params;
-            const { content, action } = request.body;
+            const { content, action, messageType, mediaUrl } = request.body;
 
             const session = await ChatSession.findById(id);
             if (!session) {
@@ -61,6 +87,7 @@ export const chatRoutes = async (fastify: FastifyInstance) => {
             if (action && action === 'close') {
                 session.status = 'closed';
                 await session.save();
+                await cache.del('chat_sessions_admin');
                 
                 // Notify user gracefully
                 try {
@@ -96,31 +123,47 @@ export const chatRoutes = async (fastify: FastifyInstance) => {
                 return reply.send({ success: true, message: 'Chat closed' });
             }
 
-            if (!content || content.trim() === '') {
-                return reply.status(400).send({ error: 'Message content is required' });
+            if ((!content || content.trim() === '') && !mediaUrl) {
+                return reply.status(400).send({ error: 'Message content or media is required' });
             }
 
             // Save admin message to DB
             const newMessage = await ChatMessage.create({
                 sessionId: session._id,
                 sender: 'admin',
-                content: content,
-                messageType: 'text'
+                content: content || '',
+                messageType: messageType || 'text',
+                mediaUrl: mediaUrl || undefined
             });
 
             // Update session updatedAt
             session.updatedAt = new Date();
             await session.save();
 
+            // Invalidate caches
+            await cache.del('chat_sessions_admin');
+            await cache.del(`chat_messages_${id}`);
+
             // Send message back to Telegram User
             try {
-                await bot.api.sendMessage(session.telegramId, `👨‍💻 *Admin:*\n${content}`, { 
-                    parse_mode: "Markdown",
-                    reply_markup: {
-                        keyboard: [[{ text: "❌ End Chat" }]],
-                        resize_keyboard: true
-                    }
-                });
+                if (messageType === 'photo' && mediaUrl) {
+                    await bot.api.sendPhoto(session.telegramId, mediaUrl, {
+                        caption: content ? `👨‍💻 *Admin:*\n${content}` : '👨‍💻 *Admin sent a photo*',
+                        parse_mode: "Markdown",
+                        reply_markup: {
+                            keyboard: [[{ text: "❌ End Chat" }]],
+                            resize_keyboard: true
+                        }
+                    });
+                } else {
+                    await bot.api.sendMessage(session.telegramId, `👨‍💻 *Admin:*\n${content}`, { 
+                        parse_mode: "Markdown",
+                        reply_markup: {
+                            keyboard: [[{ text: "❌ End Chat" }]],
+                            resize_keyboard: true
+                        }
+                    });
+                }
             } catch (tgError) {
                 console.error(`Failed to send message to Telegram User ${session.telegramId}:`, tgError);
                 return reply.status(500).send({ error: 'Message saved but failed to deliver to Telegram' });
@@ -156,6 +199,9 @@ export const chatRoutes = async (fastify: FastifyInstance) => {
 
             // Re-fetch to populate
             const populatedSession = await ChatSession.findById(session._id).populate('userId', 'firstName lastName username');
+            
+            await cache.del('chat_sessions_admin');
+            
             return reply.send(populatedSession);
         } catch (error) {
             console.error('Error creating chat session:', error);
@@ -188,7 +234,6 @@ export const chatRoutes = async (fastify: FastifyInstance) => {
             );
 
             // Invalidate cache
-            const { cache } = require('../utils/cache');
             await cache.del('bot_settings');
 
             return reply.send(updated);
@@ -197,12 +242,15 @@ export const chatRoutes = async (fastify: FastifyInstance) => {
         }
     });
 
-    // 6. Delete Chat Session
     fastify.delete('/api/chat/sessions/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply) => {
         try {
             const { id } = request.params;
             await ChatSession.findByIdAndDelete(id);
             await ChatMessage.deleteMany({ sessionId: id });
+            
+            await cache.del('chat_sessions_admin');
+            await cache.del(`chat_messages_${id}`);
+
             return reply.send({ success: true, message: 'Session deleted' });
         } catch (error) {
             console.error('Error deleting chat session:', error);

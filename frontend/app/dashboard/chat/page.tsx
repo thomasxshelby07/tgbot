@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Send, Hash, X, Search, ArrowLeft, Settings as SettingsIcon, PlusCircle, Trash2, Filter } from 'lucide-react';
+import { Send, Hash, X, Search, ArrowLeft, Settings as SettingsIcon, PlusCircle, Trash2, Filter, ImageIcon, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface UserDetail {
@@ -27,6 +27,7 @@ interface ChatMessage {
     content: string;
     messageType: string;
     createdAt: string;
+    mediaUrl?: string;
 }
 
 export default function ChatPage() {
@@ -36,7 +37,10 @@ export default function ChatPage() {
     const [loadingSessions, setLoadingSessions] = useState(true);
     const [inputMessage, setInputMessage] = useState('');
     const [sending, setSending] = useState(false);
+    const [uploadingImage, setUploadingImage] = useState(false);
+    const [isAutoScroll, setIsAutoScroll] = useState(true);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Modals state
     const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
@@ -125,8 +129,16 @@ export default function ChatPage() {
 
     // Auto-scroll to bottom of messages
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+        if (isAutoScroll) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messages, isAutoScroll]);
+
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+        const isBottom = scrollHeight - scrollTop - clientHeight < 150;
+        setIsAutoScroll(isBottom);
+    };
 
     const handleUpdateSettings = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -152,6 +164,7 @@ export default function ChatPage() {
                 content: inputMessage
             });
             setInputMessage('');
+            setIsAutoScroll(true);
             fetchMessages(selectedSession._id); // instant refresh
             fetchSessions(false); // update last modified sorting
         } catch (error) {
@@ -159,6 +172,40 @@ export default function ChatPage() {
             toast.error('Failed to send message');
         } finally {
             setSending(false);
+        }
+    };
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !selectedSession) return;
+
+        setUploadingImage(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            const uploadRes = await axios.post(`${apiUrl}/api/upload`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            const mediaUrl = uploadRes.data.url;
+            
+            await axios.post(`${apiUrl}/api/chat/sessions/${selectedSession._id}/messages`, {
+                content: '', // Optional caption could be added here
+                messageType: 'photo',
+                mediaUrl: mediaUrl
+            });
+            
+            setIsAutoScroll(true);
+            fetchMessages(selectedSession._id);
+            fetchSessions(false);
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            toast.error('Failed to send image');
+        } finally {
+            setUploadingImage(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
@@ -217,7 +264,7 @@ export default function ChatPage() {
     });
 
     return (
-        <div className="flex flex-col h-screen w-full bg-zinc-50 dark:bg-zinc-950 overflow-hidden font-sans">
+        <div className="flex flex-col h-[100dvh] w-full bg-zinc-50 dark:bg-zinc-950 overflow-hidden font-sans">
             {/* Top Navigation Bar */}
             <div className="h-14 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 shrink-0 shadow-sm z-10">
                 <div className="flex items-center gap-4">
@@ -242,9 +289,9 @@ export default function ChatPage() {
             </div>
 
             {/* Main Chat Interface */}
-            <div className="flex flex-1 min-h-0">
+            <div className="flex flex-1 min-h-0 relative">
                 {/* Left Sidebar - Chat List */}
-                <div className="w-[300px] shrink-0 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col">
+                <div className={`w-full md:w-[300px] shrink-0 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex-col ${selectedSession ? 'hidden md:flex' : 'flex'}`}>
                     <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-950/50">
                         <span className="text-xs font-bold text-zinc-500 tracking-wider">CHATS</span>
                         <div className="flex gap-2">
@@ -283,6 +330,7 @@ export default function ChatPage() {
                                         key={session._id}
                                         onClick={() => {
                                             setSelectedSession(session);
+                                            setIsAutoScroll(true);
                                             // Optimistically clear the unread badge visually
                                             setSessions(prev => prev.map(s => s._id === session._id ? { ...s, unreadCount: 0 } : s));
                                         }}
@@ -326,7 +374,7 @@ export default function ChatPage() {
                 </div>
 
                 {/* Right Area - Chat Messages */}
-                <div className="flex-1 bg-[#efefef] dark:bg-[#121212] flex flex-col min-w-0 relative">
+                <div className={`flex-1 bg-[#efefef] dark:bg-[#121212] flex-col min-w-0 relative ${selectedSession ? 'flex' : 'hidden md:flex'}`}>
                     {selectedSession ? (
                         <>
                             {/* Chat Header Background Image Overlays */}
@@ -334,8 +382,14 @@ export default function ChatPage() {
                             
                             {/* Active Chat Header */}
                             <div className="h-14 p-3 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0 flex justify-between items-center z-10 shadow-sm shadow-black/5">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-[12px]">
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <button 
+                                        onClick={() => setSelectedSession(null)}
+                                        className="md:hidden p-1.5 -ml-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-500 transition-colors"
+                                    >
+                                        <ArrowLeft size={18} />
+                                    </button>
+                                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-[12px] shrink-0">
                                         {(selectedSession.userId?.firstName || selectedSession.telegramId.toString()).charAt(0)}
                                     </div>
                                     <div>
@@ -368,18 +422,26 @@ export default function ChatPage() {
                             </div>
 
                             {/* Message List */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-2 z-10 relative">
+                            <div className="flex-1 overflow-y-auto p-4 space-y-2 z-10 relative" onScroll={handleScroll}>
                                 {messages.map((msg, idx) => {
                                     const isAdmin = msg.sender === 'admin';
+                                    const hasMedia = msg.messageType === 'photo' && msg.mediaUrl;
                                     return (
                                         <div key={msg._id || idx} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`max-w-[75%] px-3.5 py-2 relative shadow-sm ${
+                                            <div className={`max-w-[85%] sm:max-w-[75%] px-3.5 py-2 relative shadow-sm ${
                                                 isAdmin 
                                                     ? 'bg-[#d9fdd3] dark:bg-[#005c4b] text-gray-900 dark:text-gray-100 rounded-lg rounded-tr-none' 
                                                     : 'bg-white dark:bg-[#202c33] text-gray-900 dark:text-gray-100 rounded-lg rounded-tl-none border border-black/5 dark:border-transparent'
                                             }`}>
-                                                <p className="text-[13px] whitespace-pre-wrap leading-relaxed pr-8">{msg.content}</p>
-                                                <p className={`text-[9px] mt-1 text-right opacity-60 absolute bottom-1.5 right-2`}>
+                                                {hasMedia ? (
+                                                    <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="block mb-1">
+                                                        <img src={msg.mediaUrl} alt="Image" className="max-w-full max-h-[250px] rounded-md object-contain" />
+                                                    </a>
+                                                ) : null}
+                                                {msg.content ? (
+                                                    <p className={`text-[13px] whitespace-pre-wrap leading-relaxed pr-8 ${hasMedia ? 'mt-1' : ''}`}>{msg.content}</p>
+                                                ) : null}
+                                                <p className={`text-[9px] mt-1 text-right opacity-60 ${hasMedia && !msg.content ? 'relative bottom-0 right-0 mt-1 inline-block w-full' : 'absolute bottom-1.5 right-2'}`}>
                                                     {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                                 </p>
                                             </div>
@@ -391,8 +453,23 @@ export default function ChatPage() {
 
                             {/* Input Area */}
                             {selectedSession.status === 'active' ? (
-                                <form onSubmit={handleSendMessage} className="p-3 bg-white dark:bg-zinc-900 shrink-0 z-10">
-                                    <div className="flex items-center gap-2 max-w-4xl mx-auto">
+                                <form onSubmit={handleSendMessage} className="p-3 bg-white dark:bg-zinc-900 shrink-0 z-10 pb-6 sm:pb-3" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+                                    <div className="flex items-center gap-2 max-w-4xl mx-auto relative">
+                                        <input 
+                                            type="file" 
+                                            accept="image/*" 
+                                            className="hidden" 
+                                            ref={fileInputRef} 
+                                            onChange={handleImageUpload} 
+                                        />
+                                        <button 
+                                            type="button" 
+                                            onClick={() => fileInputRef.current?.click()}
+                                            disabled={uploadingImage}
+                                            className="w-10 h-10 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 flex items-center justify-center transition-colors shrink-0 disabled:opacity-50"
+                                        >
+                                            {uploadingImage ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
+                                        </button>
                                         <input
                                             type="text"
                                             value={inputMessage}
