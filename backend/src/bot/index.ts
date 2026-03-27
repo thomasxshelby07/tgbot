@@ -82,11 +82,11 @@ const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string,
         if (cachedFileId) {
             console.log(`🚀 Using cached file_id for: ${mediaUrl}`);
             if (isAudio) {
-                await ctx.replyWithAudio(cachedFileId, { caption, reply_markup });
+                await ctx.replyWithAudio(cachedFileId, { caption, reply_markup, parse_mode: "Markdown" });
             } else if (isVideo) {
-                await ctx.replyWithVideo(cachedFileId, { caption, reply_markup });
+                await ctx.replyWithVideo(cachedFileId, { caption, reply_markup, parse_mode: "Markdown" });
             } else {
-                await ctx.replyWithPhoto(cachedFileId, { caption, reply_markup });
+                await ctx.replyWithPhoto(cachedFileId, { caption, reply_markup, parse_mode: "Markdown" });
             }
             return;
         }
@@ -94,11 +94,11 @@ const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string,
         console.log(`📤 Uploading new media: ${mediaUrl} (type: ${isVideo ? 'video' : isAudio ? 'audio' : 'image'})`);
         let message;
         if (isAudio) {
-            message = await ctx.replyWithAudio(mediaUrl, { caption, reply_markup });
+            message = await ctx.replyWithAudio(mediaUrl, { caption, reply_markup, parse_mode: "Markdown" });
         } else if (isVideo) {
-            message = await ctx.replyWithVideo(mediaUrl, { caption, reply_markup });
+            message = await ctx.replyWithVideo(mediaUrl, { caption, reply_markup, parse_mode: "Markdown" });
         } else {
-            message = await ctx.replyWithPhoto(mediaUrl, { caption, reply_markup });
+            message = await ctx.replyWithPhoto(mediaUrl, { caption, reply_markup, parse_mode: "Markdown" });
         }
 
         // Cache the file_id from the sent message for super-fast future sends
@@ -449,7 +449,7 @@ export const initBot = async () => {
                 if (menuButton.mediaUrl) {
                     await sendMediaMessage(ctx, menuButton.mediaUrl, responseMessage, inlineKeyboard as any, menuButton.mediaType);
                 } else {
-                    await ctx.reply(responseMessage, { reply_markup: inlineKeyboard as any });
+                    await ctx.reply(responseMessage, { reply_markup: inlineKeyboard as any, parse_mode: "Markdown" });
                 }
             }
         } catch (error) {

@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { v2 as cloudinary } from 'cloudinary';
+import path from 'path';
 import '../config/cloudinary'; // Ensure config is loaded
 
 export const uploadRoutes = async (fastify: FastifyInstance) => {
@@ -27,10 +28,12 @@ export const uploadRoutes = async (fastify: FastifyInstance) => {
             const resourceType = (data.mimetype.startsWith('audio') || data.mimetype.startsWith('video')) ? 'video' : 'image';
 
             return await new Promise((resolve, reject) => {
+                const publicId = path.parse(data.filename).name;
                 const uploadStream = cloudinary.uploader.upload_stream(
                     {
                         folder: 'tgbot_uploads',
                         resource_type: 'auto',
+                        public_id: publicId,
                     },
                     (error, result) => {
                         if (error) {

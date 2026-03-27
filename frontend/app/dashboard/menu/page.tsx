@@ -323,6 +323,9 @@ export default function MenuPage() {
                                     className="w-full p-2 bg-zinc-50 dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 font-mono text-sm"
                                     placeholder="Type the message here..."
                                 />
+                                <p className="text-[10px] text-zinc-400 mt-1 uppercase tracking-wider font-bold">
+                                    Markdown Supported: *bold*, _italic_, [link](url)
+                                </p>
                             </div>
 
                             {/* Media Upload */}
