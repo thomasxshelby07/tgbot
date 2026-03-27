@@ -22,7 +22,7 @@ export const uploadRoutes = async (fastify: FastifyInstance) => {
             }
 
             // Determine media type for client response
-            const mediaType = data.mimetype.startsWith('video') ? 'video' : 'image';
+            const mediaType = data.mimetype.startsWith('video') ? 'video' : data.mimetype.startsWith('audio') ? 'audio' : 'image';
             // Determine resource type based on mime type
             const resourceType = (data.mimetype.startsWith('audio') || data.mimetype.startsWith('video')) ? 'video' : 'image';
 

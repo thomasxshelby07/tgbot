@@ -231,7 +231,7 @@ export default function MenuPage() {
                                         <h3 className="font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2 truncate">
                                             {btn.text}
                                             {btn.mediaUrl && (
-                                                <span title={btn.mediaType === 'video' ? 'Has Video' : 'Has Image'} className={btn.mediaType === 'video' ? 'text-purple-500' : 'text-cyan-500'}>
+                                                <span title={btn.mediaType === 'video' ? 'Has Video' : btn.mediaType === 'audio' ? 'Has Audio' : 'Has Image'} className={btn.mediaType === 'video' ? 'text-purple-500' : btn.mediaType === 'audio' ? 'text-orange-500' : 'text-cyan-500'}>
                                                     <Upload size={14} className="animate-pulse" />
                                                 </span>
                                             )}
@@ -327,7 +327,7 @@ export default function MenuPage() {
 
                             {/* Media Upload */}
                             <div>
-                                <label className="block text-sm font-bold mb-2 uppercase tracking-wider text-zinc-500">Media — Image or Video (Optional)</label>
+                                <label className="block text-sm font-bold mb-2 uppercase tracking-wider text-zinc-500">Media — Image, Video, or Audio (Optional)</label>
                                 <div className="flex flex-col sm:flex-row items-center gap-4">
                                     {formData.mediaUrl && (
                                         <div className="relative w-full sm:w-32 h-32 sm:h-24 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden bg-black flex items-center justify-center shadow-md">
@@ -337,6 +337,12 @@ export default function MenuPage() {
                                                     className="w-full h-full object-cover"
                                                     muted
                                                     playsInline
+                                                    controls
+                                                />
+                                            ) : formData.mediaType === 'audio' ? (
+                                                <audio
+                                                    src={formData.mediaUrl}
+                                                    className="w-full p-2"
                                                     controls
                                                 />
                                             ) : (
@@ -353,11 +359,11 @@ export default function MenuPage() {
                                     <div className="flex-1 w-full">
                                         <input
                                             type="file"
-                                            accept="image/*,video/mp4,video/webm,video/quicktime"
+                                            accept="image/*,video/mp4,video/webm,video/quicktime,audio/*"
                                             onChange={handleFileUpload}
                                             className="block w-full text-sm text-zinc-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
                                         />
-                                        <p className="text-[10px] text-zinc-400 mt-2 font-medium tracking-wide">JPG, PNG, WebP, MP4, MOV</p>
+                                        <p className="text-[10px] text-zinc-400 mt-2 font-medium tracking-wide">JPG, PNG, WebP, MP4, MOV, MP3, WAV, OGG</p>
                                     </div>
                                 </div>
                                 {/* URL Display */}

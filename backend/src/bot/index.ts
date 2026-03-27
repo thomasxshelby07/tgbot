@@ -73,7 +73,7 @@ async function getSettings() {
 
 const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string, reply_markup: any, mediaType?: string) => {
     try {
-        const isAudio = mediaUrl.match(/\.(mp3|wav|ogg|m4a)$/i);
+        const isAudio = mediaType === 'audio' || mediaUrl.match(/\.(mp3|wav|ogg|m4a)$/i);
         const isVideo = mediaType === 'video' || mediaUrl.match(/\.(mp4|webm|mov|avi|mpeg)$/i);
 
         // Check cache for existing file_id
