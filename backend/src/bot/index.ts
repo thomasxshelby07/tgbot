@@ -11,6 +11,7 @@ import { Channel } from '../models/Channel';
 import { WelcomeMessage } from '../models/WelcomeMessage';
 import { ChatSession } from '../models/ChatSession';
 import { ChatMessage } from '../models/ChatMessage';
+import cloudinary from '../config/cloudinary';
 
 // --- Session Logic ---
 interface SessionData {
@@ -453,6 +454,56 @@ export const initBot = async () => {
             }
         } catch (error) {
             console.error("Error handling text message:", error);
+        }
+    });
+
+    // 5a. Handle Photo Messages from User (Live Chat)
+    bot.on("message:photo", async (ctx) => {
+        try {
+            const activeSession = await ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' });
+
+            if (ctx.session?.step === 'chatting' || activeSession) {
+                const photo = ctx.message.photo;
+                const fileId = photo[photo.length - 1].file_id; // Get highest resolution photo
+                const file = await ctx.api.getFile(fileId);
+                const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
+
+                const uploadRes = await cloudinary.uploader.upload(fileUrl, {
+                    folder: 'tgbot_uploads',
+                    resource_type: 'auto'
+                });
+                
+                const caption = ctx.message.caption || '';
+                
+                if (activeSession) {
+                    await ChatMessage.create({
+                        sessionId: activeSession._id,
+                        sender: 'user',
+                        content: caption,
+                        messageType: 'photo',
+                        mediaUrl: uploadRes.secure_url
+                    });
+                    activeSession.updatedAt = new Date();
+                    await activeSession.save();
+                } else {
+                    const dbUser = await User.findOne({ telegramId: ctx.from.id.toString() });
+                    const newSession = await ChatSession.findOneAndUpdate(
+                        { telegramId: ctx.from.id.toString() },
+                        { $set: { userId: dbUser?._id, status: 'active', updatedAt: new Date() } },
+                        { new: true, upsert: true }
+                    );
+                    ctx.session.step = 'chatting';
+                    await ChatMessage.create({
+                        sessionId: newSession._id,
+                        sender: 'user',
+                        content: caption,
+                        messageType: 'photo',
+                        mediaUrl: uploadRes.secure_url
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Error handling photo message:", error);
         }
     });
 
