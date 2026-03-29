@@ -425,7 +425,12 @@ export default function ChatPage() {
                             <div className="flex-1 overflow-y-auto p-4 space-y-2 z-10 relative" onScroll={handleScroll}>
                                 {messages.map((msg, idx) => {
                                     const isAdmin = msg.sender === 'admin';
-                                    const hasMedia = msg.messageType === 'photo' && msg.mediaUrl;
+                                    const isPhoto = msg.messageType === 'photo' && msg.mediaUrl;
+                                    const isVideo = msg.messageType === 'video' && msg.mediaUrl;
+                                    const isAudio = (msg.messageType === 'audio' || msg.messageType === 'voice') && msg.mediaUrl;
+                                    const isDocument = msg.messageType === 'document' && msg.mediaUrl;
+                                    const hasMedia = isPhoto || isVideo || isAudio || isDocument;
+
                                     return (
                                         <div key={msg._id || idx} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
                                             <div className={`max-w-[85%] sm:max-w-[75%] px-3.5 py-2 relative shadow-sm ${
@@ -433,11 +438,22 @@ export default function ChatPage() {
                                                     ? 'bg-[#d9fdd3] dark:bg-[#005c4b] text-gray-900 dark:text-gray-100 rounded-lg rounded-tr-none' 
                                                     : 'bg-white dark:bg-[#202c33] text-gray-900 dark:text-gray-100 rounded-lg rounded-tl-none border border-black/5 dark:border-transparent'
                                             }`}>
-                                                {hasMedia ? (
+                                                {isPhoto && (
                                                     <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="block mb-1">
                                                         <img src={msg.mediaUrl} alt="Image" className="max-w-full max-h-[250px] rounded-md object-contain" />
                                                     </a>
-                                                ) : null}
+                                                )}
+                                                {isVideo && (
+                                                    <video src={msg.mediaUrl} controls className="max-w-full max-h-[250px] rounded-md mb-1" />
+                                                )}
+                                                {isAudio && (
+                                                    <audio src={msg.mediaUrl} controls className="max-w-full mb-1 h-10" />
+                                                )}
+                                                {isDocument && (
+                                                    <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 mb-1 text-blue-500 hover:underline text-sm font-medium bg-black/5 dark:bg-white/5 p-2 rounded-lg">
+                                                        📄 View Document
+                                                    </a>
+                                                )}
                                                 {msg.content ? (
                                                     <p className={`text-[13px] whitespace-pre-wrap leading-relaxed pr-8 ${hasMedia ? 'mt-1' : ''}`}>{msg.content}</p>
                                                 ) : null}

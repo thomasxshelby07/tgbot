@@ -457,14 +457,35 @@ export const initBot = async () => {
         }
     });
 
-    // 5a. Handle Photo Messages from User (Live Chat)
-    bot.on("message:photo", async (ctx) => {
+    // 5a. Handle Media Messages from User (Live Chat)
+    bot.on(["message:photo", "message:video", "message:audio", "message:voice", "message:document"], async (ctx) => {
         try {
             const activeSession = await ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' });
 
             if (ctx.session?.step === 'chatting' || activeSession) {
-                const photo = ctx.message.photo;
-                const fileId = photo[photo.length - 1].file_id; // Get highest resolution photo
+                const msg = ctx.message;
+                let fileId = "";
+                let msgType = "photo";
+
+                if (msg.photo) {
+                    fileId = msg.photo[msg.photo.length - 1].file_id;
+                    msgType = "photo";
+                } else if (msg.video) {
+                    fileId = msg.video.file_id;
+                    msgType = "video";
+                } else if (msg.audio) {
+                    fileId = msg.audio.file_id;
+                    msgType = "audio";
+                } else if (msg.voice) {
+                    fileId = msg.voice.file_id;
+                    msgType = "voice";
+                } else if (msg.document) {
+                    fileId = msg.document.file_id;
+                    msgType = "document";
+                }
+
+                if (!fileId) return;
+
                 const file = await ctx.api.getFile(fileId);
                 const fileUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
 
@@ -480,7 +501,7 @@ export const initBot = async () => {
                         sessionId: activeSession._id,
                         sender: 'user',
                         content: caption,
-                        messageType: 'photo',
+                        messageType: msgType,
                         mediaUrl: uploadRes.secure_url
                     });
                     activeSession.updatedAt = new Date();
@@ -497,7 +518,7 @@ export const initBot = async () => {
                         sessionId: newSession._id,
                         sender: 'user',
                         content: caption,
-                        messageType: 'photo',
+                        messageType: msgType,
                         mediaUrl: uploadRes.secure_url
                     });
                 }
