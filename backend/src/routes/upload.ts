@@ -32,7 +32,7 @@ export const uploadRoutes = async (fastify: FastifyInstance) => {
                 const uploadStream = cloudinary.uploader.upload_stream(
                     {
                         folder: 'tgbot_uploads',
-                        resource_type: 'auto',
+                        resource_type: resourceType as any,
                         public_id: publicId,
                     },
                     (error, result) => {

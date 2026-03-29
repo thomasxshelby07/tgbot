@@ -11,7 +11,7 @@ import os from 'os';
 dotenv.config();
 
 const app = fastify({
-    bodyLimit: 10 * 1024 * 1024 // 10MB
+    bodyLimit: 100 * 1024 * 1024 // 100MB limit to allow large video/audio
 });
 const PORT = process.env.PORT || 4000;
 const DOMAIN = process.env.DOMAIN || '';
@@ -26,7 +26,11 @@ import path from 'path';
 import { uploadRoutes } from './routes/upload';
 import { userRoutes } from './routes/users';
 
-app.register(fastifyMultipart);
+app.register(fastifyMultipart, {
+    limits: {
+        fileSize: 100 * 1024 * 1024 // 100MB
+    }
+});
 app.register(fastifyStatic, {
     root: path.join(__dirname, '../../public/uploads'),
     prefix: '/uploads/',
