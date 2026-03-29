@@ -79,14 +79,6 @@ const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string,
         // Check cache for existing file_id
         const cachedFileId = fileIdCache[mediaUrl];
 
-        let safeMediaUrl = mediaUrl;
-        const urlWithoutQuery = safeMediaUrl.split('?')[0];
-        if (!urlWithoutQuery.match(/\.(mp4|webm|mov|avi|mpeg|mp3|wav|ogg|m4a|jpg|jpeg|png|gif|webp)$/i)) {
-            if (isVideo) safeMediaUrl += '.mp4';
-            else if (isAudio) safeMediaUrl += '.mp3';
-            else safeMediaUrl += '.jpg';
-        }
-
         if (cachedFileId) {
             console.log(`🚀 Using cached file_id for: ${mediaUrl}`);
             try {
@@ -104,7 +96,7 @@ const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string,
             }
         }
 
-        console.log(`📤 Uploading new media: ${safeMediaUrl} (type: ${isVideo ? 'video' : isAudio ? 'audio' : 'image'})`);
+        console.log(`📤 Uploading new media: ${mediaUrl} (type: ${isVideo ? 'video' : isAudio ? 'audio' : 'image'})`);
         let message;
         
         const sendMediaWithMode = async (urlOrFile: string | InputFile, markdown: boolean) => {
@@ -115,13 +107,22 @@ const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string,
         };
 
         try {
-            message = await sendMediaWithMode(safeMediaUrl, true);
+            message = await sendMediaWithMode(mediaUrl, true);
         } catch (error: any) {
             console.warn(`URL/Markdown sending failed: ${error.message}. Retrying via Stream & fallback...`);
-            // If it failed due to parsing (Markdown), try without markdown. If it's a URL error, try InputFile
+            
             try {
-                // By passing `new URL(safeMediaUrl)`, Grammy downloads it to memory and sends it explicitly. (Up to 50MB limits bypass)
-                message = await sendMediaWithMode(new InputFile(new URL(safeMediaUrl)), false);
+                console.log(`Attempting native stream fetch to buffer for: ${mediaUrl}`);
+                // Download file locally into a buffer and upload to TG to bypass all URL size limits and fetch issues
+                const response = await fetch(mediaUrl);
+                if (!response.ok) throw new Error(`HTTP ${response.status} from Cloudinary`);
+                
+                const arrayBuffer = await response.arrayBuffer();
+                const buffer = Buffer.from(arrayBuffer);
+                const fileExt = isAudio ? 'media.mp3' : isVideo ? 'media.mp4' : 'media.jpg';
+                const inputFile = new InputFile(buffer, fileExt);
+
+                message = await sendMediaWithMode(inputFile, false);
             } catch (streamError: any) {
                 console.error(`Stream upload also failed:`, streamError.message);
                 // Complete fallback to text
