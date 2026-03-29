@@ -100,10 +100,22 @@ const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string,
         let message;
         
         const sendMediaWithMode = async (urlOrFile: string | InputFile, markdown: boolean) => {
-            const opts: any = { caption, reply_markup, parse_mode: markdown ? "Markdown" : undefined };
-            if (isAudio) return await ctx.replyWithAudio(urlOrFile, opts);
-            if (isVideo) return await ctx.replyWithVideo(urlOrFile, opts);
-            return await ctx.replyWithPhoto(urlOrFile, opts);
+            const isCaptionTooLong = caption && caption.length > 1024;
+            const mediaCaption = isCaptionTooLong ? "" : caption;
+            // Only attach reply_markup to the media if we are NOT sending a separate text message
+            const mediaOpts: any = { caption: mediaCaption, reply_markup: isCaptionTooLong ? undefined : reply_markup, parse_mode: markdown ? "Markdown" : undefined };
+            
+            let sentMessage;
+            if (isAudio) sentMessage = await ctx.replyWithAudio(urlOrFile, mediaOpts);
+            else if (isVideo) sentMessage = await ctx.replyWithVideo(urlOrFile, mediaOpts);
+            else sentMessage = await ctx.replyWithPhoto(urlOrFile, mediaOpts);
+
+            if (isCaptionTooLong) {
+                // Send the long text as a separate message
+                await ctx.reply(caption, { reply_markup, parse_mode: markdown ? "Markdown" : undefined });
+            }
+            
+            return sentMessage;
         };
 
         try {
