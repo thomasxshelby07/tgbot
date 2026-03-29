@@ -79,26 +79,55 @@ const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string,
         // Check cache for existing file_id
         const cachedFileId = fileIdCache[mediaUrl];
 
-        if (cachedFileId) {
-            console.log(`🚀 Using cached file_id for: ${mediaUrl}`);
-            if (isAudio) {
-                await ctx.replyWithAudio(cachedFileId, { caption, reply_markup, parse_mode: "Markdown" });
-            } else if (isVideo) {
-                await ctx.replyWithVideo(cachedFileId, { caption, reply_markup, parse_mode: "Markdown" });
-            } else {
-                await ctx.replyWithPhoto(cachedFileId, { caption, reply_markup, parse_mode: "Markdown" });
-            }
-            return;
+        let safeMediaUrl = mediaUrl;
+        const urlWithoutQuery = safeMediaUrl.split('?')[0];
+        if (!urlWithoutQuery.match(/\.(mp4|webm|mov|avi|mpeg|mp3|wav|ogg|m4a|jpg|jpeg|png|gif|webp)$/i)) {
+            if (isVideo) safeMediaUrl += '.mp4';
+            else if (isAudio) safeMediaUrl += '.mp3';
+            else safeMediaUrl += '.jpg';
         }
 
-        console.log(`📤 Uploading new media: ${mediaUrl} (type: ${isVideo ? 'video' : isAudio ? 'audio' : 'image'})`);
+        if (cachedFileId) {
+            console.log(`🚀 Using cached file_id for: ${mediaUrl}`);
+            try {
+                if (isAudio) {
+                    await ctx.replyWithAudio(cachedFileId, { caption, reply_markup, parse_mode: "Markdown" });
+                } else if (isVideo) {
+                    await ctx.replyWithVideo(cachedFileId, { caption, reply_markup, parse_mode: "Markdown" });
+                } else {
+                    await ctx.replyWithPhoto(cachedFileId, { caption, reply_markup, parse_mode: "Markdown" });
+                }
+                return;
+            } catch (err) {
+                 console.log("Cached file_id expired or invalid. Re-uploading.");
+                 delete fileIdCache[mediaUrl];
+            }
+        }
+
+        console.log(`📤 Uploading new media: ${safeMediaUrl} (type: ${isVideo ? 'video' : isAudio ? 'audio' : 'image'})`);
         let message;
-        if (isAudio) {
-            message = await ctx.replyWithAudio(mediaUrl, { caption, reply_markup, parse_mode: "Markdown" });
-        } else if (isVideo) {
-            message = await ctx.replyWithVideo(mediaUrl, { caption, reply_markup, parse_mode: "Markdown" });
-        } else {
-            message = await ctx.replyWithPhoto(mediaUrl, { caption, reply_markup, parse_mode: "Markdown" });
+        
+        const sendMediaWithMode = async (urlOrFile: string | InputFile, markdown: boolean) => {
+            const opts: any = { caption, reply_markup, parse_mode: markdown ? "Markdown" : undefined };
+            if (isAudio) return await ctx.replyWithAudio(urlOrFile, opts);
+            if (isVideo) return await ctx.replyWithVideo(urlOrFile, opts);
+            return await ctx.replyWithPhoto(urlOrFile, opts);
+        };
+
+        try {
+            message = await sendMediaWithMode(safeMediaUrl, true);
+        } catch (error: any) {
+            console.warn(`URL/Markdown sending failed: ${error.message}. Retrying via Stream & fallback...`);
+            // If it failed due to parsing (Markdown), try without markdown. If it's a URL error, try InputFile
+            try {
+                // By passing `new URL(safeMediaUrl)`, Grammy downloads it to memory and sends it explicitly. (Up to 50MB limits bypass)
+                message = await sendMediaWithMode(new InputFile(new URL(safeMediaUrl)), false);
+            } catch (streamError: any) {
+                console.error(`Stream upload also failed:`, streamError.message);
+                // Complete fallback to text
+                await ctx.reply(caption || "Media could not be loaded. Please try again.", { reply_markup });
+                return;
+            }
         }
 
         // Cache the file_id from the sent message for super-fast future sends
@@ -119,9 +148,8 @@ const sendMediaMessage = async (ctx: Context, mediaUrl: string, caption: string,
         }
 
     } catch (error) {
-        console.error('Error sending media message:', error);
-        // Fallback to text if media fails
-        await ctx.reply(caption, { reply_markup });
+        console.error('Fatal Error sending media message:', error);
+        await ctx.reply(caption, { reply_markup }).catch(()=>console.log("Fallback also failed."));
     }
 };
 
