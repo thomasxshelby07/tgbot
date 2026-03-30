@@ -31,7 +31,6 @@ const Sidebar = ({ isOpen, onClose, adminRole }: SidebarProps) => {
 
     const navigation = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-        { name: 'Live Chat', href: '/dashboard/chat', icon: MessageCircle },
         { name: 'Channels', href: '/dashboard/channels', icon: Radio },
         { name: 'Channel Welcome', href: '/dashboard/welcome-messages', icon: Tv },
         { name: 'Default Welcome', href: '/dashboard/welcome', icon: MessageSquare },
@@ -47,9 +46,8 @@ const Sidebar = ({ isOpen, onClose, adminRole }: SidebarProps) => {
         if (!adminRole) return false;
         if (adminRole.role === 'superadmin') return true;
         
-        // Normal admin only gets Support Tickets (and maybe Live Chat if explicitly told, but user said "tiecket support mai chat features", so let's give them ONLY support tickets)
+        // Normal admin only gets Support Tickets
         if (item.name === 'Support Tickets') return true;
-        if (item.name === 'Live Chat') return true; // Optionally give access to generic Live Chat as well
         
         return false;
     });

@@ -202,11 +202,6 @@ export const initBot = async () => {
             if (menuButtons.length > 0 || settings?.vipActive || settings?.supportActive || settings?.chatActive) {
                 const keyboard = new Keyboard().resized();
                 
-                // Add Chat button on top
-                if (settings?.chatActive) {
-                    keyboard.text(settings.chatButtonText || "💬 Live Chat").row();
-                }
-                
                 // Add VIP and Support buttons
                 if (settings?.vipActive || settings?.supportActive) {
                     if (settings?.vipActive) keyboard.text(settings.vipButtonText || "🌟 JOIN VIP");
@@ -325,7 +320,7 @@ export const initBot = async () => {
             const settings = await getSettings();
             
             // --- 2. Check Static/Action Buttons ---
-            const isLiveChatBtn = settings?.chatActive && text === (settings.chatButtonText || "💬 Live Chat");
+            const isLiveChatBtn = false; // Deprecated standalone feature
             const isVipBtn = settings?.vipActive && text === (settings.vipButtonText || "🌟 JOIN VIP");
             const isSupportBtn = settings?.supportActive && text === (settings.supportButtonText || "🆘 Help & Support");
             const menuButton = await MainMenuButton.findOne({ text: text, active: true }); // Single Mongo Read
@@ -341,7 +336,6 @@ export const initBot = async () => {
                 ]);
                 const menuButtons = await MainMenuButton.find({ active: true }).sort({ order: 1 });
                 const keyboard = new Keyboard().resized();
-                if (settings?.chatActive) keyboard.text(settings.chatButtonText || "💬 Live Chat").row();
                 if (settings?.vipActive || settings?.supportActive) {
                     if (settings?.vipActive) keyboard.text(settings.vipButtonText || "🌟 JOIN VIP");
                     if (settings?.supportActive) keyboard.text(settings.supportButtonText || "🆘 Help & Support");
@@ -354,29 +348,11 @@ export const initBot = async () => {
             // --- 3. Async Chat Routing (Expensive DB Operations) ---
             // Only run if the user isn't clicking a predefined button to massively optimize menu speed
             if (!isAnyBotMenuButton) {
-                const [activeSession, openTicket] = await Promise.all([
-                    ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' }),
-                    SupportTicket.findOne({ telegramId: ctx.from.id.toString(), status: 'open' })
-                ]);
+                const openTicket = await SupportTicket.findOne({ telegramId: ctx.from.id.toString(), status: 'open' });
 
-                if (activeSession || openTicket || ctx.session?.step === 'chatting') {
-                    if (openTicket) {
-                        await ChatMessage.create({ ticketId: openTicket._id, sender: 'user', content: text, messageType: 'text' });
-                    } else if (activeSession) {
-                        await ChatMessage.create({ sessionId: activeSession._id, sender: 'user', content: text, messageType: 'text' });
-                        activeSession.updatedAt = new Date();
-                        await activeSession.save();
-                    } else {
-                        const dbUser = await User.findOne({ telegramId: ctx.from.id.toString() });
-                        const newSession = await ChatSession.findOneAndUpdate(
-                            { telegramId: ctx.from.id.toString() },
-                            { $set: { userId: dbUser?._id, status: 'active', updatedAt: new Date() } },
-                            { new: true, upsert: true }
-                        );
-                        ctx.session.step = 'chatting';
-                        await ChatMessage.create({ sessionId: newSession._id, sender: 'user', content: text, messageType: 'text' });
-                    }
-                    return; // Skip everything else, user is purely sending a chat message
+                if (openTicket) {
+                    await ChatMessage.create({ ticketId: openTicket._id, sender: 'user', content: text, messageType: 'text' });
+                    return; // Skip everything else, user is purely sending a chat message to a ticket
                 }
             } else {
                 // If they explicitly clicked a button, instantly break them out of chat
@@ -384,21 +360,6 @@ export const initBot = async () => {
             }
 
             // --- 4. Process Menu Button Main Interactions ---
-            if (isLiveChatBtn) {
-                console.log(`💬 Live Chat Button Clicked by User ${ctx.from.id}`);
-                ctx.session.step = 'chatting';
-                const user = await User.findOne({ telegramId: ctx.from.id.toString() });
-                await ChatSession.findOneAndUpdate(
-                    { telegramId: ctx.from.id.toString() },
-                    { $set: { userId: user?._id, status: 'active', updatedAt: new Date() } },
-                    { new: true, upsert: true }
-                );
-                return await ctx.reply("💬 *Live Chat Started*\n\nSend your messages below. An admin will reply to you shortly.\n\nClick 'End Chat' when you are done.", {
-                    parse_mode: "Markdown",
-                    reply_markup: new Keyboard().text("❌ End Chat").resized()
-                });
-            }
-
             if (isSupportBtn) {
                 console.log(`🆘 Help & Support Button Clicked by User ${ctx.from.id}`);
                 ctx.session.step = 'support_lang';
@@ -442,12 +403,9 @@ export const initBot = async () => {
     // 5a. Handle Media Messages from User (Live Chat)
     bot.on(["message:photo", "message:video", "message:audio", "message:voice", "message:document"], async (ctx) => {
         try {
-            const [activeSession, openTicket] = await Promise.all([
-                ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' }),
-                SupportTicket.findOne({ telegramId: ctx.from.id.toString(), status: 'open' })
-            ]);
+            const openTicket = await SupportTicket.findOne({ telegramId: ctx.from.id.toString(), status: 'open' });
 
-            if (ctx.session?.step === 'chatting' || activeSession || openTicket) {
+            if (openTicket) {
                 const msg = ctx.message;
                 let fileId = "";
                 let msgType = "photo";
@@ -484,31 +442,6 @@ export const initBot = async () => {
                 if (openTicket) {
                     await ChatMessage.create({
                         ticketId: openTicket._id,
-                        sender: 'user',
-                        content: caption,
-                        messageType: msgType,
-                        mediaUrl: uploadRes.secure_url
-                    });
-                } else if (activeSession) {
-                    await ChatMessage.create({
-                        sessionId: activeSession._id,
-                        sender: 'user',
-                        content: caption,
-                        messageType: msgType,
-                        mediaUrl: uploadRes.secure_url
-                    });
-                    activeSession.updatedAt = new Date();
-                    await activeSession.save();
-                } else {
-                    const dbUser = await User.findOne({ telegramId: ctx.from.id.toString() });
-                    const newSession = await ChatSession.findOneAndUpdate(
-                        { telegramId: ctx.from.id.toString() },
-                        { $set: { userId: dbUser?._id, status: 'active', updatedAt: new Date() } },
-                        { new: true, upsert: true }
-                    );
-                    ctx.session.step = 'chatting';
-                    await ChatMessage.create({
-                        sessionId: newSession._id,
                         sender: 'user',
                         content: caption,
                         messageType: msgType,

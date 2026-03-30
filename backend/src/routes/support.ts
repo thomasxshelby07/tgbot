@@ -47,11 +47,6 @@ export const supportRoutes = async (fastify: FastifyInstance) => {
                 const menuButtons = await MainMenuButton.find({ active: true }).sort({ order: 1 });
                 const settings = await Settings.findOne();
                 const keyboard = { keyboard: [] as any[], resize_keyboard: true };
-                
-                if (settings?.chatActive) {
-                    keyboard.keyboard.push([{ text: settings.chatButtonText || "💬 Live Chat" }]);
-                }
-                
                 const row2 = [];
                 if (settings?.vipActive) row2.push({ text: settings.vipButtonText || "🌟 JOIN VIP" });
                 if (settings?.supportActive) row2.push({ text: settings.supportButtonText || "🆘 Help & Support" });
