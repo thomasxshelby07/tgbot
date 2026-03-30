@@ -43,7 +43,8 @@ export default function DashboardLayout({
         );
 
         // Verify token via API
-        axios.get('http://localhost:4000/api/auth/me')
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        axios.get(`${apiUrl}/api/auth/me`)
             .then(res => {
                 setAdminRole({ role: res.data.role, permissions: res.data.permissions });
                 setIsAuthenticated(true);
