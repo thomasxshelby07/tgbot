@@ -190,9 +190,11 @@ const start = async () => {
     }
 };
 
-// --- CLUSTER LOGIC FOR 10X PERFORMANCE ---
+// --- CLUSTER LOGIC FOR HIGH PERFORMANCE (SAFELY CAPPED FOR RAM) ---
 if (cluster.isPrimary) {
-    const numCPUs = os.cpus().length;
+    // Railway containers show full host CPUs but have strict RAM limits
+    // We cap to max 2 workers to prevent severe memory swapping and freezing
+    const numCPUs = Math.min(os.cpus().length, parseInt(process.env.MAX_WORKERS || '2'));
     console.log(`🚀 Primary process ${process.pid} is running. Setting up ${numCPUs} workers.`);
 
     // Fork workers for each CPU core

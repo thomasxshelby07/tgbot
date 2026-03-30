@@ -597,13 +597,13 @@ export const initBot = async () => {
         
         if (ctx.session.step !== 'interest') return await ctx.answerCallbackQuery("Expired session. Please start again.");
 
+        await ctx.answerCallbackQuery(`Selected: ${interest}`); // Provide instant feedback UI
+        
         ctx.session.vipInterest = interest;
         ctx.session.step = 'review';
 
         const name = ctx.session.vipName;
         const number = ctx.session.vipNumber;
-
-        await ctx.answerCallbackQuery(`Selected: ${interest}`);
 
         const summary = `📝 *Aapki Details*\n\n👤 Naam: ${name}\n📞 Number: ${number}\n🎯 Interest: ${interest}\n\nNiche button pe click karke submit karein aur VIP link payein!`;
 
@@ -618,6 +618,9 @@ export const initBot = async () => {
     // 5c. Final VIP Submission
     bot.callbackQuery("vip_submit", async (ctx) => {
         if (ctx.session.step !== 'review') return await ctx.answerCallbackQuery("Invalid request.");
+
+        // Provide instant UI response before doing slow DB work
+        await ctx.answerCallbackQuery("Submitted! / जमा हो गया!");
 
         try {
             const name = ctx.session.vipName || "Unknown";
@@ -637,8 +640,6 @@ export const initBot = async () => {
             ctx.session.vipName = undefined;
             ctx.session.vipNumber = undefined;
             ctx.session.vipInterest = undefined;
-
-            await ctx.answerCallbackQuery("Submitted! / जमा हो गया!");
             
             // Send final message with channel link
             const settings = await getSettings();
@@ -661,10 +662,12 @@ export const initBot = async () => {
         const lang = ctx.match[1] as 'en' | 'hi';
         if (ctx.session.step !== 'support_lang') return await ctx.answerCallbackQuery("Expired session.");
 
+        const isHi = lang === 'hi';
+        await ctx.answerCallbackQuery(isHi ? "भाषा चुनी गई: हिंदी" : "Language selected: English"); // Instant UI Feedback
+
         ctx.session.language = lang;
         ctx.session.step = 'support_type';
         
-        const isHi = lang === 'hi';
         const msg = isHi ? "Aapko kis tarah ki dikkat aa rahi hai?" : "What issue are you facing?";
         
         const keyboard = new InlineKeyboard()
@@ -673,7 +676,6 @@ export const initBot = async () => {
             .text("ID Issue 🆔", "support_type_ID")
             .text("Other ❓", "support_type_Other");
 
-        await ctx.answerCallbackQuery(isHi ? "भाषा चुनी गई: हिंदी" : "Language selected: English");
         await ctx.editMessageText(msg, { reply_markup: keyboard });
     });
 
@@ -681,6 +683,8 @@ export const initBot = async () => {
     bot.callbackQuery(/^support_type_(.+)$/, async (ctx) => {
         const type = ctx.match[1];
         if (ctx.session.step !== 'support_type') return await ctx.answerCallbackQuery("Expired session.");
+
+        await ctx.answerCallbackQuery(`Selected: ${type}`); // Instant UI Feedback
 
         ctx.session.supportType = type;
         ctx.session.step = 'support_name';
@@ -690,13 +694,16 @@ export const initBot = async () => {
             ? `✅ Issue Type: ${type}\n\nApna full name batao:` 
             : `✅ Issue Type: ${type}\n\nPlease enter your Full Name:`;
 
-        await ctx.answerCallbackQuery(`Selected: ${type}`);
         await ctx.editMessageText(msg);
     });
 
     // 5f. Final Support Ticket Submission
     bot.callbackQuery("support_submit", async (ctx) => {
         if (ctx.session.step !== 'support_review') return await ctx.answerCallbackQuery("Invalid request.");
+
+        const isHi = ctx.session.language === 'hi';
+        // Provide Instant UI response before DB commit
+        await ctx.answerCallbackQuery(isHi ? "टिकट जमा हो गया!" : "Ticket submitted!");
 
         try {
             const { supportName, supportNumber, supportId, supportType, supportProblem, language } = ctx.session;
@@ -726,7 +733,6 @@ export const initBot = async () => {
                 ? "✅ Aapka ticket register ho gaya hai! 30 minute ke andar hamari team aapse connect karegi. Thank you!"
                 : "✅ Your support ticket has been submitted. Our team will connect with you via call or WhatsApp within 30 minutes. Thank you!";
             
-            await ctx.answerCallbackQuery(isHi ? "टिकट जमा हो गया!" : "Ticket submitted!");
             await ctx.editMessageText(successMsg);
 
         } catch (error) {
