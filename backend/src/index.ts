@@ -60,17 +60,30 @@ const seedSuperAdmin = async () => {
             return;
         }
 
-        const existing = await Admin.findOne({ email });
-        if (!existing) {
-            const salt = await bcrypt.genSalt(10);
-            const passwordHash = await bcrypt.hash(password, salt);
-            await Admin.create({
-                email,
-                passwordHash,
-                role: 'superadmin',
-                permissions: ['all']
-            });
-            console.log('✅ Super Admin seeded.');
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(password, salt);
+        await Admin.findOneAndUpdate(
+            { email },
+            {
+                $setOnInsert: {
+                    email,
+                    passwordHash,
+                    role: 'superadmin',
+                    permissions: ['all']
+                }
+            },
+            { upsert: true, new: true }
+        );
+        console.log('✅ Super Admin seed checked/upserted.');
+
+        // Cleanup any accidental duplicates (keep one)
+        const duplicates = await Admin.find({ email });
+        if (duplicates.length > 1) {
+            console.log(`🧹 Cleaning up ${duplicates.length - 1} duplicate super admins...`);
+            for (let i = 1; i < duplicates.length; i++) {
+                await Admin.findByIdAndDelete(duplicates[i]._id);
+            }
+            console.log('✅ Duplicates cleaned.');
         }
     } catch (e) {
         console.error('Failed to seed Super Admin:', e);
@@ -107,7 +120,9 @@ import { webhookCallback } from 'grammy';
 const start = async () => {
     try {
         await connectDB();
-        await seedSuperAdmin();
+        if (cluster.worker?.id === 1) {
+            await seedSuperAdmin();
+        }
         await initBot();
 
         // Start Broadcast Worker ONLY ONCE — guard against multiple cluster workers

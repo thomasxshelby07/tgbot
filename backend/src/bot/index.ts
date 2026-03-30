@@ -295,8 +295,10 @@ export const initBot = async () => {
             const isAnyBotMenuButton = isLiveChatBtn || isVipBtn || isSupportBtn || isMenuBtn;
 
             // --- Live Chat & Ticket Handling ---
-            const activeSession = await ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' });
-            const openTicket = await SupportTicket.findOne({ telegramId: ctx.from.id.toString(), status: 'open' });
+            const [activeSession, openTicket] = await Promise.all([
+                ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' }),
+                SupportTicket.findOne({ telegramId: ctx.from.id.toString(), status: 'open' })
+            ]);
 
             if (text === "❌ End Chat") {
                 ctx.session.step = undefined;
@@ -510,8 +512,10 @@ export const initBot = async () => {
     // 5a. Handle Media Messages from User (Live Chat)
     bot.on(["message:photo", "message:video", "message:audio", "message:voice", "message:document"], async (ctx) => {
         try {
-            const activeSession = await ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' });
-            const openTicket = await SupportTicket.findOne({ telegramId: ctx.from.id.toString(), status: 'open' });
+            const [activeSession, openTicket] = await Promise.all([
+                ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' }),
+                SupportTicket.findOne({ telegramId: ctx.from.id.toString(), status: 'open' })
+            ]);
 
             if (ctx.session?.step === 'chatting' || activeSession || openTicket) {
                 const msg = ctx.message;

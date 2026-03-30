@@ -164,7 +164,7 @@ export default function SupportPage() {
             formData.append('file', file);
             
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-            const uploadRes = await axios.post(`${apiUrl}/api/upload/media`, formData);
+            const uploadRes = await axios.post(`${apiUrl}/api/upload`, formData);
             const mediaUrl = uploadRes.data.url;
 
             await axios.post(`${apiUrl}/api/support/tickets/${selectedTicket._id}/messages`, {
@@ -190,7 +190,7 @@ export default function SupportPage() {
     });
 
     return (
-        <div className="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-2rem)] overflow-hidden">
+        <div className="flex flex-col h-[calc(100vh-6rem)] lg:h-[calc(100vh-4rem)] overflow-hidden">
             <div className="flex justify-between items-center mb-6 shrink-0">
                 <div>
                     <h1 className="text-3xl font-bold dark:text-white">Support Desk</h1>
