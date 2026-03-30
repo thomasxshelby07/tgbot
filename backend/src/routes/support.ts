@@ -3,13 +3,30 @@ import { SupportTicket } from '../models/SupportTicket';
 import { Settings } from '../models/Settings';
 import { cache } from '../utils/cache';
 
+import { bot } from '../bot';
+import { ChatMessage } from '../models/ChatMessage';
+import { InputFile } from 'grammy';
+
 const SETTINGS_KEY = 'bot_settings';
 
 export const supportRoutes = async (fastify: FastifyInstance) => {
     // Get all support tickets
     fastify.get('/tickets', async (req: FastifyRequest, reply: FastifyReply) => {
         try {
-            const tickets = await SupportTicket.find().sort({ createdAt: -1 });
+            const admin = (req as any).admin;
+            let query: any = {};
+            
+            if (admin && admin.role !== 'superadmin') {
+                if (admin.permissions.includes('deposit_withdraw')) {
+                    query.issueType = { $in: ['Deposit', 'Withdrawal'] };
+                } else if (admin.permissions.includes('id_other')) {
+                    query.issueType = { $in: ['ID', 'Other'] };
+                } else if (!admin.permissions.includes('all')) {
+                    return reply.status(403).send({ error: 'No ticket permissions' });
+                }
+            }
+
+            const tickets = await SupportTicket.find(query).sort({ createdAt: -1 });
             return reply.send(tickets);
         } catch (error) {
             console.error('Error fetching support tickets:', error);
@@ -32,11 +49,65 @@ export const supportRoutes = async (fastify: FastifyInstance) => {
     // Delete a ticket
     fastify.delete('/tickets/:id', async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
         try {
+            const admin = (req as any).admin;
+            if (admin && admin.role !== 'superadmin') {
+                return reply.status(403).send({ error: 'Only Super Admin can delete tickets' });
+            }
             const ticket = await SupportTicket.findByIdAndDelete(req.params.id);
             if (!ticket) return reply.status(404).send({ error: 'Ticket not found' });
+            // Delete associated messages
+            await ChatMessage.deleteMany({ ticketId: ticket._id });
             return reply.send({ success: true, message: 'Ticket deleted' });
         } catch (error) {
             console.error('Error deleting ticket:', error);
+            return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
+    // Get messages for a ticket
+    fastify.get('/tickets/:id/messages', async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+        try {
+            const messages = await ChatMessage.find({ ticketId: req.params.id }).sort({ createdAt: 1 });
+            return reply.send(messages);
+        } catch (error) {
+            console.error('Error fetching ticket messages:', error);
+            return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
+    // Send a message from admin to user for a specific ticket
+    fastify.post('/tickets/:id/messages', async (req: FastifyRequest<{ Params: { id: string }, Body: { content?: string, mediaUrl?: string, messageType?: string } }>, reply: FastifyReply) => {
+        try {
+            const ticket = await SupportTicket.findById(req.params.id);
+            if (!ticket) return reply.status(404).send({ error: 'Ticket not found' });
+
+            const { content, mediaUrl, messageType } = req.body;
+            
+            // Send exactly via bot to user
+            if (mediaUrl && messageType === 'photo') {
+                await bot.api.sendPhoto(ticket.telegramId, mediaUrl, { caption: content || '' });
+            } else if (mediaUrl && messageType === 'video') {
+                await bot.api.sendVideo(ticket.telegramId, mediaUrl, { caption: content || '' });
+            } else if (mediaUrl && messageType === 'audio') {
+                await bot.api.sendAudio(ticket.telegramId, mediaUrl, { caption: content || '' });
+            } else if (content) {
+                await bot.api.sendMessage(ticket.telegramId, content);
+            } else {
+                return reply.status(400).send({ error: 'Message content or media required' });
+            }
+
+            const newMessage = await ChatMessage.create({
+                ticketId: ticket._id,
+                sender: 'admin',
+                content: content || '',
+                messageType: messageType || 'text',
+                mediaUrl: mediaUrl || undefined,
+                isRead: true
+            });
+
+            return reply.send(newMessage);
+        } catch (error) {
+            console.error('Error sending ticket reply:', error);
             return reply.status(500).send({ error: 'Internal Server Error' });
         }
     });

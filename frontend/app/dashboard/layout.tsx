@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { Menu, X } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import axios from 'axios';
 
 export default function DashboardLayout({
     children,
@@ -11,8 +12,55 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [adminRole, setAdminRole] = useState<{role: string, permissions: string[]} | null>(null);
     const pathname = usePathname();
+    const router = useRouter();
     const isChatPage = pathname === '/dashboard/chat';
+
+    useEffect(() => {
+        const token = localStorage.getItem('bot_admin_token');
+        if (!token) {
+            router.push('/login');
+            return;
+        }
+
+        // Setup Axios Interceptors
+        const requestInterceptor = axios.interceptors.request.use((config) => {
+            config.headers.Authorization = `Bearer ${token}`;
+            return config;
+        });
+
+        const responseInterceptor = axios.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    localStorage.removeItem('bot_admin_token');
+                    router.push('/login');
+                }
+                return Promise.reject(error);
+            }
+        );
+
+        // Verify token via API
+        axios.get('http://localhost:4000/api/auth/me')
+            .then(res => {
+                setAdminRole({ role: res.data.role, permissions: res.data.permissions });
+                setIsAuthenticated(true);
+            })
+            .catch(() => {
+                setIsAuthenticated(false);
+            });
+
+        return () => {
+            axios.interceptors.request.eject(requestInterceptor);
+            axios.interceptors.response.eject(responseInterceptor);
+        };
+    }, [router]);
+
+    if (!isAuthenticated) {
+        return <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-white"><span className="animate-pulse">Loading Dashboard...</span></div>;
+    }
 
     return (
         <div className={`flex h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-300 ${isChatPage ? 'overflow-hidden' : ''}`}>
@@ -42,7 +90,7 @@ export default function DashboardLayout({
                 />
             )}
 
-            {!isChatPage && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
+            {!isChatPage && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} adminRole={adminRole} />}
             
             <main className={`flex-1 ${!isChatPage ? 'lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8' : 'w-full'} overflow-y-auto w-full text-zinc-900 dark:text-zinc-100 transition-all duration-300 min-h-screen`}>
                 <div className={`mx-auto h-full w-full ${!isChatPage ? 'max-w-7xl' : ''}`}>

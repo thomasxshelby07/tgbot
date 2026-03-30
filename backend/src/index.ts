@@ -45,19 +45,53 @@ import vipRoutes from './routes/vip';
 import { supportRoutes } from './routes/support';
 import { chatRoutes } from './routes/chat';
 
-app.register(settingsRoutes);
-app.register(uploadRoutes);
-app.register(userRoutes, { prefix: '/api' });
-app.register(broadcastRoutes);
-app.register(channelRoutes);
-app.register(welcomeMessageRoutes);
-app.register(vipRoutes, { prefix: '/api/vip' });
-app.register(supportRoutes, { prefix: '/api/support' });
-app.register(chatRoutes);
+import { authRoutes } from './routes/auth';
+import { authMiddleware } from './middleware/auth';
+import { Admin } from './models/Admin';
+import bcrypt from 'bcrypt';
 
-console.log('Registering menu routes...');
-app.register(menuRoutes);
-console.log('Menu routes registered.');
+const seedSuperAdmin = async () => {
+    try {
+        const email = 'supertg07@bot.com';
+        const existing = await Admin.findOne({ email });
+        if (!existing) {
+            const password = 'thomas@8058';
+            const salt = await bcrypt.genSalt(10);
+            const passwordHash = await bcrypt.hash(password, salt);
+            await Admin.create({
+                email,
+                passwordHash,
+                role: 'superadmin',
+                permissions: ['all']
+            });
+            console.log('✅ Super Admin seeded.');
+        }
+    } catch (e) {
+        console.error('Failed to seed Super Admin:', e);
+    }
+};
+
+// Register public/auth routes
+app.register(authRoutes);
+
+// Register Protected Routes
+app.register(async (protectedApp) => {
+    protectedApp.addHook('preHandler', authMiddleware);
+    
+    protectedApp.register(settingsRoutes);
+    protectedApp.register(uploadRoutes);
+    protectedApp.register(userRoutes, { prefix: '/api' });
+    protectedApp.register(broadcastRoutes);
+    protectedApp.register(channelRoutes);
+    protectedApp.register(welcomeMessageRoutes);
+    protectedApp.register(vipRoutes, { prefix: '/api/vip' });
+    protectedApp.register(supportRoutes, { prefix: '/api/support' });
+    protectedApp.register(chatRoutes);
+    
+    console.log('Registering menu routes...');
+    protectedApp.register(menuRoutes);
+    console.log('Menu routes registered.');
+});
 
 // Register webhook route for Telegram - As per user request for Cloudflare Tunnel
 // Webhook route removed for Polling Mode
@@ -67,6 +101,7 @@ import { webhookCallback } from 'grammy';
 const start = async () => {
     try {
         await connectDB();
+        await seedSuperAdmin();
         await initBot();
 
         // Start Broadcast Worker ONLY ONCE — guard against multiple cluster workers

@@ -244,6 +244,11 @@ export const chatRoutes = async (fastify: FastifyInstance) => {
 
     fastify.delete('/api/chat/sessions/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply) => {
         try {
+            const admin = (request as any).admin;
+            if (admin && admin.role !== 'superadmin') {
+                return reply.status(403).send({ error: 'Only Super Admin can delete chats' });
+            }
+
             const { id } = request.params;
             await ChatSession.findByIdAndDelete(id);
             await ChatMessage.deleteMany({ sessionId: id });

@@ -294,8 +294,9 @@ export const initBot = async () => {
             const isMenuBtn = !!menuButton;
             const isAnyBotMenuButton = isLiveChatBtn || isVipBtn || isSupportBtn || isMenuBtn;
 
-            // --- Live Chat Handling ---
+            // --- Live Chat & Ticket Handling ---
             const activeSession = await ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' });
+            const openTicket = await SupportTicket.findOne({ telegramId: ctx.from.id.toString(), status: 'open' });
 
             if (text === "❌ End Chat") {
                 ctx.session.step = undefined;
@@ -304,6 +305,7 @@ export const initBot = async () => {
                     activeSession.status = 'closed';
                     await activeSession.save();
                 }
+                // We do NOT close the ticket on "End Chat", tickets are closed by admins.
 
                 // Re-send main menu
                 const menuButtons = await MainMenuButton.find({ active: true }).sort({ order: 1 });
@@ -325,9 +327,16 @@ export const initBot = async () => {
                 return await ctx.reply("✅ Chat ended. Returning to Main Menu.", { reply_markup: keyboard.resized() });
             }
 
-            if ((ctx.session?.step === 'chatting' || activeSession) && !isAnyBotMenuButton) {
+            if ((ctx.session?.step === 'chatting' || activeSession || openTicket) && !isAnyBotMenuButton) {
                 // If not ending chat, assume it's a message to admin
-                if (activeSession) {
+                if (openTicket) {
+                    await ChatMessage.create({
+                        ticketId: openTicket._id,
+                        sender: 'user',
+                        content: text,
+                        messageType: 'text'
+                    });
+                } else if (activeSession) {
                     await ChatMessage.create({
                         sessionId: activeSession._id,
                         sender: 'user',
@@ -356,7 +365,7 @@ export const initBot = async () => {
             }
 
             // If it is a menu button, make sure chatting step is cleared to sync state
-            if (isAnyBotMenuButton && ctx.session?.step === 'chatting' && !activeSession) {
+            if (isAnyBotMenuButton && ctx.session?.step === 'chatting' && !activeSession && !openTicket) {
                 ctx.session.step = undefined;
             }
 
@@ -502,8 +511,9 @@ export const initBot = async () => {
     bot.on(["message:photo", "message:video", "message:audio", "message:voice", "message:document"], async (ctx) => {
         try {
             const activeSession = await ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' });
+            const openTicket = await SupportTicket.findOne({ telegramId: ctx.from.id.toString(), status: 'open' });
 
-            if (ctx.session?.step === 'chatting' || activeSession) {
+            if (ctx.session?.step === 'chatting' || activeSession || openTicket) {
                 const msg = ctx.message;
                 let fileId = "";
                 let msgType = "photo";
@@ -537,7 +547,15 @@ export const initBot = async () => {
                 
                 const caption = ctx.message.caption || '';
                 
-                if (activeSession) {
+                if (openTicket) {
+                    await ChatMessage.create({
+                        ticketId: openTicket._id,
+                        sender: 'user',
+                        content: caption,
+                        messageType: msgType,
+                        mediaUrl: uploadRes.secure_url
+                    });
+                } else if (activeSession) {
                     await ChatMessage.create({
                         sessionId: activeSession._id,
                         sender: 'user',

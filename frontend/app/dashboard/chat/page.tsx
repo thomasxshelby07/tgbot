@@ -42,6 +42,19 @@ export default function ChatPage() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Admin Role State
+    const [adminRole, setAdminRole] = useState<string>('admin');
+
+    useEffect(() => {
+        const token = localStorage.getItem('bot_admin_token');
+        if (token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                setAdminRole(payload.role);
+            } catch (e) { }
+        }
+    }, []);
+
     // Modals state
     const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -411,13 +424,15 @@ export default function ChatPage() {
                                             End Chat
                                         </button>
                                     )}
-                                    <button 
-                                        onClick={handleDeleteChat}
-                                        className="text-red-500 hover:text-red-600 dark:text-red-400 bg-zinc-50 hover:bg-red-50 dark:bg-zinc-800 dark:hover:bg-red-900/20 p-1.5 rounded-md transition-colors"
-                                        title="Delete completely"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                    {adminRole === 'superadmin' && (
+                                        <button 
+                                            onClick={handleDeleteChat}
+                                            className="text-red-500 hover:text-red-600 dark:text-red-400 bg-zinc-50 hover:bg-red-50 dark:bg-zinc-800 dark:hover:bg-red-900/20 p-1.5 rounded-md transition-colors"
+                                            title="Delete completely"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 

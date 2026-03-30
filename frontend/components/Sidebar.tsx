@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
     LayoutDashboard,
     Users,
@@ -22,10 +22,12 @@ import {
 interface SidebarProps {
     isOpen?: boolean;
     onClose?: () => void;
+    adminRole?: { role: string; permissions: string[] } | null;
 }
 
-const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
+const Sidebar = ({ isOpen, onClose, adminRole }: SidebarProps) => {
     const pathname = usePathname();
+    const router = useRouter();
 
     const navigation = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -40,7 +42,22 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         { name: 'Users', href: '/dashboard/users', icon: Users },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings },
         { name: 'Logs', href: '/dashboard/logs', icon: FileText },
-    ];
+        { name: 'Admins', href: '/dashboard/admins', icon: Users },
+    ].filter(item => {
+        if (!adminRole) return false;
+        if (adminRole.role === 'superadmin') return true;
+        
+        // Normal admin only gets Support Tickets (and maybe Live Chat if explicitly told, but user said "tiecket support mai chat features", so let's give them ONLY support tickets)
+        if (item.name === 'Support Tickets') return true;
+        if (item.name === 'Live Chat') return true; // Optionally give access to generic Live Chat as well
+        
+        return false;
+    });
+
+    const handleLogout = () => {
+        localStorage.removeItem('bot_admin_token');
+        router.push('/login');
+    };
 
     return (
         <aside 
@@ -97,7 +114,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             </nav>
 
             <div className="p-4 border-t border-zinc-800/50 bg-zinc-900/50 backdrop-blur-sm">
-                <button className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-medium text-zinc-400 hover:bg-red-500/10 hover:text-red-400 transition-all group">
+                <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-medium text-zinc-400 hover:bg-red-500/10 hover:text-red-400 transition-all group">
                     <LogOut size={18} className="group-hover:text-red-400 transition-colors" />
                     <span>Logout</span>
                 </button>

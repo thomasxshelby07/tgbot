@@ -1,7 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IChatMessage extends Document {
-    sessionId: mongoose.Types.ObjectId;
+    sessionId?: mongoose.Types.ObjectId;
+    ticketId?: mongoose.Types.ObjectId;
     sender: 'user' | 'admin';
     content: string;
     messageType: 'text' | 'photo' | 'video' | 'audio' | 'document';
@@ -11,7 +12,8 @@ export interface IChatMessage extends Document {
 }
 
 const ChatMessageSchema: Schema = new Schema({
-    sessionId: { type: Schema.Types.ObjectId, ref: 'ChatSession', required: true },
+    sessionId: { type: Schema.Types.ObjectId, ref: 'ChatSession' },
+    ticketId: { type: Schema.Types.ObjectId, ref: 'SupportTicket' },
     sender: { type: String, enum: ['user', 'admin'], required: true },
     content: { type: String, default: '' },
     messageType: { type: String, enum: ['text', 'photo', 'video', 'audio', 'document'], default: 'text' },
@@ -20,7 +22,8 @@ const ChatMessageSchema: Schema = new Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-// Index for getting messages for a session efficiently
+// Index for getting messages for a session or ticket efficiently
 ChatMessageSchema.index({ sessionId: 1, createdAt: 1 });
+ChatMessageSchema.index({ ticketId: 1, createdAt: 1 });
 
 export const ChatMessage = mongoose.model<IChatMessage>('ChatMessage', ChatMessageSchema);
