@@ -291,11 +291,6 @@ export const initBot = async () => {
                 const keyboard = new InlineKeyboard().text("1. Cricket 🏏", "vip_interest_Cricket").text("2. Casino 🎰", "vip_interest_Casino").row().text("3. Both / Dono 🏏🎰", "vip_interest_Both");
                 return await ctx.reply("Apna interest select karo:", { reply_markup: keyboard });
             }
-            if (step === 'support_name') {
-                ctx.session.supportName = text;
-                ctx.session.step = 'support_number';
-                return await ctx.reply(ctx.session.language === 'hi' ? "✅ Naam mil gaya!\n\nAb apna mobile number daalo:" : "✅ Name received!\n\nNow please enter your Mobile Number:");
-            }
             if (step === 'support_number') {
                 ctx.session.supportNumber = text;
                 ctx.session.step = 'support_id';
@@ -310,9 +305,10 @@ export const initBot = async () => {
                 ctx.session.supportProblem = text;
                 ctx.session.step = 'support_review';
                 const isHi = ctx.session.language === 'hi';
+                const nameStr = ctx.from?.first_name || 'User';
                 const summary = isHi 
-                    ? `📝 *Aapki Details*\n\n📋 Issue: ${ctx.session.supportType}\n👤 Naam: ${ctx.session.supportName}\n📞 Number: ${ctx.session.supportNumber}\n🆔 ID: ${ctx.session.supportId}\n❓ Problem: ${text}\n\nSubmit karne ke liye niche click karein!`
-                    : `📝 *Support Request Summary*\n\n📋 Issue Type: ${ctx.session.supportType}\n👤 Name: ${ctx.session.supportName}\n📞 Number: ${ctx.session.supportNumber}\n🆔 Dafabet ID: ${ctx.session.supportId}\n❓ Problem: ${text}\n\nClick below to submit!`;
+                    ? `📝 *Aapki Details*\n\n📋 Issue: ${ctx.session.supportType}\n👤 Naam: ${nameStr}\n📞 Number: ${ctx.session.supportNumber}\n🆔 ID: ${ctx.session.supportId}\n❓ Problem: ${text}\n\nSubmit karne ke liye niche click karein!`
+                    : `📝 *Support Request Summary*\n\n📋 Issue Type: ${ctx.session.supportType}\n👤 Name: ${nameStr}\n📞 Number: ${ctx.session.supportNumber}\n🆔 Dafabet ID: ${ctx.session.supportId}\n❓ Problem: ${text}\n\nClick below to submit!`;
                 return await ctx.reply(summary, { parse_mode: "Markdown", reply_markup: new InlineKeyboard().text(isHi ? "✅ Submit Karein" : "✅ Submit Ticket", "support_submit") });
             }
 
@@ -330,10 +326,7 @@ export const initBot = async () => {
             // --- End Chat Explicit Hook ---
             if (text === "❌ End Chat") {
                 ctx.session.step = undefined;
-                await Promise.all([
-                    ChatSession.findOneAndUpdate({ telegramId: ctx.from.id.toString(), status: 'active' }, { status: 'closed' }),
-                    SupportTicket.findOneAndUpdate({ telegramId: ctx.from.id.toString(), status: 'open' }, { status: 'resolved' })
-                ]);
+                await ChatSession.findOneAndUpdate({ telegramId: ctx.from.id.toString(), status: 'active' }, { status: 'closed' });
                 const menuButtons = await MainMenuButton.find({ active: true }).sort({ order: 1 });
                 const keyboard = new Keyboard().resized();
                 if (settings?.vipActive || settings?.supportActive) {
@@ -550,12 +543,12 @@ export const initBot = async () => {
         await ctx.answerCallbackQuery(`Selected: ${type}`); // Instant UI Feedback
 
         ctx.session.supportType = type;
-        ctx.session.step = 'support_name';
+        ctx.session.step = 'support_number';
         
         const isHi = ctx.session.language === 'hi';
         const msg = isHi 
-            ? `✅ Issue Type: ${type}\n\nApna full name batao:` 
-            : `✅ Issue Type: ${type}\n\nPlease enter your Full Name:`;
+            ? `✅ Issue Type: ${type}\n\nApna Mobile Number daalo:` 
+            : `✅ Issue Type: ${type}\n\nPlease enter your Mobile Number:`;
 
         await ctx.editMessageText(msg);
     });
@@ -569,22 +562,29 @@ export const initBot = async () => {
         await ctx.answerCallbackQuery(isHi ? "टिकट जमा हो गया!" : "Ticket submitted!");
 
         try {
-            const { supportName, supportNumber, supportId, supportType, supportProblem, language } = ctx.session;
+            const { supportNumber, supportId, supportType, supportProblem, language } = ctx.session;
             const telegramId = ctx.from.id.toString();
+            const name = ctx.from.first_name || 'User';
 
-            // Save to Database
-            await SupportTicket.create({
-                telegramId,
-                name: supportName,
-                phoneNumber: supportNumber,
-                dafabetId: supportId,
-                issueType: supportType,
-                problem: supportProblem
-            });
+            // Upsert exactly one ticket per user, keeping old chat reference valid
+            await SupportTicket.findOneAndUpdate(
+                { telegramId },
+                {
+                    $set: {
+                        name: name,
+                        phoneNumber: supportNumber,
+                        dafabetId: supportId,
+                        issueType: supportType,
+                        problem: supportProblem,
+                        status: 'open',
+                        createdAt: new Date()
+                    }
+                },
+                { upsert: true, new: true, setDefaultsOnInsert: true }
+            );
 
             // Clear Session
             ctx.session.step = undefined;
-            ctx.session.supportName = undefined;
             ctx.session.supportNumber = undefined;
             ctx.session.supportId = undefined;
             ctx.session.supportProblem = undefined;
