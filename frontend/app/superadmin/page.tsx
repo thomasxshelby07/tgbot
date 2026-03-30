@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Send, Lock, Mail, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function LoginPage() {
+export default function SuperAdminLoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -28,12 +28,12 @@ export default function LoginPage() {
 
             const data = await res.json();
             if (res.ok && data.token) {
-                if (data.admin.role === 'superadmin') {
-                    toast.error('Super Admins must login via the /superadmin portal.');
+                if (data.admin.role !== 'superadmin') {
+                    toast.error('Access Denied. This portal is for Super Admins only.');
                     return;
                 }
                 localStorage.setItem('bot_admin_token', data.token);
-                toast.success('Login successful!');
+                toast.success('Super Admin Login successful!');
                 router.push('/dashboard');
             } else {
                 toast.error(data.error || 'Login failed');
@@ -59,8 +59,8 @@ export default function LoginPage() {
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.5)] mb-6 transform hover:scale-105 transition-transform duration-300">
                         <Send size={32} className="text-white ml-1" />
                     </div>
-                    <h1 className="text-3xl font-extrabold text-white tracking-tight">Admin Area</h1>
-                    <p className="text-zinc-400 mt-2 text-sm text-center">Sign in to manage help desk operations.</p>
+                    <h1 className="text-3xl font-extrabold text-white tracking-tight text-center">Super Admin Portal</h1>
+                    <p className="text-zinc-400 mt-2 text-sm text-center">Restricted access area for system owner.</p>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-5">
@@ -107,7 +107,7 @@ export default function LoginPage() {
                             <Loader2 size={20} className="animate-spin" />
                         ) : (
                             <>
-                                <span>Sign In to Dashboard</span>
+                                <span>Sign In to Super Admin Console</span>
                                 <Send size={18} className="group-hover:translate-x-1 transition-transform" />
                             </>
                         )}

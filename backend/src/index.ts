@@ -52,10 +52,16 @@ import bcrypt from 'bcrypt';
 
 const seedSuperAdmin = async () => {
     try {
-        const email = 'supertg07@bot.com';
+        const email = process.env.SUPER_ADMIN_EMAIL;
+        const password = process.env.SUPER_ADMIN_PASSWORD;
+
+        if (!email || !password) {
+            console.log('⚠️ SUPER_ADMIN_EMAIL or SUPER_ADMIN_PASSWORD not set. Skipping seed.');
+            return;
+        }
+
         const existing = await Admin.findOne({ email });
         if (!existing) {
-            const password = 'thomas@8058';
             const salt = await bcrypt.genSalt(10);
             const passwordHash = await bcrypt.hash(password, salt);
             await Admin.create({
