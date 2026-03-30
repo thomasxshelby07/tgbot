@@ -42,16 +42,16 @@ export default function DashboardLayout({
             }
         );
 
-        // Verify token via API
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-        axios.get(`${apiUrl}/api/auth/me`)
-            .then(res => {
-                setAdminRole({ role: res.data.role, permissions: res.data.permissions });
-                setIsAuthenticated(true);
-            })
-            .catch(() => {
-                setIsAuthenticated(false);
-            });
+        // Verify token locally for instant rendering
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            setAdminRole({ role: payload.role, permissions: payload.permissions || [] });
+            setIsAuthenticated(true);
+        } catch (e) {
+            localStorage.removeItem('bot_admin_token');
+            router.push('/login');
+            return;
+        }
 
         return () => {
             axios.interceptors.request.eject(requestInterceptor);

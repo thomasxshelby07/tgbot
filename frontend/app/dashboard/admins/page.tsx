@@ -26,7 +26,8 @@ export default function AdminsPage() {
 
     const fetchAdmins = async () => {
         try {
-            const res = await axios.get('http://localhost:4000/api/auth/admins');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            const res = await axios.get(`${apiUrl}/api/auth/admins`);
             setAdmins(res.data);
         } catch (error: any) {
             toast.error(error.response?.data?.error || 'Failed to load admins');
@@ -42,7 +43,8 @@ export default function AdminsPage() {
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:4000/api/auth/admins', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            await axios.post(`${apiUrl}/api/auth/admins`, {
                 email: newEmail,
                 password: newPassword,
                 role: newRole,
@@ -61,7 +63,8 @@ export default function AdminsPage() {
     const handleDelete = async (id: string, email: string) => {
         if (!process.browser || !window.confirm(`Are you sure you want to delete ${email}?`)) return;
         try {
-            await axios.delete(`http://localhost:4000/api/auth/admins/${id}`);
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            await axios.delete(`${apiUrl}/api/auth/admins/${id}`);
             toast.success('Admin deleted');
             fetchAdmins();
         } catch (error: any) {
@@ -73,7 +76,8 @@ export default function AdminsPage() {
         const newPass = window.prompt(`Enter new password for ${email}:`);
         if (!newPass) return;
         try {
-            await axios.put(`http://localhost:4000/api/auth/admins/${id}/reset`, { newPassword: newPass });
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            await axios.put(`${apiUrl}/api/auth/admins/${id}/reset`, { newPassword: newPass });
             toast.success('Password reset successfully. Active sessions invalidated.');
         } catch (error: any) {
             toast.error(error.response?.data?.error || 'Failed to reset password');
@@ -83,7 +87,8 @@ export default function AdminsPage() {
     const handleForceLogout = async (id: string, email: string) => {
         if (!window.confirm(`Are you sure you want to forcefully logout ${email} from all devices?`)) return;
         try {
-            await axios.put(`http://localhost:4000/api/auth/admins/${id}/logout`);
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            await axios.put(`${apiUrl}/api/auth/admins/${id}/logout`);
             toast.success('Admin forcefully logged out');
         } catch (error: any) {
             toast.error(error.response?.data?.error || 'Failed to logout admin');
