@@ -301,8 +301,12 @@ export default function SupportPage() {
                                 </div>
                                 <div className="flex gap-2">
                                     {selectedTicket.status === 'open' && (
-                                        <button onClick={() => handleResolve(selectedTicket._id)} className="p-2 text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors" title="Resolve Ticket">
-                                            <CheckCircle size={18} />
+                                        <button 
+                                            onClick={() => handleResolve(selectedTicket._id)} 
+                                            className="text-[11px] text-orange-600 hover:text-orange-700 dark:text-orange-400 bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/40 px-3 py-1.5 rounded-md font-bold transition-colors" 
+                                            title="End Chat & Resolve Ticket"
+                                        >
+                                            End Chat
                                         </button>
                                     )}
                                     {adminRole === 'superadmin' && (
