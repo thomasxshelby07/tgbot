@@ -84,16 +84,21 @@ export const supportRoutes = async (fastify: FastifyInstance) => {
             const { content, mediaUrl, messageType } = req.body;
             
             // Send exactly via bot to user
-            if (mediaUrl && messageType === 'photo') {
-                await bot.api.sendPhoto(ticket.telegramId, mediaUrl, { caption: content || '' });
-            } else if (mediaUrl && messageType === 'video') {
-                await bot.api.sendVideo(ticket.telegramId, mediaUrl, { caption: content || '' });
-            } else if (mediaUrl && messageType === 'audio') {
-                await bot.api.sendAudio(ticket.telegramId, mediaUrl, { caption: content || '' });
-            } else if (content) {
-                await bot.api.sendMessage(ticket.telegramId, content);
-            } else {
-                return reply.status(400).send({ error: 'Message content or media required' });
+            try {
+                if (mediaUrl && messageType === 'photo') {
+                    await bot.api.sendPhoto(ticket.telegramId, mediaUrl, { caption: content ? content : undefined });
+                } else if (mediaUrl && messageType === 'video') {
+                    await bot.api.sendVideo(ticket.telegramId, mediaUrl, { caption: content ? content : undefined });
+                } else if (mediaUrl && messageType === 'audio') {
+                    await bot.api.sendAudio(ticket.telegramId, mediaUrl, { caption: content ? content : undefined });
+                } else if (content) {
+                    await bot.api.sendMessage(ticket.telegramId, content);
+                } else {
+                    return reply.status(400).send({ error: 'Message content or media required' });
+                }
+            } catch (tgErr) {
+                console.error("Failed to send telegram message in support ticket:", tgErr);
+                // We still continue to create the DB record so the admin sees the message they sent.
             }
 
             const newMessage = await ChatMessage.create({

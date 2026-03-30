@@ -41,6 +41,7 @@ export default function SupportPage() {
     
     // Admin Role State
     const [adminRole, setAdminRole] = useState<string>('admin');
+    const [permissions, setPermissions] = useState<string[]>([]);
 
     useEffect(() => {
         const token = localStorage.getItem('bot_admin_token');
@@ -48,6 +49,7 @@ export default function SupportPage() {
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 setAdminRole(payload.role);
+                setPermissions(payload.permissions || []);
             } catch (e) { }
         }
     }, []);
@@ -189,8 +191,11 @@ export default function SupportPage() {
         return matchesSearch && matchesType && matchesStatus;
     });
 
+    const canSeeDepositWithdraw = adminRole === 'superadmin' || permissions.includes('deposit_withdraw');
+    const canSeeIdOther = adminRole === 'superadmin' || permissions.includes('id_other');
+
     return (
-        <div className="flex flex-col h-[calc(100vh-6rem)] lg:h-[calc(100vh-4rem)] overflow-hidden">
+        <div className="flex flex-col h-[75vh] md:h-[80vh] overflow-hidden">
             <div className="flex justify-between items-center mb-6 shrink-0">
                 <div>
                     <h1 className="text-3xl font-bold dark:text-white">Support Desk</h1>
@@ -219,10 +224,10 @@ export default function SupportPage() {
                                 className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
                             >
                                 <option value="all">All Types</option>
-                                <option value="Withdrawal">Withdrawal</option>
-                                <option value="Deposit">Deposit</option>
-                                <option value="ID">ID Issue</option>
-                                <option value="Other">Other</option>
+                                {canSeeDepositWithdraw && <option value="Withdrawal">Withdrawal</option>}
+                                {canSeeDepositWithdraw && <option value="Deposit">Deposit</option>}
+                                {canSeeIdOther && <option value="ID">ID Issue</option>}
+                                {canSeeIdOther && <option value="Other">Other</option>}
                             </select>
                             <select
                                 value={filterStatus}
