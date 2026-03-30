@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Upload, Plus, Trash2, Send } from "lucide-react";
 import Image from "next/image";
+import axios from "axios";
 
 interface Button {
     text: string;
@@ -31,16 +32,8 @@ export default function BroadcastPage() {
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-            const res = await fetch(`${apiUrl}/api/upload`, {
-                method: "POST",
-                body: formData,
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setMediaUrl(data.url);
-            } else {
-                setStatus({ type: "error", message: "Image upload failed" });
-            }
+            const res = await axios.post(`${apiUrl}/api/upload`, formData);
+            setMediaUrl(res.data.url);
         } catch (error) {
             setStatus({ type: "error", message: "Error uploading image" });
         } finally {
@@ -74,33 +67,22 @@ export default function BroadcastPage() {
         try {
             console.log("Sending broadcast request...");
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-            const res = await fetch(`${apiUrl}/api/broadcast`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    message,
-                    mediaUrl,
-                    buttons: buttons.filter(b => b.text && b.url), // Filter empty buttons
-                    limit, // Send the selected limit
-                }),
-                mode: 'cors', // Explicitly request CORS
+            const res = await axios.post(`${apiUrl}/api/broadcast`, {
+                message,
+                mediaUrl,
+                buttons: buttons.filter(b => b.text && b.url), // Filter empty buttons
+                limit, // Send the selected limit
             });
 
-            console.log("Broadcast response status:", res.status);
-
-            if (res.ok) {
-                setStatus({ type: "success", message: "Broadcast started successfully! Messages are being queued." });
-                setMessage("");
-                setMediaUrl("");
-                setButtons([]);
-            } else {
-                const errorData = await res.json().catch(() => ({}));
-                console.error("Broadcast failed response:", errorData);
-                setStatus({ type: "error", message: `Failed to start broadcast: ${errorData.error || res.statusText}` });
-            }
+            console.log("Broadcast success");
+            setStatus({ type: "success", message: "Broadcast started successfully! Messages are being queued." });
+            setMessage("");
+            setMediaUrl("");
+            setButtons([]);
         } catch (error: any) {
             console.error("Network Error during broadcast:", error);
-            setStatus({ type: "error", message: `Network error: ${error.message}. Is the backend running on port 4000?` });
+            const errorMsg = error.response?.data?.error || error.message;
+            setStatus({ type: "error", message: `Broadcast failed: ${errorMsg}` });
         } finally {
             setLoading(false);
         }

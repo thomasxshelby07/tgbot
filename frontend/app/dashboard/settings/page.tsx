@@ -31,15 +31,13 @@ export default function SettingsPage() {
     const fetchSettings = async () => {
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-            const res = await fetch(`${apiUrl}/api/settings/welcome`);
-            if (res.ok) {
-                const data = await res.json();
-                setFormData({
-                    welcomeMessage: data.message || "",
-                    welcomeMessageMediaUrl: data.mediaUrl || "",
-                    welcomeMessageButtons: data.buttons || []
-                });
-            }
+            const res = await axios.get(`${apiUrl}/api/settings/welcome`);
+            const data = res.data;
+            setFormData({
+                welcomeMessage: data.message || "",
+                welcomeMessageMediaUrl: data.mediaUrl || "",
+                welcomeMessageButtons: data.buttons || []
+            });
         } catch (error) {
             console.error("Error fetching settings:", error);
         } finally {
@@ -57,9 +55,7 @@ export default function SettingsPage() {
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-            const res = await axios.post(`${apiUrl}/api/upload`, uploadData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const res = await axios.post(`${apiUrl}/api/upload`, uploadData);
 
             setFormData(prev => ({
                 ...prev,
@@ -77,24 +73,16 @@ export default function SettingsPage() {
         setSaving(true);
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-            const res = await fetch(`${apiUrl}/api/settings/welcome`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    message: formData.welcomeMessage,
-                    mediaUrl: formData.welcomeMessageMediaUrl,
-                    buttons: formData.welcomeMessageButtons
-                }),
+            await axios.post(`${apiUrl}/api/settings/welcome`, {
+                message: formData.welcomeMessage,
+                mediaUrl: formData.welcomeMessageMediaUrl,
+                buttons: formData.welcomeMessageButtons
             });
 
-            if (res.ok) {
-                alert("Settings saved successfully!");
-            } else {
-                alert("Failed to save settings");
-            }
+            alert("Settings saved successfully!");
         } catch (error) {
             console.error("Error saving settings:", error);
-            alert("Network error");
+            alert("Failed to save settings. Is the server running?");
         } finally {
             setSaving(false);
         }

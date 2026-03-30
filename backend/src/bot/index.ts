@@ -305,7 +305,7 @@ export const initBot = async () => {
                 ctx.session.supportProblem = text;
                 ctx.session.step = 'support_review';
                 const isHi = ctx.session.language === 'hi';
-                const nameStr = ctx.from?.first_name || 'User';
+                const nameStr = `${ctx.from.first_name}${ctx.from.last_name ? ' ' + ctx.from.last_name : ''} (#${ctx.from.id})`;
                 const summary = isHi 
                     ? `📝 *Aapki Details*\n\n📋 Issue: ${ctx.session.supportType}\n👤 Naam: ${nameStr}\n📞 Number: ${ctx.session.supportNumber}\n🆔 ID: ${ctx.session.supportId}\n❓ Problem: ${text}\n\nSubmit karne ke liye niche click karein!`
                     : `📝 *Support Request Summary*\n\n📋 Issue Type: ${ctx.session.supportType}\n👤 Name: ${nameStr}\n📞 Number: ${ctx.session.supportNumber}\n🆔 Dafabet ID: ${ctx.session.supportId}\n❓ Problem: ${text}\n\nClick below to submit!`;
@@ -564,7 +564,7 @@ export const initBot = async () => {
         try {
             const { supportNumber, supportId, supportType, supportProblem, language } = ctx.session;
             const telegramId = ctx.from.id.toString();
-            const name = ctx.from.first_name || 'User';
+            const name = `${ctx.from.first_name}${ctx.from.last_name ? ' ' + ctx.from.last_name : ''} (#${telegramId})`;
 
             // Upsert exactly one ticket per user, keeping old chat reference valid
             await SupportTicket.findOneAndUpdate(
