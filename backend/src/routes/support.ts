@@ -39,6 +39,40 @@ export const supportRoutes = async (fastify: FastifyInstance) => {
         try {
             const ticket = await SupportTicket.findByIdAndUpdate(req.params.id, { status: 'resolved' }, { new: true });
             if (!ticket) return reply.status(404).send({ error: 'Ticket not found' });
+            
+            // Notify user gracefully that the support session ended
+            try {
+                // Return them to the main menu logically
+                const { MainMenuButton } = require('../models/MainMenuButton');
+                const menuButtons = await MainMenuButton.find({ active: true }).sort({ order: 1 });
+                const settings = await Settings.findOne();
+                const keyboard = { keyboard: [] as any[], resize_keyboard: true };
+                
+                if (settings?.chatActive) {
+                    keyboard.keyboard.push([{ text: settings.chatButtonText || "💬 Live Chat" }]);
+                }
+                
+                const row2 = [];
+                if (settings?.vipActive) row2.push({ text: settings.vipButtonText || "🌟 JOIN VIP" });
+                if (settings?.supportActive) row2.push({ text: settings.supportButtonText || "🆘 Help & Support" });
+                if (row2.length > 0) keyboard.keyboard.push(row2);
+                
+                let currentRow: any[] = [];
+                menuButtons.forEach((btn: any, idx: number) => {
+                    currentRow.push({ text: btn.text });
+                    if (currentRow.length === 2 || idx === menuButtons.length - 1) {
+                        keyboard.keyboard.push(currentRow);
+                        currentRow = [];
+                    }
+                });
+
+                await bot.api.sendMessage(ticket.telegramId, "✅ Your support ticket has been resolved by the admin. The chat session is now closed.", {
+                    reply_markup: keyboard.keyboard.length > 0 ? keyboard : undefined
+                });
+            } catch (notifyErr) {
+                console.error("Failed to notify user about ticket resolution:", notifyErr);
+            }
+
             return reply.send(ticket);
         } catch (error) {
             console.error('Error resolving ticket:', error);
@@ -85,14 +119,16 @@ export const supportRoutes = async (fastify: FastifyInstance) => {
             
             // Send exactly via bot to user
             try {
+                const markup = { keyboard: [[{ text: "❌ End Chat" }]], resize_keyboard: true };
+
                 if (mediaUrl && messageType === 'photo') {
-                    await bot.api.sendPhoto(ticket.telegramId, mediaUrl, { caption: content ? content : undefined });
+                    await bot.api.sendPhoto(ticket.telegramId, mediaUrl, { caption: content ? `👨‍💻 *Admin:*\n${content}` : '👨‍💻 *Admin sent a photo*', parse_mode: 'Markdown', reply_markup: markup });
                 } else if (mediaUrl && messageType === 'video') {
-                    await bot.api.sendVideo(ticket.telegramId, mediaUrl, { caption: content ? content : undefined });
+                    await bot.api.sendVideo(ticket.telegramId, mediaUrl, { caption: content ? `👨‍💻 *Admin:*\n${content}` : '👨‍💻 *Admin sent a video*', parse_mode: 'Markdown', reply_markup: markup });
                 } else if (mediaUrl && messageType === 'audio') {
-                    await bot.api.sendAudio(ticket.telegramId, mediaUrl, { caption: content ? content : undefined });
+                    await bot.api.sendAudio(ticket.telegramId, mediaUrl, { caption: content ? `👨‍💻 *Admin:*\n${content}` : '👨‍💻 *Admin sent an audio file*', parse_mode: 'Markdown', reply_markup: markup });
                 } else if (content) {
-                    await bot.api.sendMessage(ticket.telegramId, content);
+                    await bot.api.sendMessage(ticket.telegramId, `👨‍💻 *Admin:*\n${content}`, { parse_mode: 'Markdown', reply_markup: markup });
                 } else {
                     return reply.status(400).send({ error: 'Message content or media required' });
                 }

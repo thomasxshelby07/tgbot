@@ -307,7 +307,11 @@ export const initBot = async () => {
                     activeSession.status = 'closed';
                     await activeSession.save();
                 }
-                // We do NOT close the ticket on "End Chat", tickets are closed by admins.
+                
+                if (openTicket) {
+                    openTicket.status = 'resolved';
+                    await openTicket.save();
+                }
 
                 // Re-send main menu
                 const menuButtons = await MainMenuButton.find({ active: true }).sort({ order: 1 });
