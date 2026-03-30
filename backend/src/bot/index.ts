@@ -280,234 +280,160 @@ export const initBot = async () => {
         if (text.startsWith('/')) return;
 
         try {
-            const settings = await getSettings();
             const step = ctx.session?.step;
-
             console.log(`🤖 BOT LOGIC: Text: "${text}" | Current Step: "${step}"`);
 
+            // --- 0. Ultra-Fast Path: State Machine Overrides ---
+            // If user is actively filling out a form, handle it IMMEDIATELY without hitting DB for chat sessions
+            if (step === 'name') {
+                ctx.session.vipName = text;
+                ctx.session.step = 'number';
+                return await ctx.reply("✅ Naam mil gaya! Ab apna mobile number daalo:");
+            }
+            if (step === 'number') {
+                ctx.session.vipNumber = text;
+                ctx.session.step = 'interest';
+                const keyboard = new InlineKeyboard().text("1. Cricket 🏏", "vip_interest_Cricket").text("2. Casino 🎰", "vip_interest_Casino").row().text("3. Both / Dono 🏏🎰", "vip_interest_Both");
+                return await ctx.reply("Apna interest select karo:", { reply_markup: keyboard });
+            }
+            if (step === 'support_name') {
+                ctx.session.supportName = text;
+                ctx.session.step = 'support_number';
+                return await ctx.reply(ctx.session.language === 'hi' ? "✅ Naam mil gaya!\n\nAb apna mobile number daalo:" : "✅ Name received!\n\nNow please enter your Mobile Number:");
+            }
+            if (step === 'support_number') {
+                ctx.session.supportNumber = text;
+                ctx.session.step = 'support_id';
+                return await ctx.reply(ctx.session.language === 'hi' ? "✅ Number mil gaya!\n\nAb apni Dafabet ID batao:" : "✅ Number received!\n\nPlease enter your Dafabet ID:");
+            }
+            if (step === 'support_id') {
+                ctx.session.supportId = text;
+                ctx.session.step = 'support_problem';
+                return await ctx.reply(ctx.session.language === 'hi' ? "✅ ID mil gayi!\n\nAb batao aapko kya dikkat aa rahi hai (Yaha type karo):" : "✅ ID received!\n\nPlease describe your problem (Type here):");
+            }
+            if (step === 'support_problem') {
+                ctx.session.supportProblem = text;
+                ctx.session.step = 'support_review';
+                const isHi = ctx.session.language === 'hi';
+                const summary = isHi 
+                    ? `📝 *Aapki Details*\n\n📋 Issue: ${ctx.session.supportType}\n👤 Naam: ${ctx.session.supportName}\n📞 Number: ${ctx.session.supportNumber}\n🆔 ID: ${ctx.session.supportId}\n❓ Problem: ${text}\n\nSubmit karne ke liye niche click karein!`
+                    : `📝 *Support Request Summary*\n\n📋 Issue Type: ${ctx.session.supportType}\n👤 Name: ${ctx.session.supportName}\n📞 Number: ${ctx.session.supportNumber}\n🆔 Dafabet ID: ${ctx.session.supportId}\n❓ Problem: ${text}\n\nClick below to submit!`;
+                return await ctx.reply(summary, { parse_mode: "Markdown", reply_markup: new InlineKeyboard().text(isHi ? "✅ Submit Karein" : "✅ Submit Ticket", "support_submit") });
+            }
+
+            // --- 1. Memory/Redis Fetch (Ultra Fast) ---
+            const settings = await getSettings();
+            
+            // --- 2. Check Static/Action Buttons ---
             const isLiveChatBtn = settings?.chatActive && text === (settings.chatButtonText || "💬 Live Chat");
             const isVipBtn = settings?.vipActive && text === (settings.vipButtonText || "🌟 JOIN VIP");
             const isSupportBtn = settings?.supportActive && text === (settings.supportButtonText || "🆘 Help & Support");
-            
-            // Re-fetch standard menu button check early
-            const menuButton = await MainMenuButton.findOne({ text: text, active: true });
+            const menuButton = await MainMenuButton.findOne({ text: text, active: true }); // Single Mongo Read
             const isMenuBtn = !!menuButton;
             const isAnyBotMenuButton = isLiveChatBtn || isVipBtn || isSupportBtn || isMenuBtn;
 
-            // --- Live Chat & Ticket Handling ---
-            const [activeSession, openTicket] = await Promise.all([
-                ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' }),
-                SupportTicket.findOne({ telegramId: ctx.from.id.toString(), status: 'open' })
-            ]);
-
+            // --- End Chat Explicit Hook ---
             if (text === "❌ End Chat") {
                 ctx.session.step = undefined;
-                
-                if (activeSession) {
-                    activeSession.status = 'closed';
-                    await activeSession.save();
-                }
-                
-                if (openTicket) {
-                    openTicket.status = 'resolved';
-                    await openTicket.save();
-                }
-
-                // Re-send main menu
+                await Promise.all([
+                    ChatSession.findOneAndUpdate({ telegramId: ctx.from.id.toString(), status: 'active' }, { status: 'closed' }),
+                    SupportTicket.findOneAndUpdate({ telegramId: ctx.from.id.toString(), status: 'open' }, { status: 'resolved' })
+                ]);
                 const menuButtons = await MainMenuButton.find({ active: true }).sort({ order: 1 });
                 const keyboard = new Keyboard().resized();
-                
-                if (settings?.chatActive) {
-                    keyboard.text(settings.chatButtonText || "💬 Live Chat").row();
-                }
+                if (settings?.chatActive) keyboard.text(settings.chatButtonText || "💬 Live Chat").row();
                 if (settings?.vipActive || settings?.supportActive) {
                     if (settings?.vipActive) keyboard.text(settings.vipButtonText || "🌟 JOIN VIP");
                     if (settings?.supportActive) keyboard.text(settings.supportButtonText || "🆘 Help & Support");
                     keyboard.row();
                 }
-                menuButtons.forEach((btn, index) => {
-                    keyboard.text(btn.text);
-                    if ((index + 1) % 2 === 0) keyboard.row();
-                });
-                
+                menuButtons.forEach((btn, idx) => { keyboard.text(btn.text); if ((idx + 1) % 2 === 0) keyboard.row(); });
                 return await ctx.reply("✅ Chat ended. Returning to Main Menu.", { reply_markup: keyboard.resized() });
             }
 
-            if ((ctx.session?.step === 'chatting' || activeSession || openTicket) && !isAnyBotMenuButton) {
-                // If not ending chat, assume it's a message to admin
-                if (openTicket) {
-                    await ChatMessage.create({
-                        ticketId: openTicket._id,
-                        sender: 'user',
-                        content: text,
-                        messageType: 'text'
-                    });
-                } else if (activeSession) {
-                    await ChatMessage.create({
-                        sessionId: activeSession._id,
-                        sender: 'user',
-                        content: text,
-                        messageType: 'text'
-                    });
-                    activeSession.updatedAt = new Date();
-                    await activeSession.save();
-                } else {
-                    // Fallback to create or reuse session just in case
-                    const dbUser = await User.findOne({ telegramId: ctx.from.id.toString() });
-                    const newSession = await ChatSession.findOneAndUpdate(
-                        { telegramId: ctx.from.id.toString() },
-                        { $set: { userId: dbUser?._id, status: 'active', updatedAt: new Date() } },
-                        { new: true, upsert: true }
-                    );
-                    ctx.session.step = 'chatting';
-                    await ChatMessage.create({
-                        sessionId: newSession._id,
-                        sender: 'user',
-                        content: text,
-                        messageType: 'text'
-                    });
+            // --- 3. Async Chat Routing (Expensive DB Operations) ---
+            // Only run if the user isn't clicking a predefined button to massively optimize menu speed
+            if (!isAnyBotMenuButton) {
+                const [activeSession, openTicket] = await Promise.all([
+                    ChatSession.findOne({ telegramId: ctx.from.id.toString(), status: 'active' }),
+                    SupportTicket.findOne({ telegramId: ctx.from.id.toString(), status: 'open' })
+                ]);
+
+                if (activeSession || openTicket || ctx.session?.step === 'chatting') {
+                    if (openTicket) {
+                        await ChatMessage.create({ ticketId: openTicket._id, sender: 'user', content: text, messageType: 'text' });
+                    } else if (activeSession) {
+                        await ChatMessage.create({ sessionId: activeSession._id, sender: 'user', content: text, messageType: 'text' });
+                        activeSession.updatedAt = new Date();
+                        await activeSession.save();
+                    } else {
+                        const dbUser = await User.findOne({ telegramId: ctx.from.id.toString() });
+                        const newSession = await ChatSession.findOneAndUpdate(
+                            { telegramId: ctx.from.id.toString() },
+                            { $set: { userId: dbUser?._id, status: 'active', updatedAt: new Date() } },
+                            { new: true, upsert: true }
+                        );
+                        ctx.session.step = 'chatting';
+                        await ChatMessage.create({ sessionId: newSession._id, sender: 'user', content: text, messageType: 'text' });
+                    }
+                    return; // Skip everything else, user is purely sending a chat message
                 }
-                return; // Do not process further commands
+            } else {
+                // If they explicitly clicked a button, instantly break them out of chat
+                if (ctx.session?.step === 'chatting') ctx.session.step = undefined;
             }
 
-            // If it is a menu button, make sure chatting step is cleared to sync state
-            if (isAnyBotMenuButton && ctx.session?.step === 'chatting' && !activeSession && !openTicket) {
-                ctx.session.step = undefined;
-            }
-
-            // --- Live Chat Button Entry ---
+            // --- 4. Process Menu Button Main Interactions ---
             if (isLiveChatBtn) {
                 console.log(`💬 Live Chat Button Clicked by User ${ctx.from.id}`);
                 ctx.session.step = 'chatting';
-
-                // Find or create active session
                 const user = await User.findOne({ telegramId: ctx.from.id.toString() });
                 await ChatSession.findOneAndUpdate(
                     { telegramId: ctx.from.id.toString() },
                     { $set: { userId: user?._id, status: 'active', updatedAt: new Date() } },
                     { new: true, upsert: true }
                 );
-
-                const keyboard = new Keyboard().text("❌ End Chat").resized();
                 return await ctx.reply("💬 *Live Chat Started*\n\nSend your messages below. An admin will reply to you shortly.\n\nClick 'End Chat' when you are done.", {
                     parse_mode: "Markdown",
-                    reply_markup: keyboard
+                    reply_markup: new Keyboard().text("❌ End Chat").resized()
                 });
             }
 
-            // --- Help & Support Flow ---
-            if (step === 'support_name') {
-                ctx.session.supportName = text;
-                ctx.session.step = 'support_number';
-                const msg = ctx.session.language === 'hi' 
-                    ? "✅ Naam mil gaya!\n\nAb apna mobile number daalo:" 
-                    : "✅ Name received!\n\nNow please enter your Mobile Number:";
-                return await ctx.reply(msg);
+            if (isSupportBtn) {
+                console.log(`🆘 Help & Support Button Clicked by User ${ctx.from.id}`);
+                ctx.session.step = 'support_lang';
+                return await ctx.reply("Apni language select karo:", { 
+                    reply_markup: new InlineKeyboard().text("English 🇺🇸", "support_lang_en").text("Hindi 🇮🇳", "support_lang_hi") 
+                });
             }
 
-            if (step === 'support_number') {
-                ctx.session.supportNumber = text;
-                ctx.session.step = 'support_id';
-                const msg = ctx.session.language === 'hi' 
-                    ? "✅ Number mil gaya!\n\nAb apni Dafabet ID batao:" 
-                    : "✅ Number received!\n\nPlease enter your Dafabet ID:";
-                return await ctx.reply(msg);
-            }
-
-            if (step === 'support_id') {
-                ctx.session.supportId = text;
-                ctx.session.step = 'support_problem';
-                const msg = ctx.session.language === 'hi' 
-                    ? "✅ ID mil gayi!\n\nAb batao aapko kya dikkat aa rahi hai (Yaha type karo):" 
-                    : "✅ ID received!\n\nPlease describe your problem (Type here):";
-                return await ctx.reply(msg);
-            }
-
-            if (step === 'support_problem') {
-                ctx.session.supportProblem = text;
-                ctx.session.step = 'support_review';
-
-                const isHi = ctx.session.language === 'hi';
-                const summary = isHi 
-                    ? `📝 *Aapki Details*\n\n📋 Issue: ${ctx.session.supportType}\n👤 Naam: ${ctx.session.supportName}\n📞 Number: ${ctx.session.supportNumber}\n🆔 ID: ${ctx.session.supportId}\n❓ Problem: ${text}\n\nSubmit karne ke liye niche click karein!`
-                    : `📝 *Support Request Summary*\n\n📋 Issue Type: ${ctx.session.supportType}\n👤 Name: ${ctx.session.supportName}\n📞 Number: ${ctx.session.supportNumber}\n🆔 Dafabet ID: ${ctx.session.supportId}\n❓ Problem: ${text}\n\nClick below to submit!`;
-
-                const btnText = isHi ? "✅ Submit Karein" : "✅ Submit Ticket";
-                const keyboard = new InlineKeyboard().text(btnText, "support_submit");
-                return await ctx.reply(summary, { parse_mode: "Markdown", reply_markup: keyboard });
-            }
-            // --- VIP Registration Flow ---
-            if (step === 'name') {
-                ctx.session.vipName = text;
-                ctx.session.step = 'number';
-                console.log(`➡️ Moving to Number step for User ${ctx.from?.id}`);
-                return await ctx.reply("✅ Naam mil gaya! Ab apna mobile number daalo:");
-            }
-
-            if (step === 'number') {
-                ctx.session.vipNumber = text;
-                ctx.session.step = 'interest';
-                console.log(`➡️ Moving to Interest step for User ${ctx.from?.id}`);
-
-                const keyboard = new InlineKeyboard()
-                    .text("1. Cricket 🏏", "vip_interest_Cricket")
-                    .text("2. Casino 🎰", "vip_interest_Casino").row()
-                    .text("3. Both / Dono 🏏🎰", "vip_interest_Both");
-
-                return await ctx.reply("Apna interest select karo:", { reply_markup: keyboard });
-            }
-
-            // Check if this text matches the VIP Button
             if (isVipBtn) {
-                console.log(`🌟 VIP Button Clicked by User ${ctx.from?.id}`);
-
-                // Check if already a member
-                const existingMember = await VipMember.findOne({ telegramId: ctx.from?.id.toString() });
+                console.log(`🌟 VIP Button Clicked by User ${ctx.from.id}`);
+                const existingMember = await VipMember.findOne({ telegramId: ctx.from.id.toString() });
                 if (existingMember) {
-                    console.log(`✅ User ${ctx.from?.id} is already a VIP member. Sending link directly.`);
                     const channelLink = settings?.vipChannelLink || "";
-                    const keyboard = channelLink ? new InlineKeyboard().url("🚀 Join VIP Channel Now / अभी VIP चैनल से जुड़ें", channelLink) : undefined;
-                    
-                    return await ctx.reply(
-                        "✅ Aap pehle se hi VIP member hain!\n\nJoin karne ke liye niche click karein:",
-                        { reply_markup: keyboard }
-                    );
+                    return await ctx.reply("✅ Aap pehle se hi VIP member hain!\n\nJoin karne ke liye niche click karein:", { 
+                        reply_markup: channelLink ? new InlineKeyboard().url("🚀 Join VIP Channel", channelLink) : undefined 
+                    });
                 }
-
-                // Send Welcome Message first
-                await ctx.reply(settings.vipWelcomeMessage || "VIP Registration me aapka swagat hai!");
-                
-                // Then ask for Name immediately
+                await ctx.reply(settings?.vipWelcomeMessage || "VIP Registration me aapka swagat hai!");
                 ctx.session.step = 'name';
                 return await ctx.reply("Apna full name batayein:");
             }
 
-            // Check if this text matches the Help & Support Button
-            if (isSupportBtn) {
-                console.log(`🆘 Help & Support Button Clicked by User ${ctx.from?.id}`);
-                ctx.session.step = 'support_lang';
-
-                const keyboard = new InlineKeyboard()
-                    .text("English 🇺🇸", "support_lang_en")
-                    .text("Hindi 🇮🇳", "support_lang_hi");
-
-                return await ctx.reply("Apni language select karo:", { reply_markup: keyboard });
-            }
-
-            // --- Standard Menu Buttons ---
             if (menuButton) {
-                const responseMessage = menuButton.responseMessage || `You selected: ${text}`;
-                const responseButtons = menuButton.responseButtons || [];
-                const inlineKeyboard = responseButtons.length > 0 ? {
-                    inline_keyboard: responseButtons.map((btn: any) => [{ text: btn.text, url: btn.url }])
-                } : undefined;
+                const buttons = menuButton.responseButtons || [];
+                const inlineKeyboard = buttons.length > 0 
+                    ? { inline_keyboard: buttons.map((btn: any) => [{ text: btn.text, url: btn.url }]) } 
+                    : undefined;
 
                 if (menuButton.mediaUrl) {
-                    await sendMediaMessage(ctx, menuButton.mediaUrl, responseMessage, inlineKeyboard as any, menuButton.mediaType);
+                    await sendMediaMessage(ctx, menuButton.mediaUrl, menuButton.responseMessage || "", inlineKeyboard as any, menuButton.mediaType);
                 } else {
-                    await ctx.reply(responseMessage, { reply_markup: inlineKeyboard as any, parse_mode: "Markdown" });
+                    await ctx.reply(menuButton.responseMessage || `Selected: ${text}`, { reply_markup: inlineKeyboard as any, parse_mode: "Markdown" });
                 }
             }
+
         } catch (error) {
             console.error("Error handling text message:", error);
         }

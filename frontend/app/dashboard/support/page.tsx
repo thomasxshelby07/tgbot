@@ -122,6 +122,21 @@ export default function SupportPage() {
         }
     };
 
+    const handleReopen = async (id: string, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            await axios.patch(`${apiUrl}/api/support/tickets/${id}/reopen`);
+            toast.success('Ticket reopened');
+            fetchTickets();
+            if (selectedTicket?._id === id) {
+                setSelectedTicket(prev => prev ? { ...prev, status: 'open' } : null);
+            }
+        } catch (error) {
+            toast.error('Failed to reopen ticket');
+        }
+    };
+
     const handleDelete = async (id: string, e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
         if (!confirm('Are you sure you want to delete this ticket?')) return;
@@ -330,6 +345,15 @@ export default function SupportPage() {
                                             End Chat
                                         </button>
                                     )}
+                                    {selectedTicket.status === 'resolved' && (
+                                        <button 
+                                            onClick={() => handleReopen(selectedTicket._id)} 
+                                            className="text-[11px] text-blue-600 hover:text-blue-700 dark:text-blue-400 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 px-3 py-1.5 rounded-md font-bold transition-colors" 
+                                            title="Reopen Ticket"
+                                        >
+                                            Reopen
+                                        </button>
+                                    )}
                                     {adminRole === 'superadmin' && (
                                         <button onClick={() => handleDelete(selectedTicket._id)} className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors" title="Delete Ticket">
                                             <Trash2 size={18} />
@@ -384,8 +408,16 @@ export default function SupportPage() {
                             {/* Input Area */}
                             <div className="p-3 bg-white dark:bg-zinc-900 shrink-0 z-10 pb-6 sm:pb-3" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
                                 {selectedTicket.status === 'resolved' ? (
-                                    <div className="text-center text-[12px] text-zinc-400">
-                                        This ticket has been resolved. Chat is closed.
+                                    <div className="flex flex-col items-center justify-center py-2 gap-2">
+                                        <div className="text-center text-[12px] text-zinc-400">
+                                            This ticket has been resolved. Chat is closed.
+                                        </div>
+                                        <button 
+                                            onClick={() => handleReopen(selectedTicket._id)}
+                                            className="text-[12px] px-4 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                                        >
+                                            Reopen Ticket
+                                        </button>
                                     </div>
                                 ) : (
                                     <form onSubmit={handleSendMessage} className="flex items-center gap-2 max-w-4xl mx-auto relative">

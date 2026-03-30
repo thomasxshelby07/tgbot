@@ -80,6 +80,26 @@ export const supportRoutes = async (fastify: FastifyInstance) => {
         }
     });
 
+    // Reopen a ticket
+    fastify.patch('/tickets/:id/reopen', async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+        try {
+            const ticket = await SupportTicket.findByIdAndUpdate(req.params.id, { status: 'open' }, { new: true });
+            if (!ticket) return reply.status(404).send({ error: 'Ticket not found' });
+            
+            try {
+                const markup = { keyboard: [[{ text: "❌ End Chat" }]], resize_keyboard: true };
+                await bot.api.sendMessage(ticket.telegramId, "🔄 *Admin has reopened your support ticket.*\n\nYou may send messages again. Click 'End Chat' when you are done.", { parse_mode: 'Markdown', reply_markup: markup });
+            } catch (notifyErr) {
+                console.error("Failed to notify user about ticket reopen:", notifyErr);
+            }
+
+            return reply.send(ticket);
+        } catch (error) {
+            console.error('Error reopening ticket:', error);
+            return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
     // Delete a ticket
     fastify.delete('/tickets/:id', async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
         try {
