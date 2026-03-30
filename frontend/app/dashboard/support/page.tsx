@@ -195,7 +195,7 @@ export default function SupportPage() {
     const canSeeIdOther = adminRole === 'superadmin' || permissions.includes('id_other');
 
     return (
-        <div className="flex flex-col h-[75vh] md:h-[80vh] overflow-hidden">
+        <div className="flex flex-col h-[calc(100vh-96px)] lg:h-[calc(100vh-64px)] overflow-hidden">
             <div className="flex justify-between items-center mb-6 shrink-0">
                 <div>
                     <h1 className="text-3xl font-bold dark:text-white">Support Desk</h1>
