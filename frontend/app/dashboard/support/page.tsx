@@ -168,6 +168,16 @@ export default function SupportPage() {
             toast.error('Failed to send message');
         } finally {
             setIsSending(false);
+            // Reset textarea height after sending
+            const textarea = document.querySelector('textarea');
+            if (textarea) textarea.style.height = '44px';
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage(e as unknown as React.FormEvent);
         }
     };
 
@@ -421,22 +431,28 @@ export default function SupportPage() {
                                     </div>
                                 ) : (
                                     <form onSubmit={handleSendMessage} className="flex items-center gap-2 max-w-4xl mx-auto relative">
-                                        <label className="w-10 h-10 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 flex items-center justify-center transition-colors shrink-0 cursor-pointer">
+                                        <label className="w-10 h-10 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 flex items-center justify-center transition-colors shrink-0 cursor-pointer self-end mb-0.5">
                                             <input type="file" accept="image/*" className="hidden" onChange={(e) => handleMediaUpload(e, 'photo')} disabled={uploadingMedia} />
                                             {uploadingMedia ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <ImageIcon size={18} />}
                                         </label>
-                                        <input
-                                            type="text"
+                                        <textarea
                                             value={newMessage}
-                                            onChange={(e) => setNewMessage(e.target.value)}
-                                            placeholder={uploadingMedia ? "Uploading media..." : "Type a message..."}
+                                            onChange={(e) => {
+                                                setNewMessage(e.target.value);
+                                                e.target.style.height = 'auto';
+                                                e.target.style.height = `${e.target.scrollHeight}px`;
+                                            }}
+                                            onKeyDown={handleKeyDown}
+                                            placeholder={uploadingMedia ? "Uploading media..." : "Type a message... (Shift+Enter for new line)"}
                                             disabled={uploadingMedia}
-                                            className="flex-1 px-4 py-2.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-[13px] focus:ring-1 focus:ring-blue-500/50 outline-none dark:text-white transition-all"
+                                            rows={1}
+                                            className="flex-1 px-4 py-3 rounded-[20px] border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-[13px] focus:ring-1 focus:ring-blue-500/50 outline-none dark:text-white transition-all resize-none min-h-[44px] max-h-[120px] overflow-y-auto w-full custom-scrollbar leading-tight"
+                                            style={{ height: '44px' }}
                                         />
                                         <button 
                                             type="submit" 
                                             disabled={!newMessage.trim() || isSending || uploadingMedia}
-                                            className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-800 text-white flex items-center justify-center transition-colors shrink-0 shadow-sm"
+                                            className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-800 text-white flex items-center justify-center transition-colors shrink-0 shadow-sm self-end mb-0.5"
                                         >
                                             <Send size={16} className="-ml-0.5" />
                                         </button>
