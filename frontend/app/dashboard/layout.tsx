@@ -16,7 +16,7 @@ export default function DashboardLayout({
     const [adminRole, setAdminRole] = useState<{role: string, permissions: string[]} | null>(null);
     const pathname = usePathname();
     const router = useRouter();
-    const isChatPage = pathname === '/dashboard/chat';
+    const isStandalonePage = pathname === '/dashboard/chat' || pathname === '/dashboard/support';
 
     useEffect(() => {
         const token = localStorage.getItem('bot_admin_token');
@@ -64,9 +64,9 @@ export default function DashboardLayout({
     }
 
     return (
-        <div className={`flex h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-300 ${isChatPage ? 'overflow-hidden' : ''}`}>
+        <div className={`flex h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-300 ${isStandalonePage ? 'overflow-hidden' : ''}`}>
             {/* Mobile Header */}
-            {!isChatPage && (
+            {!isStandalonePage && (
                 <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-zinc-900 border-b border-zinc-800 z-40 flex items-center px-4 justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg\">
@@ -84,17 +84,17 @@ export default function DashboardLayout({
             )}
 
             {/* Sidebar Overlay */}
-            {!isChatPage && isSidebarOpen && (
+            {!isStandalonePage && isSidebarOpen && (
                 <div 
                     className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}
 
-            {!isChatPage && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} adminRole={adminRole} />}
+            {!isStandalonePage && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} adminRole={adminRole} />}
             
-            <main className={`flex-1 ${!isChatPage ? 'lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8' : 'w-full'} overflow-y-auto w-full text-zinc-900 dark:text-zinc-100 transition-all duration-300 min-h-screen`}>
-                <div className={`mx-auto h-full w-full ${!isChatPage ? 'max-w-7xl' : ''}`}>
+            <main className={`flex-1 ${!isStandalonePage ? 'lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8' : 'w-full'} overflow-y-auto w-full text-zinc-900 dark:text-zinc-100 transition-all duration-300 min-h-screen`}>
+                <div className={`mx-auto h-full w-full ${!isStandalonePage ? 'max-w-7xl' : ''}`}>
                     {children}
                 </div>
             </main>

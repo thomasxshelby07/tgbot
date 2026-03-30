@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { LifeBuoy, CheckCircle, Trash2, Search, Filter, MessageSquare, Smartphone, Hash, Send, Image as ImageIcon, Video, FileAudio, X } from 'lucide-react';
+import { LifeBuoy, CheckCircle, Trash2, Search, Filter, MessageSquare, Smartphone, Hash, Send, ImageIcon, Video, FileAudio, X, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface SupportTicket {
@@ -195,18 +195,26 @@ export default function SupportPage() {
     const canSeeIdOther = adminRole === 'superadmin' || permissions.includes('id_other');
 
     return (
-        <div className="flex flex-col h-[calc(100vh-96px)] lg:h-[calc(100vh-64px)] overflow-hidden">
-            <div className="flex justify-between items-center mb-6 shrink-0">
-                <div>
-                    <h1 className="text-3xl font-bold dark:text-white">Support Desk</h1>
-                    <p className="text-zinc-500 text-sm mt-1">Manage tickets and chat with users directly.</p>
+        <div className="flex flex-col h-[100dvh] w-full bg-zinc-50 dark:bg-zinc-950 overflow-hidden font-sans">
+            {/* Top Navigation Bar */}
+            <div className="h-14 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 shrink-0 shadow-sm z-10">
+                <div className="flex items-center gap-4">
+                    <button 
+                        onClick={() => window.location.href = '/dashboard'}
+                        className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-600 dark:text-zinc-300 transition-colors flex items-center gap-1.5 text-sm font-medium"
+                        title="Back to Dashboard"
+                    >
+                        <ArrowLeft size={16} /> Back
+                    </button>
+                    <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
+                    <h1 className="text-sm font-bold dark:text-white">Support Tickets</h1>
                 </div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-6 flex-1 min-h-0">
+            <div className="flex flex-1 min-h-0 relative">
                 {/* Left Side: Tickets List */}
-                <div className="w-full md:w-[40%] lg:w-[35%] flex flex-col bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shrink-0">
-                    <div className="p-4 border-b border-zinc-800 space-y-3 shrink-0">
+                <div className={`w-full md:w-[320px] lg:w-[350px] shrink-0 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col ${selectedTicket ? 'hidden md:flex' : 'flex'}`}>
+                    <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 space-y-2 bg-zinc-50/50 dark:bg-zinc-950/50 shrink-0">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
                             <input
@@ -251,14 +259,14 @@ export default function SupportPage() {
                                 <div
                                     key={ticket._id}
                                     onClick={() => setSelectedTicket(ticket)}
-                                    className={`p-4 rounded-xl cursor-pointer transition-all border ${
+                                    className={`p-3 cursor-pointer transition-all border-b last:border-0 ${
                                         selectedTicket?._id === ticket._id 
-                                            ? 'bg-blue-500/10 border-blue-500/50' 
-                                            : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700'
+                                            ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30' 
+                                            : 'bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800/50 hover:border-zinc-200 dark:hover:border-zinc-800'
                                     }`}
                                 >
                                     <div className="flex justify-between items-start mb-2">
-                                        <div className="font-semibold text-white truncate pr-2">{ticket.name}</div>
+                                        <div className="font-bold text-[13px] text-zinc-900 dark:text-zinc-100 truncate pr-2">{ticket.name}</div>
                                         <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
                                             ticket.status === 'resolved' ? 'bg-zinc-800 text-zinc-400' : 
                                             ticket.issueType === 'Deposit' ? 'bg-green-500/20 text-green-400' :
@@ -268,9 +276,9 @@ export default function SupportPage() {
                                             {ticket.issueType}
                                         </span>
                                     </div>
-                                    <div className="text-xs text-zinc-400 mb-1 flex items-center gap-1.5"><Hash size={12} /> ID: <span className="text-white font-mono">{ticket.dafabetId}</span></div>
-                                    <div className="text-xs text-zinc-400 mb-3 flex items-center gap-1.5"><Smartphone size={12} /> {ticket.phoneNumber}</div>
-                                    <div className="text-xs text-zinc-500 line-clamp-2">{ticket.problem}</div>
+                                    <div className="text-[11px] text-zinc-500 mb-0.5 flex items-center gap-1.5"><Hash size={10} /> ID: <span className="font-mono text-zinc-700 dark:text-zinc-300">{ticket.dafabetId}</span></div>
+                                    <div className="text-[11px] text-zinc-500 mb-2 flex items-center gap-1.5"><Smartphone size={10} /> {ticket.phoneNumber}</div>
+                                    <div className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">{ticket.problem}</div>
                                 </div>
                             ))
                         )}
@@ -278,7 +286,7 @@ export default function SupportPage() {
                 </div>
 
                 {/* Right Side: Chat Area */}
-                <div className={`w-full md:w-[60%] lg:w-[65%] flex flex-col bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shrink-0 ${!selectedTicket ? 'hidden md:flex items-center justify-center relative' : ''}`}>
+                <div className={`flex-1 flex-col bg-[#efefef] dark:bg-[#121212] min-w-0 relative ${selectedTicket ? 'flex' : 'hidden md:flex'}`}>
                     {!selectedTicket ? (
                         <>
                             <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 to-zinc-900 pointer-events-none"></div>
@@ -290,14 +298,27 @@ export default function SupportPage() {
                         </>
                     ) : (
                         <>
+                            <div className="absolute inset-0 z-0 opacity-[0.03] dark:opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
+                            
                             {/* Chat Header */}
-                            <div className="h-16 border-b border-zinc-800 flex items-center justify-between px-6 bg-zinc-950 shrink-0">
-                                <div>
-                                    <h2 className="font-bold text-white flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                        {selectedTicket.name}
-                                    </h2>
-                                    <p className="text-xs text-zinc-500 mt-0.5">Dafabet ID: {selectedTicket.dafabetId} • Issue: {selectedTicket.issueType}</p>
+                            <div className="h-14 p-3 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0 flex justify-between items-center z-10 shadow-sm shadow-black/5">
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <button 
+                                        onClick={() => setSelectedTicket(null)}
+                                        className="md:hidden p-1.5 -ml-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-500 transition-colors"
+                                    >
+                                        <ArrowLeft size={18} />
+                                    </button>
+                                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-[12px] shrink-0">
+                                        {(selectedTicket.name || 'U').charAt(0)}
+                                    </div>
+                                    <div>
+                                        <h2 className="font-bold text-[13px] dark:text-white leading-tight flex items-center gap-1">
+                                            {selectedTicket.status === 'open' ? <div className="w-2 h-2 rounded-full bg-green-500"></div> : <div className="w-2 h-2 rounded-full bg-red-500"></div>}
+                                            {selectedTicket.name}
+                                        </h2>
+                                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight">ID: {selectedTicket.dafabetId} • {selectedTicket.issueType}</p>
+                                    </div>
                                 </div>
                                 <div className="flex gap-2">
                                     {selectedTicket.status === 'open' && (
@@ -314,46 +335,45 @@ export default function SupportPage() {
                                             <Trash2 size={18} />
                                         </button>
                                     )}
-                                    <button onClick={() => setSelectedTicket(null)} className="md:hidden p-2 text-zinc-400 hover:text-white transition-colors">
-                                        <X size={18} />
+                                    <button onClick={() => setSelectedTicket(null)} className="hidden">
                                     </button>
                                 </div>
                             </div>
                             
                             {/* Original Problem Banner */}
-                            <div className="bg-blue-900/10 border-b border-blue-900/30 p-4 shrink-0">
-                                <p className="text-xs text-blue-400 font-bold mb-1 uppercase tracking-wider">Initial User Problem</p>
-                                <p className="text-sm text-blue-100">{selectedTicket.problem}</p>
+                            <div className="bg-blue-50 dark:bg-blue-900/10 border-b border-blue-100 dark:border-blue-900/30 p-3 shrink-0 z-10 mx-2 mt-2 rounded-lg">
+                                <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold mb-1 uppercase tracking-wider">Initial User Problem</p>
+                                <p className="text-[13px] text-blue-900 dark:text-blue-100 font-medium">{selectedTicket.problem}</p>
                             </div>
 
                             {/* Chat Messages */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-black/20">
+                            <div className="flex-1 overflow-y-auto p-4 space-y-2 z-10 relative custom-scrollbar">
                                 {messages.map((msg, idx) => {
                                     const isAdmin = msg.sender === 'admin';
                                     return (
                                         <div key={msg._id || idx} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`max-w-[75%] rounded-2xl flex flex-col ${isAdmin ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-zinc-800 text-zinc-100 rounded-bl-sm'}`}>
+                                            <div className={`max-w-[85%] sm:max-w-[75%] px-3.5 py-2 relative shadow-sm ${isAdmin ? 'bg-[#d9fdd3] dark:bg-[#005c4b] text-gray-900 dark:text-gray-100 rounded-lg rounded-tr-none' : 'bg-white dark:bg-[#202c33] text-gray-900 dark:text-gray-100 rounded-lg rounded-tl-none border border-black/5 dark:border-transparent'}`}>
                                                 {msg.mediaUrl ? (
-                                                    <div className="p-1">
+                                                    <div className="mb-1">
                                                         {msg.messageType === 'photo' ? (
-                                                            <img src={msg.mediaUrl} alt="Shared photo" className="rounded-xl w-full max-h-64 object-cover" />
+                                                            <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="block"><img src={msg.mediaUrl} alt="Shared photo" className="max-w-full max-h-[250px] rounded-md object-contain" /></a>
                                                         ) : msg.messageType === 'video' ? (
-                                                            <video src={msg.mediaUrl} controls className="rounded-xl w-full max-h-64 object-cover" />
+                                                            <video src={msg.mediaUrl} controls className="max-w-full max-h-[250px] rounded-md" />
                                                         ) : msg.messageType === 'audio' || msg.messageType === 'voice' ? (
-                                                            <audio src={msg.mediaUrl} controls className="w-full rounded-lg p-2" />
+                                                            <audio src={msg.mediaUrl} controls className="max-w-full h-10" />
                                                         ) : (
-                                                            <a href={msg.mediaUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm p-4 text-blue-200 underline">
-                                                                View Document
+                                                            <a href={msg.mediaUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[13px] p-2 text-blue-500 underline font-medium bg-black/5 dark:bg-white/5 rounded-lg">
+                                                                📄 View Document
                                                             </a>
                                                         )}
-                                                        {msg.content && <p className="text-sm mt-2 px-3 pb-2 break-words">{msg.content}</p>}
+                                                        {msg.content && <p className="text-[13px] mt-1 whitespace-pre-wrap">{msg.content}</p>}
                                                     </div>
                                                 ) : (
-                                                    <p className="text-sm px-4 py-2.5 break-words">{msg.content}</p>
+                                                    <p className="text-[13px] whitespace-pre-wrap leading-relaxed pr-8">{msg.content}</p>
                                                 )}
-                                                <span className={`text-[10px] px-3 pb-1.5 text-right opacity-60 ${isAdmin ? 'text-blue-100' : 'text-zinc-400'}`}>
+                                                <p className={`text-[9px] mt-1 text-right opacity-60 ${msg.mediaUrl && !msg.content ? 'relative bottom-0 right-0 inline-block w-full' : 'absolute bottom-1.5 right-2'}`}>
                                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
+                                                </p>
                                             </div>
                                         </div>
                                     );
@@ -362,39 +382,31 @@ export default function SupportPage() {
                             </div>
 
                             {/* Input Area */}
-                            <div className="p-4 bg-zinc-950 border-t border-zinc-800 shrink-0">
+                            <div className="p-3 bg-white dark:bg-zinc-900 shrink-0 z-10 pb-6 sm:pb-3" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
                                 {selectedTicket.status === 'resolved' ? (
-                                    <div className="text-center text-zinc-500 text-sm py-2">
+                                    <div className="text-center text-[12px] text-zinc-400">
                                         This ticket has been resolved. Chat is closed.
                                     </div>
                                 ) : (
-                                    <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                                        <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-lg p-1">
-                                            <label className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded text-sm cursor-pointer transition-colors relative group">
-                                                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleMediaUpload(e, 'photo')} disabled={uploadingMedia} />
-                                                <ImageIcon size={18} />
-                                                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-800 text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap">Send Image</div>
-                                            </label>
-                                            <label className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded text-sm cursor-pointer transition-colors relative group">
-                                                <input type="file" accept="video/*" className="hidden" onChange={(e) => handleMediaUpload(e, 'video')} disabled={uploadingMedia} />
-                                                <Video size={18} />
-                                                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-800 text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap">Send Video</div>
-                                            </label>
-                                        </div>
+                                    <form onSubmit={handleSendMessage} className="flex items-center gap-2 max-w-4xl mx-auto relative">
+                                        <label className="w-10 h-10 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 flex items-center justify-center transition-colors shrink-0 cursor-pointer">
+                                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleMediaUpload(e, 'photo')} disabled={uploadingMedia} />
+                                            {uploadingMedia ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <ImageIcon size={18} />}
+                                        </label>
                                         <input
                                             type="text"
                                             value={newMessage}
                                             onChange={(e) => setNewMessage(e.target.value)}
                                             placeholder={uploadingMedia ? "Uploading media..." : "Type a message..."}
                                             disabled={uploadingMedia}
-                                            className="flex-1 bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 rounded-lg px-4 py-2.5 focus:outline-none focus:border-blue-500"
+                                            className="flex-1 px-4 py-2.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-[13px] focus:ring-1 focus:ring-blue-500/50 outline-none dark:text-white transition-all"
                                         />
                                         <button 
                                             type="submit" 
                                             disabled={!newMessage.trim() || isSending || uploadingMedia}
-                                            className="bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shrink-0"
+                                            className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-800 text-white flex items-center justify-center transition-colors shrink-0 shadow-sm"
                                         >
-                                            <Send size={18} className={(isSending || uploadingMedia) ? 'animate-pulse' : ''} />
+                                            <Send size={16} className="-ml-0.5" />
                                         </button>
                                     </form>
                                 )}
