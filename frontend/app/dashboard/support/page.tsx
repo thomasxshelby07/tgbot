@@ -34,6 +34,7 @@ export default function SupportPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('all');
     const [filterStatus, setFilterStatus] = useState('open');
+    const [showOnlyUnread, setShowOnlyUnread] = useState(false);
 
     const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -241,14 +242,19 @@ export default function SupportPage() {
         }
     };
 
-    const filteredTickets = tickets.filter(ticket => {
-        const matchesSearch = ticket.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            ticket.phoneNumber.includes(searchTerm) ||
-            ticket.dafabetId.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesType = filterType === 'all' || ticket.issueType === filterType;
-        const matchesStatus = filterStatus === 'all' || ticket.status === filterStatus;
-        return matchesSearch && matchesType && matchesStatus;
-    });
+    const filteredTickets = tickets
+        .filter(ticket => {
+            const matchesSearch = ticket.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                ticket.phoneNumber.includes(searchTerm) ||
+                ticket.dafabetId.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesType = filterType === 'all' || ticket.issueType === filterType;
+            const matchesStatus = filterStatus === 'all' || ticket.status === filterStatus;
+            const matchesUnread = !showOnlyUnread || ticket.unreadCount > 0;
+            return matchesSearch && matchesType && matchesStatus && matchesUnread;
+        })
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+    const totalUnread = tickets.reduce((acc, t) => acc + (t.unreadCount || 0), 0);
 
     const canSeeDepositWithdraw = adminRole === 'superadmin' || permissions.includes('deposit_withdraw');
     const canSeeIdOther = adminRole === 'superadmin' || permissions.includes('id_other');
@@ -266,7 +272,14 @@ export default function SupportPage() {
                         <ArrowLeft size={16} /> Back
                     </button>
                     <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
-                    <h1 className="text-sm font-bold dark:text-white">Support Tickets</h1>
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-sm font-bold dark:text-white">Support Tickets</h1>
+                        {totalUnread > 0 && (
+                            <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
+                                {totalUnread} New
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -296,6 +309,16 @@ export default function SupportPage() {
                                 {canSeeIdOther && <option value="ID">ID Issue</option>}
                                 {canSeeIdOther && <option value="Other">Other</option>}
                             </select>
+                            <button
+                                onClick={() => setShowOnlyUnread(!showOnlyUnread)}
+                                className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
+                                    showOnlyUnread 
+                                        ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-600/20' 
+                                        : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-600'
+                                }`}
+                            >
+                                Unread
+                            </button>
                             <select
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
@@ -323,31 +346,54 @@ export default function SupportPage() {
                                         setTickets(prev => prev.map(t => t._id === ticket._id ? { ...t, unreadCount: 0 } : t));
                                         lastTicketsRef.current = lastTicketsRef.current.map(t => t._id === ticket._id ? { ...t, unreadCount: 0 } : t);
                                     }}
-                                    className={`p-3 cursor-pointer transition-all border-b last:border-0 relative ${
+                                    className={`p-4 cursor-pointer transition-all border-b last:border-0 relative group ${
                                         selectedTicket?._id === ticket._id 
-                                            ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30' 
-                                            : 'bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800/50 hover:border-zinc-200 dark:hover:border-zinc-800'
-                                    }`}
+                                            ? 'bg-blue-600/10 dark:bg-blue-600/10 border-blue-500/50' 
+                                            : 'bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 border-zinc-100 dark:border-zinc-800/50'
+                                    } ${ticket.unreadCount > 0 ? 'ring-1 ring-blue-500/30' : ''}`}
                                 >
                                     {ticket.unreadCount > 0 && (
-                                        <div className="absolute top-3 right-3 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-bounce shadow-lg shadow-red-500/20 z-10">
+                                        <div className="absolute top-4 right-4 w-5 h-5 bg-blue-600 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-pulse shadow-lg shadow-blue-600/40 z-10">
                                             {ticket.unreadCount}
                                         </div>
                                     )}
                                     <div className="flex justify-between items-start mb-2">
-                                        <div className={`font-bold text-[13px] truncate pr-2 ${ticket.unreadCount > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{ticket.name}</div>
-                                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
-                                            ticket.status === 'resolved' ? 'bg-zinc-800 text-zinc-400' : 
-                                            ticket.issueType === 'Deposit' ? 'bg-green-500/20 text-green-400' :
-                                            ticket.issueType === 'Withdrawal' ? 'bg-orange-500/20 text-orange-400' :
-                                            'bg-blue-500/20 text-blue-400'
+                                        <div className={`font-bold text-[14px] truncate pr-4 transition-colors ${ticket.unreadCount > 0 ? 'text-blue-500' : 'text-zinc-900 dark:text-zinc-100 group-hover:text-blue-400'}`}>
+                                            {ticket.name}
+                                        </div>
+                                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded tracking-tighter ${
+                                            ticket.status === 'resolved' ? 'bg-zinc-800 text-zinc-500' : 
+                                            ticket.issueType === 'Deposit' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
+                                            ticket.issueType === 'Withdrawal' ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20' :
+                                            'bg-sky-500/10 text-sky-500 border border-sky-500/20'
                                         }`}>
                                             {ticket.issueType}
                                         </span>
                                     </div>
-                                    <div className="text-[11px] text-zinc-500 mb-0.5 flex items-center gap-1.5"><Hash size={10} /> ID: <span className="font-mono text-zinc-700 dark:text-zinc-300">{ticket.dafabetId}</span></div>
-                                    <div className="text-[11px] text-zinc-500 mb-2 flex items-center gap-1.5"><Smartphone size={10} /> {ticket.phoneNumber}</div>
-                                    <div className={`text-xs line-clamp-2 leading-relaxed ${ticket.unreadCount > 0 ? 'text-zinc-900 dark:text-zinc-200 font-medium' : 'text-zinc-600 dark:text-zinc-400'}`}>{ticket.problem}</div>
+                                    
+                                    <div className="space-y-1">
+                                        <div className="text-[11px] text-zinc-500 flex items-center gap-1.5 font-medium italic opacity-70">
+                                            <Hash size={10} className="text-blue-500" /> {ticket.dafabetId}
+                                        </div>
+                                        <div className="text-[11px] text-zinc-400 flex items-center gap-1.5">
+                                            <Smartphone size={10} /> {ticket.phoneNumber}
+                                        </div>
+                                        <div className={`text-[12px] line-clamp-2 mt-2 leading-relaxed h-8 transition-colors ${ticket.unreadCount > 0 ? 'text-zinc-200 font-semibold' : 'text-zinc-500 dark:text-zinc-400 underline-offset-4 decoration-zinc-800'}`}>
+                                            {ticket.problem}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="mt-3 flex items-center justify-between opacity-40 group-hover:opacity-100 transition-opacity">
+                                        <span className="text-[9px] font-mono text-zinc-500">
+                                            {new Date(ticket.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                        </span>
+                                        {ticket.status === 'open' && (
+                                            <div className="flex gap-1">
+                                                <div className="w-1 h-1 rounded-full bg-blue-500 animate-ping"></div>
+                                                <span className="text-[9px] uppercase font-bold text-blue-500">Active</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             ))
                         )}
