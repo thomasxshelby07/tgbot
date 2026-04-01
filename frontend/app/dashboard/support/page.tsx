@@ -14,6 +14,8 @@ interface SupportTicket {
     issueType: string;
     problem: string;
     status: 'open' | 'resolved';
+    unreadCount: number;
+    updatedAt: string;
     createdAt: string;
 }
 
@@ -42,6 +44,21 @@ export default function SupportPage() {
     // Admin Role State
     const [adminRole, setAdminRole] = useState<string>('admin');
     const [permissions, setPermissions] = useState<string[]>([]);
+    
+    // Notification logic
+    const lastTicketsRef = useRef<SupportTicket[]>([]);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    useEffect(() => {
+        audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+    }, []);
+
+    const playNotificationSound = () => {
+        if (audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch(e => console.log('Audio play failed:', e));
+        }
+    };
 
     useEffect(() => {
         const token = localStorage.getItem('bot_admin_token');
@@ -69,10 +86,27 @@ export default function SupportPage() {
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
             const response = await axios.get(`${apiUrl}/api/support/tickets`);
-            setTickets(response.data);
+            const newTickets = response.data;
+
+            // Check for notifications
+            if (lastTicketsRef.current.length > 0) {
+                const hadNewTicket = newTickets.length > lastTicketsRef.current.length;
+                const hadNewUnread = newTickets.some((nt: SupportTicket) => {
+                    const oldT = lastTicketsRef.current.find(ot => ot._id === nt._id);
+                    return oldT && nt.unreadCount > oldT.unreadCount;
+                });
+
+                if (hadNewTicket || hadNewUnread) {
+                    playNotificationSound();
+                    if (hadNewTicket) toast.success('New support ticket received!');
+                }
+            }
+
+            setTickets(newTickets);
+            lastTicketsRef.current = newTickets;
             
             // Auto close selected ticket if deleted or resolved (optional depending on UX preference)
-            if (selectedTicket && !response.data.find((t: any) => t._id === selectedTicket._id)) {
+            if (selectedTicket && !newTickets.find((t: any) => t._id === selectedTicket._id)) {
                 setSelectedTicket(null);
             }
         } catch (error) {
@@ -283,15 +317,25 @@ export default function SupportPage() {
                             filteredTickets.map(ticket => (
                                 <div
                                     key={ticket._id}
-                                    onClick={() => setSelectedTicket(ticket)}
-                                    className={`p-3 cursor-pointer transition-all border-b last:border-0 ${
+                                    onClick={() => {
+                                        setSelectedTicket(ticket);
+                                        // Reset unread count locally for instant feedback
+                                        setTickets(prev => prev.map(t => t._id === ticket._id ? { ...t, unreadCount: 0 } : t));
+                                        lastTicketsRef.current = lastTicketsRef.current.map(t => t._id === ticket._id ? { ...t, unreadCount: 0 } : t);
+                                    }}
+                                    className={`p-3 cursor-pointer transition-all border-b last:border-0 relative ${
                                         selectedTicket?._id === ticket._id 
                                             ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30' 
                                             : 'bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800/50 hover:border-zinc-200 dark:hover:border-zinc-800'
                                     }`}
                                 >
+                                    {ticket.unreadCount > 0 && (
+                                        <div className="absolute top-3 right-3 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-bounce shadow-lg shadow-red-500/20 z-10">
+                                            {ticket.unreadCount}
+                                        </div>
+                                    )}
                                     <div className="flex justify-between items-start mb-2">
-                                        <div className="font-bold text-[13px] text-zinc-900 dark:text-zinc-100 truncate pr-2">{ticket.name}</div>
+                                        <div className={`font-bold text-[13px] truncate pr-2 ${ticket.unreadCount > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{ticket.name}</div>
                                         <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
                                             ticket.status === 'resolved' ? 'bg-zinc-800 text-zinc-400' : 
                                             ticket.issueType === 'Deposit' ? 'bg-green-500/20 text-green-400' :
@@ -303,7 +347,7 @@ export default function SupportPage() {
                                     </div>
                                     <div className="text-[11px] text-zinc-500 mb-0.5 flex items-center gap-1.5"><Hash size={10} /> ID: <span className="font-mono text-zinc-700 dark:text-zinc-300">{ticket.dafabetId}</span></div>
                                     <div className="text-[11px] text-zinc-500 mb-2 flex items-center gap-1.5"><Smartphone size={10} /> {ticket.phoneNumber}</div>
-                                    <div className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">{ticket.problem}</div>
+                                    <div className={`text-xs line-clamp-2 leading-relaxed ${ticket.unreadCount > 0 ? 'text-zinc-900 dark:text-zinc-200 font-medium' : 'text-zinc-600 dark:text-zinc-400'}`}>{ticket.problem}</div>
                                 </div>
                             ))
                         )}

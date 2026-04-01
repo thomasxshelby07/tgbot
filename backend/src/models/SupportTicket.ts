@@ -8,6 +8,8 @@ export interface ISupportTicket extends Document {
     issueType: 'Withdrawal' | 'Deposit' | 'ID' | 'Other';
     problem: string;
     status: 'open' | 'resolved';
+    unreadCount: number;
+    updatedAt: Date;
     createdAt: Date;
 }
 
@@ -19,6 +21,8 @@ const SupportTicketSchema: Schema = new Schema({
     issueType: { type: String, enum: ['Withdrawal', 'Deposit', 'ID', 'Other'], required: true },
     problem: { type: String, required: true },
     status: { type: String, enum: ['open', 'resolved'], default: 'open' },
+    unreadCount: { type: Number, default: 0 },
+    updatedAt: { type: Date, default: Date.now },
     createdAt: { type: Date, default: Date.now }
 });
 

@@ -26,7 +26,7 @@ export const supportRoutes = async (fastify: FastifyInstance) => {
                 }
             }
 
-            const tickets = await SupportTicket.find(query).sort({ createdAt: -1 });
+            const tickets = await SupportTicket.find(query).sort({ updatedAt: -1 });
             return reply.send(tickets);
         } catch (error) {
             console.error('Error fetching support tickets:', error);
@@ -116,6 +116,12 @@ export const supportRoutes = async (fastify: FastifyInstance) => {
     // Get messages for a ticket
     fastify.get('/tickets/:id/messages', async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
         try {
+            // Reset unread count for this ticket when admin views messages
+            await SupportTicket.findByIdAndUpdate(req.params.id, { unreadCount: 0 });
+            
+            // Mark all user messages for this ticket as read
+            await ChatMessage.updateMany({ ticketId: req.params.id, sender: 'user', isRead: false }, { isRead: true });
+
             const messages = await ChatMessage.find({ ticketId: req.params.id }).sort({ createdAt: 1 });
             return reply.send(messages);
         } catch (error) {

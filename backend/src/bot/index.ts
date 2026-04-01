@@ -344,6 +344,13 @@ export const initBot = async () => {
                 const openTicket = await SupportTicket.findOne({ telegramId: ctx.from.id.toString(), status: 'open' });
 
                 if (openTicket) {
+                    await SupportTicket.updateOne(
+                        { _id: openTicket._id },
+                        { 
+                            $inc: { unreadCount: 1 },
+                            $set: { updatedAt: new Date() }
+                        }
+                    );
                     await ChatMessage.create({ ticketId: openTicket._id, sender: 'user', content: text, messageType: 'text' });
                     return; // Skip everything else, user is purely sending a chat message to a ticket
                 }
@@ -433,6 +440,13 @@ export const initBot = async () => {
                 const caption = ctx.message.caption || '';
                 
                 if (openTicket) {
+                    await SupportTicket.updateOne(
+                        { _id: openTicket._id },
+                        { 
+                            $inc: { unreadCount: 1 },
+                            $set: { updatedAt: new Date() }
+                        }
+                    );
                     await ChatMessage.create({
                         ticketId: openTicket._id,
                         sender: 'user',
@@ -577,6 +591,8 @@ export const initBot = async () => {
                         issueType: supportType,
                         problem: supportProblem,
                         status: 'open',
+                        unreadCount: 1,
+                        updatedAt: new Date(),
                         createdAt: new Date()
                     }
                 },
