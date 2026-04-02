@@ -114,15 +114,33 @@ export const supportRoutes = async (fastify: FastifyInstance) => {
     });
 
     // Get messages for a ticket
-    fastify.get('/tickets/:id/messages', async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+    fastify.get('/tickets/:id/messages', async (req: FastifyRequest<{ Params: { id: string }; Querystring: { since?: string } }>, reply: FastifyReply) => {
         try {
-            // Reset unread count for this ticket when admin views messages
-            await SupportTicket.findByIdAndUpdate(req.params.id, { unreadCount: 0 });
+            const { since } = req.query;
+            const query: any = { ticketId: req.params.id };
             
-            // Mark all user messages for this ticket as read
-            await ChatMessage.updateMany({ ticketId: req.params.id, sender: 'user', isRead: false }, { isRead: true });
+            if (since) {
+                query.createdAt = { $gt: new Date(since) };
+            }
 
-            const messages = await ChatMessage.find({ ticketId: req.params.id }).sort({ createdAt: 1 });
+            // Only reset unread count and mark messages as read if this is a full fetch (not a 'since' poll)
+            // or if there are actually new messages being fetched.
+            if (!since) {
+                await SupportTicket.findByIdAndUpdate(req.params.id, { unreadCount: 0 });
+                await ChatMessage.updateMany({ ticketId: req.params.id, sender: 'user', isRead: false }, { isRead: true });
+            } else {
+                // If polling, we still want to mark any newly fetched user messages as read
+                // but we only do it if the query actually returns something to avoid DB writes on empty polls
+            }
+
+            const messages = await ChatMessage.find(query).sort({ createdAt: 1 });
+            
+            if (since && messages.length > 0) {
+                // Mark these specific new messages as read and clear unread count for the ticket
+                await ChatMessage.updateMany({ _id: { $in: messages.map(m => m._id) }, sender: 'user' }, { isRead: true });
+                await SupportTicket.findByIdAndUpdate(req.params.id, { unreadCount: 0 });
+            }
+
             return reply.send(messages);
         } catch (error) {
             console.error('Error fetching ticket messages:', error);

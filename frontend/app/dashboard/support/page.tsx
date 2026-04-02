@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import axios from 'axios';
-import { LifeBuoy, CheckCircle, Trash2, Search, Filter, MessageSquare, Smartphone, Hash, Send, ImageIcon, Video, FileAudio, X, ArrowLeft } from 'lucide-react';
+import { LifeBuoy, CheckCircle, Trash2, Search, Filter, MessageSquare, Smartphone, Hash, Send, ImageIcon, Video, FileAudio, X, ArrowLeft, ChevronDown } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface SupportTicket {
@@ -28,6 +28,113 @@ interface ChatMessage {
     createdAt: string;
 }
 
+// Memoized Ticket Item for performance
+const TicketItem = memo(({ 
+    ticket, 
+    isSelected, 
+    onClick, 
+    bgColors 
+}: { 
+    ticket: SupportTicket, 
+    isSelected: boolean, 
+    onClick: () => void,
+    bgColors: string[]
+}) => {
+    const colorIndex = ticket.name.charCodeAt(0) % bgColors.length;
+    const avatarColor = bgColors[colorIndex] || 'bg-indigo-500';
+
+    return (
+        <div
+            onClick={onClick}
+            className={`p-3 cursor-pointer transition-all rounded-2xl relative group border ${
+                isSelected 
+                    ? 'bg-white border-indigo-100 shadow-[0_8px_20px_-10px_rgba(79,70,229,0.15)] ring-1 ring-indigo-500/5' 
+                    : 'bg-transparent border-transparent hover:bg-white hover:border-slate-100'
+            }`}
+        >
+            <div className="flex gap-3">
+                <div className="relative shrink-0 pt-0.5">
+                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-[16px] transition-transform group-hover:scale-105 duration-300 ${avatarColor}`}>
+                        {ticket.name.charAt(0).toUpperCase()}
+                    </div>
+                    {ticket.unreadCount > 0 && (
+                        <div className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-blue-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md z-10 p-0.5">
+                            {ticket.unreadCount}
+                        </div>
+                    )}
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start">
+                        <div className={`font-bold text-[14px] truncate transition-colors ${ticket.unreadCount > 0 ? 'text-slate-950' : 'text-slate-700'} ${isSelected ? 'text-blue-600' : ''}`}>
+                            {ticket.name}
+                        </div>
+                        <span className={`text-[10px] font-bold shrink-0 mt-0.5 flex flex-col items-end gap-0.5 ${ticket.unreadCount > 0 ? 'text-blue-600' : 'text-slate-400'}`}>
+                            {new Date(ticket.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                        </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-1.5 mt-0.5 opacity-60">
+                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">#{ticket.telegramId.slice(-5)}</span>
+                        <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                        <span className={`text-[10px] font-black uppercase tracking-tight ${
+                            ticket.status === 'resolved' ? 'text-slate-400' : 
+                            ticket.issueType === 'Deposit' ? 'text-emerald-500' :
+                            ticket.issueType === 'Withdrawal' ? 'text-orange-500' :
+                            'text-blue-500'
+                        }`}>
+                            {ticket.issueType}
+                        </span>
+                    </div>
+                    
+                    <div className={`text-[12px] line-clamp-1 leading-normal mt-1.5 ${ticket.unreadCount > 0 ? 'text-slate-800 font-semibold' : 'text-slate-500 font-medium'}`}>
+                        {ticket.problem}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+});
+TicketItem.displayName = 'TicketItem';
+
+// Memoized Message Bubble for performance
+const MessageBubble = memo(({ msg }: { msg: ChatMessage }) => {
+    const isAdmin = msg.sender === 'admin';
+    return (
+        <div className={`flex ${isAdmin ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+            <div className={`max-w-[92%] sm:max-w-[75%] px-4 py-2 relative shadow-sm ${
+                isAdmin 
+                    ? 'bg-blue-600 text-white rounded-2xl rounded-tr-none' 
+                    : 'bg-white text-slate-800 rounded-2xl rounded-tl-none border border-slate-200'
+            }`}>
+                {msg.mediaUrl ? (
+                    <div className="mb-1.5">
+                        {msg.messageType === 'photo' ? (
+                            <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl border border-black/5"><img src={msg.mediaUrl} alt="Shared photo" className="max-w-full max-h-[300px] hover:scale-105 transition-transform duration-500" /></a>
+                        ) : msg.messageType === 'video' ? (
+                            <video src={msg.mediaUrl} controls className="max-w-full max-h-[300px] rounded-xl" />
+                        ) : msg.messageType === 'audio' || msg.messageType === 'voice' ? (
+                            <audio src={msg.mediaUrl} controls className={`max-w-full h-10 ${isAdmin ? 'brightness-200' : ''}`} />
+                        ) : (
+                            <a href={msg.mediaUrl} target="_blank" rel="noreferrer" className="flex items-center gap-3 text-[13px] p-3 text-blue-600 bg-blue-50/50 rounded-xl font-bold transition-all hover:bg-blue-100/50">
+                                <div className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0 text-blue-500"><FileAudio size={20} /></div> File Documentation
+                            </a>
+                        )}
+                        {msg.content && <p className="text-[14px] mt-2 font-medium leading-relaxed">{msg.content}</p>}
+                    </div>
+                ) : (
+                    <p className="text-[14px] font-medium leading-relaxed break-words">{msg.content}</p>
+                )}
+                <div className={`flex items-center justify-end gap-1.5 mt-1 opacity-50 ${msg.mediaUrl && !msg.content ? 'relative' : ''}`}>
+                    <span className="text-[9px] font-black uppercase tracking-tighter">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    {isAdmin && <CheckCircle size={10} strokeWidth={3} className="text-white/80" />}
+                </div>
+            </div>
+        </div>
+    );
+});
+MessageBubble.displayName = 'MessageBubble';
+
 export default function SupportPage() {
     const [tickets, setTickets] = useState<SupportTicket[]>([]);
     const [loading, setLoading] = useState(true);
@@ -42,6 +149,12 @@ export default function SupportPage() {
     const [isSending, setIsSending] = useState(false);
     const [uploadingMedia, setUploadingMedia] = useState(false);
     
+    // Performance & Auto-scroll State
+    const [isAtBottom, setIsAtBottom] = useState(true);
+    const lastMessageTimeRef = useRef<string | null>(null);
+    const chatContainerRef = useRef<HTMLDivElement>(null);
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+
     // Admin Role State
     const [adminRole, setAdminRole] = useState<string>('admin');
     const [permissions, setPermissions] = useState<string[]>([]);
@@ -49,6 +162,7 @@ export default function SupportPage() {
     // Notification logic
     const lastTicketsRef = useRef<SupportTicket[]>([]);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -72,16 +186,31 @@ export default function SupportPage() {
         }
     }, []);
 
-    // Auto-scroll
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Auto-scroll logic
+    const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior });
+        }
+    }, []);
+
+    const handleScroll = () => {
+        if (!chatContainerRef.current) return;
+        const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+        const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
+        setIsAtBottom(isNearBottom);
     };
 
     useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+        if (isAtBottom) {
+            scrollToBottom();
+        }
+    }, [messages, isAtBottom, scrollToBottom]);
 
     const fetchTickets = async () => {
         try {
@@ -124,11 +253,23 @@ export default function SupportPage() {
         return () => clearInterval(interval);
     }, []);
 
-    const fetchMessages = async (ticketId: string) => {
+    const fetchMessages = async (ticketId: string, isInitial = false) => {
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-            const response = await axios.get(`${apiUrl}/api/support/tickets/${ticketId}/messages`);
-            setMessages(response.data);
+            const since = !isInitial && lastMessageTimeRef.current ? lastMessageTimeRef.current : '';
+            const response = await axios.get(`${apiUrl}/api/support/tickets/${ticketId}/messages`, {
+                params: { since }
+            });
+            
+            const newMessages = response.data;
+            if (newMessages.length > 0) {
+                if (isInitial) {
+                    setMessages(newMessages);
+                } else {
+                    setMessages(prev => [...prev, ...newMessages]);
+                }
+                lastMessageTimeRef.current = newMessages[newMessages.length - 1].createdAt;
+            }
         } catch (error) {
             console.error('Error fetching messages:', error);
         }
@@ -136,8 +277,12 @@ export default function SupportPage() {
 
     // Poll messages if a ticket is selected
     useEffect(() => {
-        if (!selectedTicket) return;
-        fetchMessages(selectedTicket._id);
+        if (!selectedTicket) {
+            lastMessageTimeRef.current = null;
+            return;
+        }
+        
+        fetchMessages(selectedTicket._id, true);
         const interval = setInterval(() => fetchMessages(selectedTicket._id), 3000); // Poll chat every 3s
         return () => clearInterval(interval);
     }, [selectedTicket]);
@@ -242,45 +387,47 @@ export default function SupportPage() {
         }
     };
 
-    const filteredTickets = tickets
-        .filter(ticket => {
-            const matchesSearch = ticket.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                ticket.phoneNumber.includes(searchTerm) ||
-                ticket.dafabetId.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesType = filterType === 'all' || ticket.issueType === filterType;
-            const matchesStatus = filterStatus === 'all' || ticket.status === filterStatus;
-            const matchesUnread = !showOnlyUnread || ticket.unreadCount > 0;
-            return matchesSearch && matchesType && matchesStatus && matchesUnread;
-        })
-        .sort((a, b) => {
-            if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
-            if (b.unreadCount > 0 && a.unreadCount === 0) return 1;
-            return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-        });
+    const filteredTickets = useMemo(() => {
+        return tickets
+            .filter(ticket => {
+                const searchLower = debouncedSearch.toLowerCase();
+                const matchesSearch = ticket.name.toLowerCase().includes(searchLower) ||
+                    ticket.phoneNumber.includes(debouncedSearch) ||
+                    ticket.dafabetId.toLowerCase().includes(searchLower);
+                const matchesType = filterType === 'all' || ticket.issueType === filterType;
+                const matchesStatus = filterStatus === 'all' || ticket.status === filterStatus;
+                const matchesUnread = !showOnlyUnread || ticket.unreadCount > 0;
+                return matchesSearch && matchesType && matchesStatus && matchesUnread;
+            })
+            .sort((a, b) => {
+                // Primary sort: newest activity (updatedAt) first
+                return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+            });
+    }, [tickets, debouncedSearch, filterType, filterStatus, showOnlyUnread]);
 
-    const totalUnread = tickets.reduce((acc, t) => acc + (t.unreadCount || 0), 0);
+    const totalUnread = useMemo(() => tickets.reduce((acc, t) => acc + (t.unreadCount || 0), 0), [tickets]);
     const bgColors = ['bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-rose-500', 'bg-orange-500', 'bg-amber-500', 'bg-emerald-500', 'bg-cyan-500', 'bg-blue-500'];
 
     const canSeeDepositWithdraw = adminRole === 'superadmin' || permissions.includes('deposit_withdraw');
     const canSeeIdOther = adminRole === 'superadmin' || permissions.includes('id_other');
 
     return (
-        <div className="flex flex-col h-[100dvh] w-full bg-[#f8fafc] text-slate-900 overflow-hidden font-sans selection:bg-indigo-100 selection:text-indigo-900">
+        <div className="flex flex-col h-screen h-[100svh] w-full bg-[#f8fafc] text-slate-900 overflow-hidden font-sans selection:bg-indigo-100 selection:text-indigo-900">
             {/* Top Navigation Bar - Premium Glassmorphism */}
             <div className="h-14 bg-white/70 backdrop-blur-xl border-b border-slate-200/60 flex items-center justify-between px-6 shrink-0 z-30 sticky top-0 shadow-[0_1px_3px_0_rgba(0,0,0,0.02)]">
                 <div className="flex items-center gap-5">
                     <button 
                         onClick={() => window.location.href = '/dashboard'}
-                        className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-indigo-600 transition-all active:scale-95 flex items-center gap-2 text-sm font-semibold"
+                        className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-blue-600 transition-all active:scale-95 flex items-center gap-2 text-sm font-semibold"
                         title="Back to Dashboard"
                     >
                         <ArrowLeft size={18} strokeWidth={2.5} /> <span className="hidden sm:inline">Dashboard</span>
                     </button>
                     <div className="h-4 w-px bg-slate-200"></div>
                     <div className="flex items-center gap-3">
-                        <h1 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 uppercase tracking-tight">Support Tickets</h1>
+                        <h1 className="text-base font-bold text-slate-800 tracking-tight">Support Terminal</h1>
                         {totalUnread > 0 && (
-                            <span className="bg-indigo-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg shadow-indigo-600/20 ring-2 ring-white">
+                            <span className="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg shadow-blue-600/20 ring-2 ring-white">
                                 {totalUnread}
                             </span>
                         )}
@@ -296,14 +443,14 @@ export default function SupportPage() {
 
             <div className="flex flex-1 min-h-0 relative">
                 {/* Left Side: Tickets List - Sleeker Sidebar */}
-                <div className={`w-full md:w-[340px] shrink-0 bg-white border-r border-slate-200/60 flex flex-col z-20 ${selectedTicket ? 'hidden md:flex' : 'flex'}`}>
-                    <div className="p-4 border-b border-slate-100 space-y-3 bg-slate-50/30 shrink-0">
+                <div className={`w-full md:w-[320px] shrink-0 bg-white border-r border-slate-200 flex flex-col z-20 ${selectedTicket ? 'hidden md:flex' : 'flex'}`}>
+                    <div className="p-4 border-b border-slate-100 space-y-3 bg-white shrink-0">
                         <div className="relative group">
-                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
                             <input
                                 type="text"
                                 placeholder="Search Name, Phone, ID..."
-                                className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500/50 transition-all placeholder-slate-400 font-medium"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all placeholder-slate-400 font-medium"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -313,9 +460,9 @@ export default function SupportPage() {
                                 <select
                                     value={filterType}
                                     onChange={(e) => setFilterType(e.target.value)}
-                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-[12px] font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all appearance-none cursor-pointer"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[12px] font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all appearance-none cursor-pointer"
                                 >
-                                    <option value="all">All Issues</option>
+                                    <option value="all">Issues</option>
                                     {canSeeDepositWithdraw && <option value="Withdrawal">Withdrawal</option>}
                                     {canSeeDepositWithdraw && <option value="Deposit">Deposit</option>}
                                     {canSeeIdOther && <option value="ID">ID Issue</option>}
@@ -326,7 +473,7 @@ export default function SupportPage() {
                                 onClick={() => setShowOnlyUnread(!showOnlyUnread)}
                                 className={`px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all border ${
                                     showOnlyUnread 
-                                        ? 'bg-indigo-600 border-indigo-500 text-white shadow-md shadow-indigo-600/20' 
+                                        ? 'bg-blue-600 border-blue-500 text-white shadow-md shadow-blue-600/20' 
                                         : 'bg-white border-slate-200 text-slate-400 hover:border-slate-300'
                                 }`}
                             >
@@ -335,7 +482,7 @@ export default function SupportPage() {
                             <select
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
-                                className="w-[85px] bg-white border border-slate-200 rounded-xl px-2 py-2 text-[11px] font-black text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 appearance-none cursor-pointer text-center"
+                                className="w-[85px] bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 text-[11px] font-black text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/10 appearance-none cursor-pointer text-center"
                             >
                                 <option value="open">Open</option>
                                 <option value="resolved">Closed</option>
@@ -344,7 +491,7 @@ export default function SupportPage() {
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-2 space-y-1.5 custom-scrollbar bg-slate-50/20">
+                    <div id="ticket-list-container" className="flex-1 overflow-y-auto p-2 space-y-1.5 custom-scrollbar bg-slate-50/20">
                         {loading ? (
                             <div className="flex flex-col items-center justify-center py-20 gap-3 opacity-40">
                                 <div className="w-8 h-8 border-2 border-slate-300 border-t-indigo-600 rounded-full animate-spin"></div>
@@ -356,67 +503,22 @@ export default function SupportPage() {
                                 <span className="text-[13px] font-medium">No results found</span>
                             </div>
                         ) : (
-                            filteredTickets.map(ticket => {
-                                const colorIndex = ticket.name.charCodeAt(0) % bgColors.length;
-                                const avatarColor = bgColors[colorIndex] || 'bg-indigo-500';
-                                const isSelected = selectedTicket?._id === ticket._id;
-                                
-                                return (
-                                <div
-                                    key={ticket._id}
+                            filteredTickets.map(ticket => (
+                                <TicketItem 
+                                    key={ticket._id} 
+                                    ticket={ticket} 
+                                    isSelected={selectedTicket?._id === ticket._id} 
+                                    bgColors={bgColors}
                                     onClick={() => {
                                         setSelectedTicket(ticket);
                                         setTickets(prev => prev.map(t => t._id === ticket._id ? { ...t, unreadCount: 0 } : t));
                                         lastTicketsRef.current = lastTicketsRef.current.map(t => t._id === ticket._id ? { ...t, unreadCount: 0 } : t);
+                                        setMessages([]);
+                                        lastMessageTimeRef.current = null;
+                                        setIsAtBottom(true);
                                     }}
-                                    className={`p-3 cursor-pointer transition-all rounded-2xl relative group border ${
-                                        isSelected 
-                                            ? 'bg-white border-indigo-100 shadow-[0_8px_20px_-10px_rgba(79,70,229,0.15)] ring-1 ring-indigo-500/5' 
-                                            : 'bg-transparent border-transparent hover:bg-white hover:border-slate-100'
-                                    }`}
-                                >
-                                    <div className="flex gap-3">
-                                        <div className="relative shrink-0 pt-0.5">
-                                            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-white font-bold text-[16px] shadow-sm transition-transform group-hover:scale-105 duration-300 ${avatarColor}`}>
-                                                {ticket.name.charAt(0).toUpperCase()}
-                                            </div>
-                                            {ticket.unreadCount > 0 && (
-                                                <div className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-indigo-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md z-10 p-0.5">
-                                                    {ticket.unreadCount}
-                                                </div>
-                                            )}
-                                        </div>
-                                        
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-start">
-                                                <div className={`font-bold text-[14px] truncate transition-colors ${ticket.unreadCount > 0 ? 'text-slate-950' : 'text-slate-700'} ${isSelected ? 'text-indigo-600' : ''}`}>
-                                                    {ticket.name}
-                                                </div>
-                                                <span className={`text-[10px] font-bold shrink-0 mt-0.5 flex flex-col items-end gap-0.5 ${ticket.unreadCount > 0 ? 'text-indigo-600' : 'text-slate-400'}`}>
-                                                    {new Date(ticket.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
-                                                </span>
-                                            </div>
-                                            
-                                            <div className="flex items-center gap-1.5 mt-0.5 opacity-60">
-                                                <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">#{ticket.telegramId.slice(-5)}</span>
-                                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                                <span className={`text-[10px] font-black uppercase tracking-tight ${
-                                                    ticket.status === 'resolved' ? 'text-slate-400' : 
-                                                    ticket.issueType === 'Deposit' ? 'text-emerald-500' :
-                                                    ticket.issueType === 'Withdrawal' ? 'text-orange-500' :
-                                                    'text-indigo-500'
-                                                }`}>
-                                                    {ticket.issueType}
-                                                </span>
-                                            </div>
-                                            
-                                            <div className={`text-[12px] line-clamp-1 leading-normal mt-1.5 ${ticket.unreadCount > 0 ? 'text-slate-800 font-semibold' : 'text-slate-500 font-medium'}`}>
-                                                {ticket.problem}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )})
+                                />
+                            ))
                         )}
                     </div>
                 </div>
@@ -442,24 +544,24 @@ export default function SupportPage() {
                             <div className="absolute inset-0 z-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
                             
                             {/* Active Ticket Header - Glass */}
-                            <div className="h-16 px-6 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl shrink-0 flex justify-between items-center z-20 shadow-[0_1px_4px_-1px_rgba(0,0,0,0.03)] sticky top-0">
-                                <div className="flex items-center gap-4">
+                            <div className="h-14 sm:h-16 px-4 sm:px-6 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl shrink-0 flex justify-between items-center z-20 shadow-[0_1px_4px_-1px_rgba(0,0,0,0.03)] sticky top-0">
+                                <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
                                     <button 
                                         onClick={() => setSelectedTicket(null)}
-                                        className="md:hidden p-2 -ml-2 text-slate-400 hover:text-indigo-600 transition-colors"
+                                        className="p-2 -ml-2 text-slate-400 hover:text-blue-600 transition-colors shrink-0"
                                     >
                                         <ArrowLeft size={20} strokeWidth={2.5} />
                                     </button>
-                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-[16px] text-white shadow-sm shrink-0 ${bgColors[selectedTicket.name.charCodeAt(0) % bgColors.length] || 'bg-indigo-500'}`}>
+                                    <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-bold text-[14px] sm:text-[16px] text-white shadow-sm shrink-0 ${bgColors[selectedTicket.name.charCodeAt(0) % bgColors.length] || 'bg-blue-500'}`}>
                                         {(selectedTicket.name || 'U').charAt(0).toUpperCase()}
                                     </div>
                                     <div className="min-w-0">
-                                        <h2 className="font-bold text-[15px] text-slate-900 leading-none truncate">
+                                        <h2 className="font-bold text-[14px] sm:text-[15px] text-slate-900 leading-none truncate">
                                             {selectedTicket.name}
                                         </h2>
-                                        <div className="flex items-center gap-2 mt-1">
+                                        <div className="flex items-center gap-1.5 mt-1 sm:mt-1.5">
                                             <span className={`flex h-1.5 w-1.5 rounded-full ${selectedTicket.status === 'open' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></span>
-                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">{selectedTicket.status === 'open' ? 'Active Technical Chat' : 'Archived Request'}</p>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">{selectedTicket.status === 'open' ? 'Technical Chat' : 'Closed'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -467,7 +569,7 @@ export default function SupportPage() {
                                     {selectedTicket.status === 'open' && (
                                         <button 
                                             onClick={() => handleResolve(selectedTicket._id)} 
-                                            className="h-10 px-5 text-[12px] font-black uppercase tracking-wider text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all shadow-lg shadow-slate-900/10 active:scale-95"
+                                            className="h-10 px-5 text-[12px] font-black uppercase tracking-wider text-white bg-slate-900 hover:bg-black rounded-xl transition-all shadow-lg active:scale-95"
                                         >
                                             End Chat
                                         </button>
@@ -475,7 +577,7 @@ export default function SupportPage() {
                                     {selectedTicket.status === 'resolved' && (
                                         <button 
                                             onClick={() => handleReopen(selectedTicket._id)} 
-                                            className="h-10 px-5 text-[12px] font-black uppercase tracking-wider text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-lg shadow-indigo-600/10"
+                                            className="h-10 px-5 text-[12px] font-black uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-lg shadow-blue-600/10"
                                         >
                                             Reopen
                                         </button>
@@ -488,25 +590,29 @@ export default function SupportPage() {
                                 </div>
                             </div>
                             
-                            {/* User Context Bar */}
-                            <div className="bg-indigo-600/5 border-b border-indigo-600/10 p-3 px-6 shrink-0 z-10 flex flex-wrap gap-x-6 gap-y-2 items-center">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500/60">Phone</span>
-                                    <span className="text-[13px] font-bold text-indigo-900 leading-none">{selectedTicket.phoneNumber}</span>
+                            {/* User Context Bar - Scrollable on mobile */}
+                            <div className="bg-slate-50 border-b border-slate-200 p-2 sm:p-3 px-4 sm:px-6 shrink-0 z-10 flex items-center overflow-x-auto no-scrollbar gap-x-6">
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Phone</span>
+                                    <span className="text-[12px] sm:text-[13px] font-bold text-slate-900 leading-none">{selectedTicket.phoneNumber}</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500/60">System ID</span>
-                                    <span className="text-[13px] font-bold text-indigo-900 leading-none font-mono">DFA-{selectedTicket.dafabetId}</span>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">System ID</span>
+                                    <span className="text-[12px] sm:text-[13px] font-bold text-slate-900 leading-none font-mono">DFA-{selectedTicket.dafabetId}</span>
                                 </div>
                                 {selectedTicket.issueType && (
-                                    <div className="ml-auto flex items-center gap-2">
-                                        <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-white shadow-sm ring-1 ring-indigo-500/10 text-indigo-600 uppercase tracking-tighter">{selectedTicket.issueType}</span>
+                                    <div className="ml-auto flex items-center gap-2 shrink-0">
+                                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-white shadow-sm border border-slate-200 text-blue-600 uppercase tracking-tighter">{selectedTicket.issueType}</span>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Chat Messages - WhatsApp-like compact bubbles */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-3 z-10 relative custom-scrollbar flex flex-col">
+                            {/* Chat Messages */}
+                            <div 
+                                ref={chatContainerRef}
+                                onScroll={handleScroll}
+                                className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 z-10 relative custom-scrollbar flex flex-col scroll-smooth bg-white"
+                            >
                                 {/* Problem Banner in message list */}
                                 <div className="self-center my-4 max-w-[90%] bg-indigo-100/50 backdrop-blur-sm border border-indigo-200/50 px-6 py-4 rounded-[28px] shadow-sm relative overflow-hidden">
                                      <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none"><LifeBuoy size={60} strokeWidth={1} /></div>
@@ -514,49 +620,27 @@ export default function SupportPage() {
                                      <p className="text-[14px] text-indigo-950 font-bold leading-relaxed">{selectedTicket.problem}</p>
                                 </div>
 
-                                {messages.map((msg, idx) => {
-                                    const isAdmin = msg.sender === 'admin';
-                                    return (
-                                        <div key={msg._id || idx} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
-                                            <div className={`max-w-[85%] sm:max-w-[65%] px-4 py-2.5 relative shadow-[0_2px_10px_-5px_rgba(0,0,0,0.05)] ${
-                                                isAdmin 
-                                                    ? 'bg-indigo-600 text-white rounded-3xl rounded-tr-none' 
-                                                    : 'bg-white text-slate-800 rounded-3xl rounded-tl-none border border-slate-100'
-                                            }`}>
-                                                {msg.mediaUrl ? (
-                                                    <div className="mb-1.5">
-                                                        {msg.messageType === 'photo' ? (
-                                                            <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-2xl border border-black/5"><img src={msg.mediaUrl} alt="Shared photo" className="max-w-full max-h-[300px] hover:scale-105 transition-transform duration-500" /></a>
-                                                        ) : msg.messageType === 'video' ? (
-                                                            <video src={msg.mediaUrl} controls className="max-w-full max-h-[300px] rounded-2xl" />
-                                                        ) : msg.messageType === 'audio' || msg.messageType === 'voice' ? (
-                                                            <audio src={msg.mediaUrl} controls className={`max-w-full h-10 ${isAdmin ? 'invert hue-rotate-180 brightness-150' : ''}`} />
-                                                        ) : (
-                                                            <a href={msg.mediaUrl} target="_blank" rel="noreferrer" className="flex items-center gap-3 text-[13px] p-3 text-indigo-600 bg-indigo-50/50 rounded-2xl font-bold transition-all hover:bg-indigo-100/50">
-                                                                <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0 text-indigo-500"><FileAudio size={20} /></div> File Documentation
-                                                            </a>
-                                                        )}
-                                                        {msg.content && <p className="text-[14px] mt-2 font-medium leading-relaxed">{msg.content}</p>}
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-[14px] font-medium leading-relaxed pr-6">{msg.content}</p>
-                                                )}
-                                                <div className={`flex items-center justify-end gap-1.5 mt-1 opacity-50 ${msg.mediaUrl && !msg.content ? 'relative' : ''}`}>
-                                                    <span className="text-[9px] font-black uppercase tracking-tighter">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                    {isAdmin && <CheckCircle size={10} strokeWidth={3} className="text-white/80" />}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                                <div ref={messagesEndRef} className="h-6" />
+                                {messages.map((msg) => (
+                                    <MessageBubble key={msg._id} msg={msg} />
+                                ))}
+                                <div ref={messagesEndRef} className="h-2 shrink-0" />
                             </div>
+
+                            {/* Floating Scroll to Bottom Button */}
+                            {!isAtBottom && messages.length > 0 && (
+                                <button 
+                                    onClick={() => scrollToBottom()}
+                                    className="absolute bottom-28 right-6 z-20 w-10 h-10 rounded-full bg-white shadow-xl border border-slate-100 flex items-center justify-center text-blue-600 animate-bounce active:scale-95"
+                                >
+                                    <ChevronDown size={20} strokeWidth={3} />
+                                </button>
+                            )}
                             
                             {/* Input Center Overlay when resolution is processing */}
                             {(isSending || uploadingMedia) && (
                                 <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-30 transition-all">
                                      <div className="bg-white/80 backdrop-blur-md px-6 py-2 rounded-full border border-slate-200 shadow-xl flex items-center gap-3">
-                                         <div className="w-3 h-3 bg-indigo-600 rounded-full animate-ping"></div>
+                                         <div className="w-3 h-3 bg-blue-600 rounded-full animate-ping"></div>
                                          <span className="text-[11px] font-black uppercase tracking-widest text-slate-700">Syncing...</span>
                                      </div>
                                 </div>
@@ -565,11 +649,11 @@ export default function SupportPage() {
                             {/* Input Area - Sleek floating bar */}
                             <div className="p-4 bg-transparent shrink-0 z-20 sticky bottom-0">
                                 {selectedTicket.status === 'resolved' ? (
-                                    <div className="flex flex-col items-center justify-center py-4 gap-3 bg-white/60 backdrop-blur-md rounded-3xl border border-slate-200/50 shadow-lg">
-                                        <div className="text-center text-[12px] font-bold text-slate-400 uppercase tracking-widest">Chat Session Archived</div>
+                                    <div className="flex flex-col items-center justify-center py-4 gap-3 bg-white/60 backdrop-blur-md rounded-3xl border border-slate-200 shadow-lg">
+                                        <div className="text-center text-[12px] font-bold text-slate-400 uppercase tracking-widest">Session Closed</div>
                                         <button 
                                             onClick={() => handleReopen(selectedTicket._id)}
-                                            className="px-8 py-2.5 bg-indigo-600 text-white rounded-full font-black text-[12px] uppercase tracking-wider hover:bg-slate-900 transition-all shadow-xl shadow-indigo-600/20 active:scale-95"
+                                            className="px-8 py-2.5 bg-blue-600 text-white rounded-full font-black text-[12px] uppercase tracking-wider hover:bg-black transition-all shadow-xl shadow-blue-600/20 active:scale-95"
                                         >
                                             Unarchive chat
                                         </button>
@@ -577,7 +661,7 @@ export default function SupportPage() {
                                 ) : (
                                     <form onSubmit={handleSendMessage} className="max-w-5xl mx-auto flex items-end gap-2 bg-white/90 backdrop-blur-2xl p-2.5 rounded-[32px] border border-slate-200 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)] ring-4 ring-slate-100/30">
                                         <div className="flex items-center gap-1">
-                                            <label className="w-11 h-11 rounded-full hover:bg-slate-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center transition-all shrink-0 cursor-pointer mb-0.5 active:scale-90">
+                                            <label className="w-11 h-11 rounded-full hover:bg-slate-100 text-slate-400 hover:text-blue-600 flex items-center justify-center transition-all shrink-0 cursor-pointer mb-0.5 active:scale-90">
                                                 <input type="file" accept="image/*" className="hidden" onChange={(e) => handleMediaUpload(e, 'photo')} disabled={uploadingMedia} />
                                                 <ImageIcon size={22} strokeWidth={2} />
                                             </label>
@@ -599,7 +683,7 @@ export default function SupportPage() {
                                         <button 
                                             type="submit" 
                                             disabled={!newMessage.trim() || isSending || uploadingMedia}
-                                            className="w-11 h-11 rounded-full bg-slate-950 hover:bg-indigo-600 disabled:bg-slate-100 disabled:text-slate-300 text-white flex items-center justify-center transition-all shrink-0 mb-0.5 shadow-lg active:scale-90"
+                                            className="w-11 h-11 rounded-full bg-slate-900 hover:bg-blue-600 disabled:bg-slate-100 disabled:text-slate-300 text-white flex items-center justify-center transition-all shrink-0 mb-0.5 shadow-lg active:scale-90"
                                         >
                                             <Send size={18} strokeWidth={3} className="-ml-1" />
                                         </button>

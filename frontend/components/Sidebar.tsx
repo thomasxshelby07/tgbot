@@ -60,49 +60,49 @@ const Sidebar = ({ isOpen, onClose, adminRole }: SidebarProps) => {
     return (
         <aside 
             className={`
-                h-screen w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col fixed left-0 top-0 overflow-y-auto z-50 transition-transform duration-300
+                h-screen w-64 bg-white border-r border-zinc-200 flex flex-col fixed left-0 top-0 overflow-y-auto z-50 transition-transform duration-300
                 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             `}
         >
-            <div className="p-6 flex items-center justify-between border-b border-zinc-800/50">
+            <div className="p-6 flex items-center justify-between border-b border-zinc-100">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
                         <Send size={16} className="text-white ml-0.5" />
                     </div>
-                    <h1 className="text-lg font-bold text-white tracking-tight">
+                    <h1 className="text-lg font-bold text-zinc-900 tracking-tight">
                         Bot Admin
                     </h1>
                 </div>
                 {/* Mobile Close Button */}
-                <button onClick={onClose} className="lg:hidden p-2 text-zinc-500 hover:text-white">
+                <button onClick={onClose} className="lg:hidden p-2 text-zinc-400 hover:text-zinc-600 transition-colors">
                     <X size={20} />
                 </button>
             </div>
-
+ 
             <nav className="flex-1 px-3 py-6">
-                <p className="px-3 text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2">Main Menu</p>
+                <p className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-[0.1em] mb-4">Main Menu</p>
                 <ul className="space-y-1">
                     {navigation.map((item) => {
                         const isActive = pathname === item.href;
                         const Icon = item.icon;
-
+ 
                         return (
                             <li key={item.name}>
                                 <Link
                                     href={item.href}
                                     onClick={onClose}
                                     className={`
-                                        flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group
+                                        flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 group
                                         ${isActive
-                                            ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                                            : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'
+                                            ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                                            : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900'
                                         }
                                     `}
                                 >
-                                    <Icon size={18} className={`transition-colors duration-200 ${isActive ? 'text-blue-400' : 'text-zinc-500 group-hover:text-zinc-300'}`} />
+                                    <Icon size={18} className={`transition-colors duration-200 ${isActive ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-600'}`} />
                                     <span>{item.name}</span>
                                     {isActive && (
-                                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)]" />
+                                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white/40" />
                                     )}
                                 </Link>
                             </li>
@@ -110,10 +110,10 @@ const Sidebar = ({ isOpen, onClose, adminRole }: SidebarProps) => {
                     })}
                 </ul>
             </nav>
-
-            <div className="p-4 border-t border-zinc-800/50 bg-zinc-900/50 backdrop-blur-sm">
-                <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-medium text-zinc-400 hover:bg-red-500/10 hover:text-red-400 transition-all group">
-                    <LogOut size={18} className="group-hover:text-red-400 transition-colors" />
+ 
+            <div className="p-4 border-t border-zinc-100 bg-zinc-50/50">
+                <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2.5 w-full rounded-xl text-sm font-semibold text-zinc-500 hover:bg-red-50 hover:text-red-600 transition-all group">
+                    <LogOut size={18} className="group-hover:text-red-500 transition-colors" />
                     <span>Logout</span>
                 </button>
             </div>
