@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Download, Save, RefreshCcw, Star } from 'lucide-react';
+import { Download, Save, RefreshCcw, Star, Users } from 'lucide-react';
 
 interface VipMember {
     _id: string;
@@ -62,85 +62,92 @@ export default function VipManagementPage() {
     };
 
     return (
-        <div className="w-full max-w-6xl mx-auto pb-20 px-1">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-6">
+        <div className="w-full max-w-6xl mx-auto pb-20 px-1 bg-slate-50 min-h-screen">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10 gap-6 px-2">
                 <div>
-                    <h1 className="text-4xl font-black text-zinc-900 dark:text-white tracking-tighter flex items-center gap-3 italic underline decoration-yellow-500/50 decoration-8 underline-offset-8">
-                        <Star className="text-yellow-500 fill-yellow-500 animate-pulse" size={32} /> VIP CLUB
-                    </h1>
-                    <p className="text-zinc-500 dark:text-zinc-400 mt-4 font-medium uppercase tracking-[0.2em] text-[10px]">Membership Control & Analytics</p>
+                    <div className="flex items-center gap-3 mb-2">
+                         <div className="p-2 bg-amber-50 rounded-xl border border-amber-100 shadow-sm">
+                            <Star className="text-amber-500 fill-amber-500 animate-pulse" size={24} />
+                         </div>
+                         <h1 className="text-4xl font-black text-slate-900 tracking-tighter italic">VIP CLUB</h1>
+                    </div>
+                    <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px] ml-1">Premium Membership Control & Analytics</p>
                 </div>
                 <button
                     onClick={handleExport}
-                    className="w-full sm:w-auto flex items-center justify-center gap-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black uppercase text-xs tracking-widest py-4 px-8 rounded-2xl transition-all shadow-xl hover:scale-[1.02] active:scale-95 border-b-4 border-zinc-700 dark:border-zinc-200"
+                    className="w-full sm:w-auto flex items-center justify-center gap-3 bg-slate-900 text-white font-black uppercase text-[12px] tracking-widest py-4 px-8 rounded-[24px] transition-all shadow-xl hover:bg-black hover:scale-[1.02] active:scale-95 shadow-slate-900/10"
                 >
-                    <Download size={18} className="stroke-[3]" /> Export Excel
+                    <Download size={18} strokeWidth={3} /> <span>Export Database</span>
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 {/* Settings Panel */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-                        <h2 className="text-lg font-bold text-zinc-900 dark:text-white mb-6">VIP Settings</h2>
+                    <div className="bg-white rounded-[32px] shadow-sm border border-slate-200 p-8 shadow-indigo-500/5 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50/50 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
                         
-                        <div className="space-y-4">
+                        <h2 className="text-lg font-black text-slate-900 mb-8 flex items-center gap-2 relative z-10">
+                             VIP Configuration
+                        </h2>
+                        
+                        <div className="space-y-6 relative z-10">
                             <div>
-                                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                                    Menu Button Text
+                                <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 ml-1">
+                                    Menu Label / बटन का नाम
                                 </label>
                                 <input
                                     type="text"
-                                    className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                                    className="w-full p-4 rounded-2xl border border-slate-100 bg-slate-50 text-slate-900 placeholder-slate-300 focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all text-sm font-bold shadow-inner"
                                     value={settings.vipButtonText}
                                     onChange={(e) => setSettings({ ...settings, vipButtonText: e.target.value })}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                                    Welcome Message
+                                <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 ml-1">
+                                    Registration Welcome / स्वागत संदेश
                                 </label>
                                 <textarea
-                                    className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm h-32 resize-none"
+                                    className="w-full p-4 rounded-2xl border border-slate-100 bg-slate-50 text-slate-900 placeholder-slate-300 focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all text-sm font-medium h-32 resize-none shadow-inner leading-relaxed"
                                     value={settings.vipWelcomeMessage}
                                     onChange={(e) => setSettings({ ...settings, vipWelcomeMessage: e.target.value })}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                                    Channel Link
+                                <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 ml-1">
+                                    Private Channel Link / चैनल लिंक
                                 </label>
                                 <input
                                     type="text"
-                                    placeholder="https://t.me/..."
-                                    className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-mono"
+                                    placeholder="https://t.me/joinchat/..."
+                                    className="w-full p-4 rounded-2xl border border-slate-100 bg-slate-50 text-slate-900 placeholder-slate-300 focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all text-sm font-mono shadow-inner"
                                     value={settings.vipChannelLink}
                                     onChange={(e) => setSettings({ ...settings, vipChannelLink: e.target.value })}
                                 />
                             </div>
 
-                            <div className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
-                                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Feature Active</span>
+                            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 shadow-inner">
+                                <span className="text-[12px] font-black uppercase tracking-widest text-slate-600">Feature Status</span>
                                 <button
                                     onClick={() => setSettings({ ...settings, vipActive: !settings.vipActive })}
-                                    className={`w-12 h-6 rounded-full transition-all relative ${settings.vipActive ? 'bg-blue-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                                    className={`w-14 h-7 rounded-full transition-all relative ${settings.vipActive ? 'bg-emerald-500' : 'bg-slate-300'}`}
                                 >
-                                    <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all ${settings.vipActive ? 'translate-x-6' : 'translate-x-0'}`} />
+                                    <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-all shadow-md ${settings.vipActive ? 'translate-x-7' : 'translate-x-0'}`} />
                                 </button>
                             </div>
 
                             <button
                                 onClick={handleSaveSettings}
                                 disabled={loading}
-                                className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded-xl transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
+                                className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-black text-white font-black text-[12px] uppercase tracking-[0.2em] py-4 rounded-2xl transition-all shadow-xl shadow-blue-500/10 active:scale-95 disabled:opacity-50"
                             >
-                                <Save size={18} /> {loading ? 'Saving...' : 'Save Settings'}
+                                <Save size={18} strokeWidth={2.5} /> {loading ? 'DEPLOYING...' : 'SAVE CONFIG'}
                             </button>
 
                             {status && (
-                                <div className={`text-center p-3 rounded-xl text-xs font-medium ${status.type === 'success' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                                <div className={`text-center p-4 rounded-2xl text-[11px] font-black uppercase tracking-widest animate-in slide-in-from-top-2 duration-300 ${status.type === 'success' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
                                     {status.text}
                                 </div>
                             )}
@@ -150,56 +157,79 @@ export default function VipManagementPage() {
 
                 {/* Members List */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-                        <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-                            <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Registered Members</h2>
+                    <div className="bg-white rounded-[32px] shadow-sm border border-slate-200 overflow-hidden shadow-indigo-500/5">
+                        <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
+                            <h2 className="text-lg font-black text-slate-900 flex items-center gap-3">
+                                <span>VIP Member Directory</span>
+                                <span className="px-2.5 py-0.5 bg-blue-600 text-white text-[10px] font-black rounded-full shadow-lg shadow-blue-500/20">{members.length}</span>
+                            </h2>
                             <button 
                                 onClick={fetchData}
-                                className="p-2 text-zinc-500 hover:text-blue-500 transition-colors"
-                                title="Refresh List"
+                                className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-blue-500 hover:rotate-180 transition-all duration-500 shadow-sm"
+                                title="Refresh Live Database"
                             >
                                 <RefreshCcw size={18} />
                             </button>
                         </div>
                         
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead className="bg-zinc-50 dark:bg-zinc-950 text-zinc-500 dark:text-zinc-400 text-xs uppercase font-semibold">
-                                    <tr>
-                                        <th className="px-6 py-4">Name</th>
-                                        <th className="px-6 py-4">Number</th>
-                                        <th className="px-6 py-4">Interest</th>
-                                        <th className="px-6 py-4 text-right">Joined Date</th>
+                            <table className="w-full text-left border-separate border-spacing-0">
+                                <thead>
+                                    <tr className="bg-slate-50/50">
+                                        <th className="px-8 py-5 font-black text-slate-400 uppercase tracking-[0.15em] text-[10px] border-b border-slate-100">Member Identity</th>
+                                        <th className="px-8 py-5 font-black text-slate-400 uppercase tracking-[0.15em] text-[10px] border-b border-slate-100">Contact Number</th>
+                                        <th className="px-8 py-5 font-black text-slate-400 uppercase tracking-[0.15em] text-[10px] border-b border-slate-100">Primary Interest</th>
+                                        <th className="px-8 py-5 font-black text-slate-400 uppercase tracking-[0.15em] text-[10px] border-b border-slate-100 text-right">Registration</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                                <tbody className="divide-y divide-slate-50">
                                     {members.length === 0 ? (
                                         <tr>
-                                            <td colSpan={4} className="px-6 py-10 text-center text-zinc-500 italic">
-                                                No VIP members registered yet.
+                                            <td colSpan={4} className="px-8 py-24 text-center">
+                                                <div className="flex flex-col items-center gap-3 opacity-20">
+                                                     <Users size={64} strokeWidth={1} />
+                                                     <span className="text-[13px] font-black uppercase tracking-[0.3em]">No VIP Records Found</span>
+                                                </div>
                                             </td>
                                         </tr>
                                     ) : (
                                         members.map((member) => (
-                                            <tr key={member._id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                                                <td className="px-6 py-4">
-                                                    <div className="font-semibold text-zinc-900 dark:text-zinc-100">{member.name}</div>
-                                                    <div className="text-xs text-zinc-500 font-mono">{member.telegramId}</div>
+                                            <tr key={member._id} className="hover:bg-slate-50/50 transition-all group">
+                                                <td className="px-8 py-5">
+                                                    <div className="flex items-center gap-3">
+                                                         <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-[15px] shadow-lg group-hover:scale-110 transition-transform duration-300">
+                                                            {member.name[0]}
+                                                         </div>
+                                                         <div className="flex flex-col">
+                                                            <div className="font-bold text-slate-900 text-[14px] leading-tight">{member.name}</div>
+                                                            <div className="text-[11px] text-slate-400 font-bold uppercase tracking-tight flex items-center gap-1.5 mt-0.5">
+                                                                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                                                                ID: {member.telegramId}
+                                                            </div>
+                                                         </div>
+                                                    </div>
                                                 </td>
-                                                <td className="px-6 py-4 text-zinc-600 dark:text-zinc-400 text-sm">
-                                                    {member.phoneNumber}
+                                                <td className="px-8 py-5">
+                                                    <span className="px-3 py-1.5 bg-slate-50 rounded-xl border border-slate-100 text-[13px] font-bold text-slate-600 shadow-inner">
+                                                        {member.phoneNumber}
+                                                    </span>
                                                 </td>
-                                                <td className="px-6 py-4">
-                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                                        member.interest === 'Casino' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30' :
-                                                        member.interest === 'Cricket' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' :
-                                                        'bg-amber-100 text-amber-600 dark:bg-amber-900/30'
+                                                <td className="px-8 py-5">
+                                                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.1em] border transition-all shadow-sm ${
+                                                        member.interest === 'Casino' ? 'bg-purple-50 border-purple-100 text-purple-600' :
+                                                        member.interest === 'Cricket' ? 'bg-blue-50 border-blue-100 text-blue-600' :
+                                                        'bg-amber-50 border-amber-100 text-amber-600'
                                                     }`}>
                                                         {member.interest}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4 text-right text-zinc-500 text-xs">
-                                                    {new Date(member.createdAt).toLocaleDateString()}
+                                                <td className="px-8 py-5 text-right flex flex-col items-end">
+                                                    <span className="text-[12px] font-black text-slate-400 uppercase tracking-tighter">
+                                                        {new Date(member.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                                                    </span>
+                                                    <span className="text-[10px] font-bold text-slate-300">
+                                                        {new Date(member.createdAt).toLocaleDateString(undefined, { year: 'numeric' })}
+                                                    </span>
                                                 </td>
                                             </tr>
                                         ))

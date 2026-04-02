@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Send, Hash, X, Search, ArrowLeft, Settings as SettingsIcon, PlusCircle, Trash2, Filter, ImageIcon, Loader2 } from 'lucide-react';
+import { Send, Hash, X, Search, ArrowLeft, Settings as SettingsIcon, PlusCircle, Trash2, Filter, ImageIcon, Loader2, Check } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface UserDetail {
@@ -277,26 +277,31 @@ export default function ChatPage() {
     });
 
     return (
-        <div className="flex flex-col h-[100dvh] w-full bg-zinc-50 dark:bg-zinc-950 overflow-hidden font-sans">
+        <div className="flex flex-col h-[100dvh] w-full bg-slate-50 overflow-hidden font-sans">
             {/* Top Navigation Bar */}
-            <div className="h-14 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 shrink-0 shadow-sm z-10">
-                <div className="flex items-center gap-4">
+            <div className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 shadow-sm z-20">
+                <div className="flex items-center gap-6">
                     <button 
                         onClick={() => window.location.href = '/dashboard'}
-                        className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-600 dark:text-zinc-300 transition-colors flex items-center gap-1.5 text-sm font-medium"
+                        className="p-2.5 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-slate-900 transition-all flex items-center gap-2 text-[13px] font-black uppercase tracking-widest border border-transparent hover:border-slate-100"
                         title="Back to Dashboard"
                     >
-                        <ArrowLeft size={16} /> Back
+                        <ArrowLeft size={16} strokeWidth={3} /> <span className="hidden sm:inline">Dashboard</span>
                     </button>
-                    <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
-                    <h1 className="text-sm font-bold dark:text-white">Admin Live Chat</h1>
+                    <div className="h-6 w-px bg-slate-100"></div>
+                    <div className="flex items-center gap-3">
+                         <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                            <Send size={14} strokeWidth={3} className="-rotate-12" />
+                         </div>
+                         <h1 className="text-[15px] font-black text-slate-900 tracking-tight italic uppercase">Direct Terminal</h1>
+                    </div>
                 </div>
                 <div>
                     <button 
                         onClick={() => setIsSettingsModalOpen(true)}
-                        className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-600 dark:text-zinc-300 transition-colors flex items-center gap-1.5 text-xs font-medium border border-zinc-200 dark:border-zinc-700"
+                        className="p-2.5 hover:bg-slate-50 rounded-xl text-slate-500 transition-all flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] border border-slate-100 shadow-sm"
                     >
-                        <SettingsIcon size={14} /> Settings
+                        <SettingsIcon size={14} strokeWidth={2.5} /> <span>Settings</span>
                     </button>
                 </div>
             </div>
@@ -304,35 +309,48 @@ export default function ChatPage() {
             {/* Main Chat Interface */}
             <div className="flex flex-1 min-h-0 relative">
                 {/* Left Sidebar - Chat List */}
-                <div className={`w-full md:w-[300px] shrink-0 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex-col ${selectedSession ? 'hidden md:flex' : 'flex'}`}>
-                    <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-950/50">
-                        <span className="text-xs font-bold text-zinc-500 tracking-wider">CHATS</span>
+                <div className={`w-full md:w-[360px] shrink-0 bg-white border-r border-slate-200 flex-col shadow-xl shadow-slate-900/[0.02] z-10 ${selectedSession ? 'hidden md:flex' : 'flex'}`}>
+                    <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+                        <div className="flex items-center gap-2">
+                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                             <span className="text-[10px] font-black text-slate-400 tracking-[0.25em] uppercase">Active Streams</span>
+                        </div>
                         <div className="flex gap-2">
                             <select 
                                 value={sessionFilter} 
                                 onChange={(e) => setSessionFilter(e.target.value as any)}
-                                className="bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 px-2 py-1.5 rounded-lg text-[11px] font-bold outline-none border border-zinc-200 dark:border-zinc-700 cursor-pointer"
+                                className="bg-white text-slate-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none border border-slate-200 cursor-pointer shadow-sm hover:border-blue-500 transition-all"
                             >
-                                <option value="all">All</option>
+                                <option value="all">Global</option>
                                 <option value="active">Active</option>
-                                <option value="closed">Closed</option>
+                                <option value="closed">History</option>
                             </select>
                             <button 
                                 onClick={() => { fetchAllUsers(); setIsNewChatModalOpen(true); }}
-                                className="bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 p-1.5 rounded-lg transition-colors flex items-center gap-1 text-[11px] font-bold"
-                                title="Start New Chat"
+                                className="bg-slate-900 hover:bg-blue-600 text-white p-2 rounded-xl transition-all shadow-lg active:scale-95"
+                                title="Init Secure Stream"
                             >
-                                <PlusCircle size={14} /> NEW
+                                <PlusCircle size={18} strokeWidth={2.5} />
                             </button>
                         </div>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-2 space-y-0.5 custom-scrollbar">
+                    
+                    <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar bg-white">
                         {loadingSessions ? (
-                            <p className="p-4 text-center text-[12px] text-zinc-400">Loading...</p>
+                            <div className="py-20 text-center flex flex-col items-center gap-3">
+                                <div className="w-6 h-6 border-2 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">Syncing...</span>
+                            </div>
                         ) : sessions.length === 0 ? (
-                            <p className="p-4 text-center text-[12px] text-zinc-400">No chats yet.</p>
+                            <div className="py-20 text-center flex flex-col items-center gap-4 opacity-30">
+                                <Search size={40} strokeWidth={1} className="text-slate-200" />
+                                <p className="text-[11px] font-black uppercase tracking-widest">No Active Channels</p>
+                            </div>
                         ) : (
-                            sessions.filter(s => sessionFilter === 'all' || s.status === sessionFilter).map(session => {
+                            [...sessions]
+                                .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+                                .filter(s => sessionFilter === 'all' || s.status === sessionFilter)
+                                .map(session => {
                                 const isSelected = selectedSession?._id === session._id;
                                 const titleName = session.userId?.firstName 
                                     ? `${session.userId.firstName} ${session.userId.lastName || ''}`.trim() 
@@ -344,38 +362,46 @@ export default function ChatPage() {
                                         onClick={() => {
                                             setSelectedSession(session);
                                             setIsAutoScroll(true);
-                                            // Optimistically clear the unread badge visually
                                             setSessions(prev => prev.map(s => s._id === session._id ? { ...s, unreadCount: 0 } : s));
                                         }}
-                                        className={`p-2.5 rounded-lg cursor-pointer transition-all flex items-center gap-3 ${
+                                        className={`p-4 rounded-3xl cursor-pointer transition-all border flex items-center gap-4 relative overflow-hidden group ${
                                             isSelected 
-                                                ? 'bg-blue-50 dark:bg-blue-900/20' 
-                                                : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+                                                ? 'bg-blue-600 border-blue-600 shadow-xl shadow-blue-600/20 translate-x-1' 
+                                                : 'bg-white border-white hover:bg-slate-50 hover:border-slate-100'
                                         }`}
                                     >
-                                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-[14px] shrink-0">
+                                        {isSelected && (
+                                            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150"></div>
+                                        )}
+                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-[16px] shrink-0 shadow-inner ${
+                                            isSelected ? 'bg-white text-blue-600' : 'bg-slate-100 text-slate-400'
+                                        }`}>
                                             {titleName.charAt(0)}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-center mb-0.5">
-                                                <div className="font-bold text-[13px] text-zinc-900 dark:text-zinc-100 truncate">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <div className={`font-black text-[14px] truncate tracking-tight transition-colors ${isSelected ? 'text-white' : 'text-slate-900 group-hover:text-blue-600'}`}>
                                                     {titleName}
                                                 </div>
-                                                <span className="text-[10px] text-zinc-400 shrink-0 ml-2">
+                                                <span className={`text-[9px] font-bold shrink-0 ml-2 uppercase opacity-60 ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>
                                                     {new Date(session.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between">
-                                                <span className="text-[11px] text-zinc-500 font-medium truncate flex items-center gap-1">
-                                                    <Hash size={10}/>{session.telegramId}
+                                                <span className={`text-[11px] font-bold truncate flex items-center gap-1.5 ${isSelected ? 'text-blue-100/70' : 'text-slate-400'}`}>
+                                                    <Hash size={10} strokeWidth={3}/>{session.telegramId}
                                                 </span>
                                                 <div className="flex items-center gap-2">
                                                     {!!session.unreadCount && session.unreadCount > 0 && (
-                                                        <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                                                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full min-w-[20px] text-center shadow-lg ${
+                                                            isSelected ? 'bg-white text-blue-600' : 'bg-blue-600 text-white shadow-blue-500/20'
+                                                        }`}>
                                                             {session.unreadCount}
                                                         </span>
                                                     )}
-                                                    <span className={`w-2 h-2 rounded-full ${session.status === 'active' ? 'bg-green-500' : 'bg-red-500/50'}`}></span>
+                                                    <div className={`w-2 h-2 rounded-full ring-4 ${
+                                                        isSelected ? 'ring-white/20' : 'ring-transparent'
+                                                    } ${session.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400/50'}`}></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -387,57 +413,65 @@ export default function ChatPage() {
                 </div>
 
                 {/* Right Area - Chat Messages */}
-                <div className={`flex-1 bg-[#efefef] dark:bg-[#121212] flex-col min-w-0 relative ${selectedSession ? 'flex' : 'hidden md:flex'}`}>
+                <div className={`flex-1 bg-slate-50 flex-col min-w-0 relative ${selectedSession ? 'flex' : 'hidden md:flex'}`}>
                     {selectedSession ? (
                         <>
-                            {/* Chat Header Background Image Overlays */}
-                            <div className="absolute inset-0 z-0 opacity-[0.03] dark:opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
+                            {/* Visual Pattern Overlay */}
+                            <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
                             
                             {/* Active Chat Header */}
-                            <div className="h-14 p-3 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0 flex justify-between items-center z-10 shadow-sm shadow-black/5">
-                                <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="h-20 p-4 border-b border-slate-200 bg-white/80 backdrop-blur-md shrink-0 flex justify-between items-center z-10 shadow-sm shadow-slate-900/[0.01]">
+                                <div className="flex items-center gap-4 px-2">
                                     <button 
                                         onClick={() => setSelectedSession(null)}
-                                        className="md:hidden p-1.5 -ml-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-500 transition-colors"
+                                        className="md:hidden p-2.5 -ml-2 bg-slate-50 hover:bg-slate-100 rounded-xl text-slate-400 transition-all border border-slate-100"
                                     >
-                                        <ArrowLeft size={18} />
+                                        <ArrowLeft size={18} strokeWidth={3} />
                                     </button>
-                                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-[12px] shrink-0">
-                                        {(selectedSession.userId?.firstName || selectedSession.telegramId.toString()).charAt(0)}
+                                    <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white font-black text-[18px] shrink-0 shadow-xl shadow-slate-900/10 hover:scale-110 transition-transform">
+                                        {(selectedSession?.userId?.firstName || selectedSession?.telegramId?.toString() || '').charAt(0)}
                                     </div>
-                                    <div>
-                                        <h2 className="font-bold text-[13px] dark:text-white leading-tight">
-                                            {selectedSession.userId?.firstName || selectedSession.telegramId}
+                                    <div className="flex flex-col">
+                                        <h2 className="font-black text-[16px] text-slate-900 tracking-tight leading-none mb-1">
+                                            {selectedSession?.userId?.firstName || selectedSession?.telegramId}
                                         </h2>
-                                        <p className="text-[11px] text-zinc-400 leading-tight">
-                                            {selectedSession.status === 'active' ? 'Active Session' : 'Closed Session'}
-                                        </p>
+                                        <div className="flex items-center gap-2">
+                                             <div className={`w-1.5 h-1.5 rounded-full ${selectedSession?.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></div>
+                                             <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                                                {selectedSession?.status === 'active' ? 'Secured Line' : 'Closed Archive'}
+                                             </p>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    {selectedSession.status === 'active' && (
+                                <div className="flex items-center gap-3 px-2">
+                                    {selectedSession?.status === 'active' && (
                                         <button 
                                             onClick={handleEndChat}
-                                            className="text-[11px] text-orange-600 hover:text-orange-700 dark:text-orange-400 bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/40 px-3 py-1.5 rounded-md font-bold transition-colors"
-                                            title="End this session"
+                                            className="text-[10px] text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-100 px-5 py-2.5 rounded-xl font-black uppercase tracking-widest transition-all shadow-sm active:scale-95"
                                         >
-                                            End Chat
+                                            Terminate
                                         </button>
                                     )}
                                     {adminRole === 'superadmin' && (
                                         <button 
                                             onClick={handleDeleteChat}
-                                            className="text-red-500 hover:text-red-600 dark:text-red-400 bg-zinc-50 hover:bg-red-50 dark:bg-zinc-800 dark:hover:bg-red-900/20 p-1.5 rounded-md transition-colors"
-                                            title="Delete completely"
+                                            className="p-3 text-slate-400 hover:text-rose-600 hover:bg-white bg-slate-100 rounded-xl transition-all border border-transparent shadow-sm"
+                                            title="Purge Logs"
                                         >
-                                            <Trash2 size={16} />
+                                            <Trash2 size={18} />
                                         </button>
                                     )}
                                 </div>
                             </div>
 
                             {/* Message List */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-2 z-10 relative" onScroll={handleScroll}>
+                            <div className="flex-1 overflow-y-auto p-6 space-y-4 z-10 relative custom-scrollbar bg-slate-50/50" onScroll={handleScroll}>
+                                <div className="flex justify-center my-10">
+                                     <div className="px-5 py-1.5 bg-slate-200/50 backdrop-blur-sm rounded-full text-[9px] font-black uppercase tracking-[0.3em] text-slate-400 italic border border-slate-100 whitespace-nowrap">
+                                        End-to-End Encryption Active
+                                     </div>
+                                </div>
+
                                 {messages.map((msg, idx) => {
                                     const isAdmin = msg.sender === 'admin';
                                     const isPhoto = msg.messageType === 'photo' && msg.mediaUrl;
@@ -447,48 +481,57 @@ export default function ChatPage() {
                                     const hasMedia = isPhoto || isVideo || isAudio || isDocument;
 
                                     return (
-                                        <div key={msg._id || idx} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`max-w-[85%] sm:max-w-[75%] px-3.5 py-2 relative shadow-sm ${
+                                        <div key={msg._id || idx} className={`flex flex-col ${isAdmin ? 'items-end' : 'items-start'} group`}>
+                                            <div className={`max-w-[85%] sm:max-w-[70%] px-5 py-3 relative shadow-sm transition-all duration-300 ${
                                                 isAdmin 
-                                                    ? 'bg-[#d9fdd3] dark:bg-[#005c4b] text-gray-900 dark:text-gray-100 rounded-lg rounded-tr-none' 
-                                                    : 'bg-white dark:bg-[#202c33] text-gray-900 dark:text-gray-100 rounded-lg rounded-tl-none border border-black/5 dark:border-transparent'
+                                                    ? 'bg-blue-600 text-white rounded-[24px] rounded-tr-[4px] hover:shadow-xl hover:shadow-blue-600/20' 
+                                                    : 'bg-white text-slate-900 rounded-[24px] rounded-tl-[4px] border border-slate-100 hover:shadow-xl hover:shadow-slate-900/5'
                                             }`}>
                                                 {isPhoto && (
-                                                    <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="block mb-1">
-                                                        <img src={msg.mediaUrl} alt="Image" className="max-w-full max-h-[250px] rounded-md object-contain" />
+                                                    <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="block mb-2 rounded-2xl overflow-hidden ring-4 ring-black/5 hover:ring-white/30 transition-all">
+                                                        <img src={msg.mediaUrl} alt="Media Attachment" className="max-w-full max-h-[300px] object-contain mx-auto" />
                                                     </a>
                                                 )}
                                                 {isVideo && (
-                                                    <video src={msg.mediaUrl} controls className="max-w-full max-h-[250px] rounded-md mb-1" />
+                                                    <video src={msg.mediaUrl} controls className="max-w-full max-h-[300px] rounded-2xl mb-2 bg-black ring-4 ring-black/5" />
                                                 )}
                                                 {isAudio && (
-                                                    <audio src={msg.mediaUrl} controls className="max-w-full mb-1 h-10" />
+                                                    <audio src={msg.mediaUrl} controls className="max-w-full mb-2 h-10 ring-4 ring-black/5 rounded-full" />
                                                 )}
                                                 {isDocument && (
-                                                    <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 mb-1 text-blue-500 hover:underline text-sm font-medium bg-black/5 dark:bg-white/5 p-2 rounded-lg">
-                                                        📄 View Document
+                                                    <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 mb-2 p-3 rounded-2xl border transition-all ${isAdmin ? 'bg-white/10 border-white/20 hover:bg-white/20' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'} text-[13px] font-bold`}>
+                                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isAdmin ? 'bg-white text-blue-600' : 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'}`}>
+                                                            <Hash size={14} />
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="leading-none mb-1">Attachment File</span>
+                                                            <span className={`text-[10px] font-medium ${isAdmin ? 'text-white/60' : 'text-slate-400'}`}>Click to open in viewport</span>
+                                                        </div>
                                                     </a>
                                                 )}
                                                 {msg.content ? (
-                                                    <p className={`text-[13px] whitespace-pre-wrap leading-relaxed pr-8 ${hasMedia ? 'mt-1' : ''}`}>{msg.content}</p>
+                                                    <p className={`text-[14px] font-medium whitespace-pre-wrap leading-relaxed ${hasMedia ? 'mt-2' : ''}`}>{msg.content}</p>
                                                 ) : null}
-                                                <p className={`text-[9px] mt-1 text-right opacity-60 ${hasMedia && !msg.content ? 'relative bottom-0 right-0 mt-1 inline-block w-full' : 'absolute bottom-1.5 right-2'}`}>
-                                                    {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                                </p>
+                                                <div className={`flex items-center gap-1.5 mt-2 transition-opacity ${isAdmin ? 'justify-end' : 'justify-start'}`}>
+                                                    {isAdmin && <Check size={10} strokeWidth={4} className="text-blue-100" />}
+                                                    <span className={`text-[9px] font-black tracking-tighter uppercase opacity-50 ${isAdmin ? 'text-blue-50' : 'text-slate-400'}`}>
+                                                        {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     );
                                 })}
-                                <div ref={messagesEndRef} className="h-2" />
+                                <div ref={messagesEndRef} className="h-6" />
                             </div>
 
                             {/* Input Area */}
-                            {selectedSession.status === 'active' ? (
-                                <form onSubmit={handleSendMessage} className="p-3 bg-white dark:bg-zinc-900 shrink-0 z-10 pb-6 sm:pb-3" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
-                                    <div className="flex items-center gap-2 max-w-4xl mx-auto relative">
+                            {(selectedSession?.status === 'active') ? (
+                                <div className="p-6 bg-white shrink-0 z-10 border-t border-slate-50 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+                                    <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto flex items-center gap-4">
                                         <input 
                                             type="file" 
-                                            accept="image/*" 
+                                            accept="image/*,video/*,audio/*,application/pdf" 
                                             className="hidden" 
                                             ref={fileInputRef} 
                                             onChange={handleImageUpload} 
@@ -497,95 +540,123 @@ export default function ChatPage() {
                                             type="button" 
                                             onClick={() => fileInputRef.current?.click()}
                                             disabled={uploadingImage}
-                                            className="w-10 h-10 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 flex items-center justify-center transition-colors shrink-0 disabled:opacity-50"
+                                            className="w-12 h-12 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-400 flex items-center justify-center transition-all shrink-0 border border-slate-100 shadow-sm active:scale-95 disabled:opacity-50"
                                         >
-                                            {uploadingImage ? <Loader2 size={18} className="animate-spin" /> : <ImageIcon size={18} />}
+                                            {uploadingImage ? <Loader2 size={18} className="animate-spin" /> : <PlusCircle size={22} />}
                                         </button>
-                                        <input
-                                            type="text"
-                                            value={inputMessage}
-                                            onChange={(e) => setInputMessage(e.target.value)}
-                                            placeholder="Type a message..."
-                                            className="flex-1 px-4 py-2.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-[13px] focus:ring-1 focus:ring-blue-500/50 outline-none dark:text-white transition-all"
-                                            disabled={sending}
-                                        />
-                                        <button 
-                                            type="submit"
-                                            disabled={sending || !inputMessage.trim()}
-                                            className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-800 text-white flex items-center justify-center transition-colors shrink-0 shadow-sm"
-                                        >
-                                            <Send size={16} className="-ml-0.5" />
-                                        </button>
-                                    </div>
-                                </form>
+                                        <div className="flex-1 relative">
+                                            <input
+                                                type="text"
+                                                value={inputMessage}
+                                                onChange={(e) => setInputMessage(e.target.value)}
+                                                placeholder="Type your secure response..."
+                                                className="w-full pl-6 pr-14 py-4 rounded-[42px] border border-slate-100 bg-slate-50 text-[14px] font-medium focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none placeholder-slate-300 transition-all shadow-inner"
+                                                disabled={sending}
+                                            />
+                                            <button 
+                                                type="submit"
+                                                disabled={sending || (!inputMessage.trim() && !uploadingImage)}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-blue-600 hover:bg-slate-900 disabled:bg-slate-200 text-white flex items-center justify-center transition-all shadow-xl shadow-blue-500/20 active:scale-75"
+                                            >
+                                                <Send size={16} strokeWidth={3} className="-rotate-12 -ml-0.5" />
+                                            </button>
+                                        </div>
+                                    </form>
+                                    <p className="max-w-4xl mx-auto text-[9px] text-center font-black uppercase tracking-[0.3em] text-slate-300 mt-4 px-2">Messages are delivered instantly via global telegram cloud API</p>
+                                </div>
                             ) : (
-                                <div className="p-3 bg-white dark:bg-zinc-900 shrink-0 text-center z-10 border-t border-zinc-200 dark:border-zinc-800">
-                                    <p className="text-[12px] text-zinc-400">This chat session has been closed.</p>
+                                <div className="p-8 bg-slate-100 shrink-0 text-center z-10 border-t border-slate-200 flex flex-col items-center gap-3">
+                                    <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-slate-400">
+                                        <Hash size={20} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[12px] font-black uppercase tracking-widest text-slate-400">Read Only Archive</p>
+                                        <p className="text-[10px] text-slate-300 font-medium">This secure session was terminated across all platforms.</p>
+                                    </div>
                                 </div>
                             )}
                         </>
                     ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-600 z-10 bg-white/50 dark:bg-black/20">
-                            <div className="w-16 h-16 bg-white dark:bg-zinc-800 rounded-full flex items-center justify-center shadow-sm mb-4">
-                                <Search size={24} className="opacity-50" />
+                        <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 z-10 p-10">
+                            <div className="w-24 h-24 bg-white rounded-[32px] flex items-center justify-center shadow-xl shadow-slate-900/[0.03] mb-8 border border-slate-50 group">
+                                <Send size={32} strokeWidth={1} className="text-slate-200 group-hover:scale-125 group-hover:text-blue-500 transition-all duration-700 -rotate-12" />
                             </div>
-                            <p className="text-[14px] font-medium text-zinc-600 dark:text-zinc-300">Select a chat to start messaging</p>
-                            <p className="text-[12px] mt-1 opacity-70">Or click 'NEW' to start a direct message with any user.</p>
+                            <h2 className="text-[20px] font-black text-slate-900 tracking-tight mb-2">Direct Communication Hub</h2>
+                            <p className="text-[13px] font-medium text-slate-400 text-center max-w-xs leading-relaxed">
+                                Select a live stream from the left panel to begin a secure encrypted session with your users.
+                            </p>
+                            <button 
+                                onClick={() => { fetchAllUsers(); setIsNewChatModalOpen(true); }}
+                                className="mt-8 px-10 py-4 bg-slate-900 text-white rounded-[20px] font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-900/10 active:scale-95"
+                            >
+                                Init Direct Message
+                            </button>
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Modals placed optimally */}
+            {/* Modals area */}
             
             {/* New Chat Modal */}
             {isNewChatModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[80vh] border border-zinc-200 dark:border-zinc-800">
-                        <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-950/50">
-                            <h3 className="font-bold text-[14px] dark:text-white">Start New Chat</h3>
-                            <button onClick={() => setIsNewChatModalOpen(false)} className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors">
-                                <X size={18} />
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[40px] w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[85vh] border border-white/20 animate-in slide-in-from-bottom-5 duration-500">
+                        <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-white sticky top-0 z-10">
+                            <div>
+                                <h3 className="font-black text-2xl text-slate-900 tracking-tighter">Terminal Link</h3>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1">Select identity to bind session</p>
+                            </div>
+                            <button onClick={() => setIsNewChatModalOpen(false)} className="p-3 bg-slate-50 text-slate-400 hover:text-slate-900 hover:rotate-90 transition-all rounded-2xl">
+                                <X size={20} strokeWidth={3} />
                             </button>
                         </div>
-                        <div className="p-3 border-b border-zinc-100 dark:border-zinc-800">
+                        <div className="p-6 border-b border-slate-50">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} strokeWidth={3} />
                                 <input 
                                     type="text" 
                                     autoFocus
-                                    placeholder="Search users..."
+                                    placeholder="Search global directory..."
                                     value={userSearchTerm}
                                     onChange={(e) => setUserSearchTerm(e.target.value)}
-                                    className="w-full pl-9 pr-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-[13px] outline-none focus:ring-1 focus:ring-blue-500/50"
+                                    className="w-full pl-12 pr-6 py-4 rounded-3xl border border-slate-100 bg-slate-50 text-[14px] font-medium outline-none focus:bg-white focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all shadow-inner"
                                 />
                             </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-1 text-sm custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/20">
                             {filteredUsers.length === 0 ? (
-                                <p className="text-center p-6 text-zinc-500 text-[12px]">No users found.</p>
+                                <div className="py-20 text-center opacity-30 flex flex-col items-center">
+                                    <Hash size={40} className="mb-4" />
+                                    <p className="text-[11px] font-black uppercase tracking-[0.3em]">Identity Not Found</p>
+                                </div>
                             ) : (
-                                filteredUsers.map(user => (
-                                    <div 
-                                        key={user._id}
-                                        onClick={() => handleStartNewChat(user)}
-                                        className="flex items-center justify-between p-2.5 border-b border-zinc-100 dark:border-zinc-800/30 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors rounded-lg mx-1"
-                                    >
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center font-bold text-[12px] shrink-0">
-                                                {(user.firstName || 'U').charAt(0)}
+                                <div className="grid gap-2">
+                                    {filteredUsers.map(user => (
+                                        <div 
+                                            key={user._id}
+                                            onClick={() => handleStartNewChat(user)}
+                                            className="flex items-center justify-between p-4 bg-white rounded-3xl border border-slate-100 hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/5 cursor-pointer transition-all animate-in zoom-in-95 duration-200"
+                                        >
+                                            <div className="flex items-center gap-4 min-w-0">
+                                                <div className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black text-[14px] shrink-0 shadow-lg shadow-slate-900/10">
+                                                    {(user.firstName || 'U').charAt(0)}
+                                                </div>
+                                                <div className="truncate">
+                                                    <div className="font-bold text-[14px] text-slate-900 truncate leading-tight mb-1">
+                                                        {[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Legacy User'}
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest truncate">
+                                                        #{user.telegramId}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="truncate">
-                                                <div className="font-bold text-[13px] dark:text-white truncate">
-                                                    {[user.firstName, user.lastName].filter(Boolean).join(' ') || 'Unknown User'}
-                                                </div>
-                                                <div className="text-[11px] text-zinc-500 truncate mt-0.5 font-medium">
-                                                    #{user.telegramId}
-                                                </div>
+                                            <div className="p-2 transition-transform hover:translate-x-1">
+                                                <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center"><PlusCircle size={18} strokeWidth={2.5} /></div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))
+                                    ))}
+                                </div>
                             )}
                         </div>
                     </div>
@@ -594,57 +665,69 @@ export default function ChatPage() {
 
             {/* Chat Settings Modal */}
             {isSettingsModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden flex flex-col border border-zinc-200 dark:border-zinc-800">
-                        <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-950/50">
-                            <h3 className="font-bold text-[14px] dark:text-white flex items-center gap-2">
-                                <SettingsIcon size={14} className="text-zinc-500" /> Chat Module Settings
-                            </h3>
-                            <button onClick={() => setIsSettingsModalOpen(false)} className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors">
-                                <X size={18} />
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[40px] w-full max-w-sm shadow-2xl overflow-hidden flex flex-col border border-white/20 animate-in zoom-in-95 duration-300">
+                        <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-white">
+                            <div>
+                                <h3 className="font-black text-2xl text-slate-900 tracking-tighter">Terminal Logic</h3>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1">Module configuration override</p>
+                            </div>
+                            <button onClick={() => setIsSettingsModalOpen(false)} className="p-3 bg-slate-50 text-slate-400 hover:text-slate-900 rounded-2xl transition-all">
+                                <X size={20} strokeWidth={3} />
                             </button>
                         </div>
-                        <form onSubmit={handleUpdateSettings} className="p-4 flex flex-col gap-4">
-                            <div className="space-y-1.5">
-                                <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Bot Menu Button Text</label>
+                        <form onSubmit={handleUpdateSettings} className="p-8 space-y-8 bg-white">
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Keyboard Label / बटन का नाम</label>
                                 <input
                                     type="text"
                                     value={settings.chatButtonText}
                                     onChange={(e) => setSettings({ ...settings, chatButtonText: e.target.value })}
-                                    className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-[13px] outline-none focus:ring-1 focus:ring-blue-500"
+                                    className="w-full px-6 py-4 rounded-3xl bg-slate-50 border border-slate-100 text-[14px] font-bold focus:bg-white focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all shadow-inner"
                                 />
+                                <p className="text-[9px] text-slate-300 italic px-1 leading-relaxed mt-1.5 font-medium">This text will appear in the bot's interactive keyboard menu.</p>
                             </div>
-                            <div className="flex items-center gap-2 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
-                                <input
-                                    type="checkbox"
-                                    id="chatActive"
-                                    checked={settings.chatActive}
-                                    onChange={(e) => setSettings({ ...settings, chatActive: e.target.checked })}
-                                    className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
-                                />
-                                <label htmlFor="chatActive" className="text-[13px] font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer">Live Chat Active globally</label>
+                            <div className="space-y-1">
+                                <div className="flex items-center justify-between p-5 rounded-3xl border border-slate-100 bg-slate-50 shadow-inner group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><Check size={14} strokeWidth={4} /></div>
+                                        <label htmlFor="chatActive" className="text-[13px] font-black uppercase tracking-widest text-slate-700 cursor-pointer">Module Enabled</label>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        id="chatActive"
+                                        checked={settings.chatActive}
+                                        onChange={(e) => setSettings({ ...settings, chatActive: e.target.checked })}
+                                        className="w-6 h-6 rounded-lg border-slate-200 text-blue-600 focus:ring-0 cursor-pointer shadow-sm"
+                                    />
+                                </div>
+                                <p className="text-[9px] text-slate-300 italic px-5 leading-relaxed mt-2 font-medium">Toggle off to temporarily disable the chat interface in the TG bot.</p>
                             </div>
                             <button
                                 type="submit"
-                                className="w-full py-2.5 mt-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-[13px] transition-colors"
+                                className="w-full py-5 bg-slate-900 hover:bg-blue-600 text-white rounded-[24px] font-black text-[13px] uppercase tracking-[0.25em] transition-all shadow-xl shadow-slate-900/10 active:scale-95"
                             >
-                                Save Changes
+                                Deploy Meta Policy
                             </button>
                         </form>
                     </div>
                 </div>
             )}
+
             {/* Custom scrollbar styling scoped just to the lists */}
             <style jsx>{`
                 .custom-scrollbar::-webkit-scrollbar {
-                    width: 4px;
+                    width: 5px;
                 }
                 .custom-scrollbar::-webkit-scrollbar-track {
                     background: transparent;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background-color: rgba(156, 163, 175, 0.3);
+                    background-color: rgba(71, 85, 105, 0.1);
                     border-radius: 20px;
+                }
+                .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+                    background-color: rgba(59, 130, 246, 0.2);
                 }
             `}</style>
         </div>

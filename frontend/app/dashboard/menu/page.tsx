@@ -201,70 +201,87 @@ export default function MenuPage() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto pb-20">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 px-1">
-                <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 italic tracking-tight underline decoration-blue-500/30 decoration-4 underline-offset-8">Menu Config</h1>
+        <div className="max-w-5xl mx-auto pb-20 bg-slate-50 min-h-screen">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-6 px-2">
+                <div>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight italic">Menu Configuration</h1>
+                    <p className="text-slate-500 font-medium mt-1">Design the interactive keyboard layout for your bot.</p>
+                </div>
                 <button
                     onClick={openCreateModal}
-                    className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 font-bold transition-all active:scale-95"
+                    className="w-full sm:w-auto px-8 py-4 bg-slate-900 hover:bg-black text-white rounded-[24px] shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3 font-black text-[13px] uppercase tracking-widest transition-all active:scale-95"
                 >
-                    <Plus size={20} className="stroke-[3]" />
-                    <span>NEW BUTTON</span>
+                    <Plus size={20} strokeWidth={3} />
+                    <span>Create Trigger</span>
                 </button>
             </div>
 
             {/* List */}
-            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+            <div className="bg-white rounded-[32px] border border-slate-200 overflow-hidden shadow-sm shadow-indigo-500/5">
                 {loading ? (
-                    <div className="p-8 text-center text-zinc-500">Loading buttons...</div>
+                    <div className="p-20 text-center flex flex-col items-center gap-4">
+                        <div className="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+                        <span className="text-[13px] font-black uppercase tracking-widest text-slate-400">Syncing Menu...</span>
+                    </div>
                 ) : buttons.length === 0 ? (
-                    <div className="p-8 text-center text-zinc-500">No buttons found. Create one to get started.</div>
+                    <div className="p-24 text-center">
+                        <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center text-slate-200 mx-auto mb-6">
+                            <Plus size={40} strokeWidth={1} />
+                        </div>
+                        <p className="text-[15px] font-bold text-slate-400">No active triggers found.</p>
+                        <button onClick={openCreateModal} className="mt-4 text-blue-600 font-black text-xs uppercase tracking-widest hover:underline">Add your first button</button>
+                    </div>
                 ) : (
-                    <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+                    <div className="divide-y divide-slate-50">
                         {buttons.sort((a, b) => a.order - b.order).map((btn) => (
-                            <div key={btn._id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-all gap-4">
-                                <div className="flex items-center gap-4">
-                                    <span className="w-10 h-10 flex items-center justify-center bg-zinc-100 dark:bg-zinc-950 rounded-xl text-sm text-blue-500 font-bold shadow-inner">
-                                        {btn.order}
+                            <div key={btn._id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-slate-50/50 transition-all gap-6 group">
+                                <div className="flex items-center gap-5">
+                                    <span className="w-12 h-12 flex items-center justify-center bg-slate-50 rounded-2xl text-[14px] text-slate-400 font-black shadow-inner border border-slate-100 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all duration-500">
+                                        {String(btn.order).padStart(2, '0')}
                                     </span>
                                     <div className="min-w-0 flex-1">
-                                        <h3 className="font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2 truncate">
+                                        <h3 className="font-black text-slate-900 flex items-center gap-2 truncate text-[16px] tracking-tight">
                                             {btn.text}
                                             {btn.mediaUrl && (
-                                                <span title={btn.mediaType === 'video' ? 'Has Video' : btn.mediaType === 'audio' ? 'Has Audio' : 'Has Image'} className={btn.mediaType === 'video' ? 'text-purple-500' : btn.mediaType === 'audio' ? 'text-orange-500' : 'text-cyan-500'}>
+                                                <div className={`p-1 rounded-lg ${btn.mediaType === 'video' ? 'bg-purple-50 text-purple-600' : btn.mediaType === 'audio' ? 'bg-orange-50 text-orange-600' : 'bg-cyan-50 text-cyan-600'}`}>
                                                     <Upload size={14} className="animate-pulse" />
-                                                </span>
+                                                </div>
                                             )}
                                         </h3>
-                                        <p className="text-xs text-zinc-500 truncate max-w-[200px] sm:max-w-xs mt-0.5">
-                                            {btn.responseMessage ? btn.responseMessage : "No text response"}
-                                            {btn.responseButtons && btn.responseButtons.length > 0 && ` • ${btn.responseButtons.length} Actions`}
+                                        <p className="text-[13px] font-medium text-slate-400 truncate max-w-[200px] sm:max-w-xs mt-1">
+                                            {btn.responseMessage ? btn.responseMessage : "No voice/text response"}
+                                            {btn.responseButtons && btn.responseButtons.length > 0 && (
+                                                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-black text-[9px] uppercase tracking-tighter">
+                                                    {btn.responseButtons.length} Call-to-actions
+                                                </span>
+                                            )}
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-end gap-2 shrink-0 bg-zinc-50 dark:bg-zinc-950/50 sm:bg-transparent p-2 sm:p-0 rounded-lg">
+                                <div className="flex items-center justify-end gap-3 shrink-0">
                                     <button
                                         onClick={() => handleToggle(btn._id, btn.active)}
-                                        className={`p-2.5 rounded-xl transition-all shadow-sm ${btn.active
-                                            ? "text-green-500 bg-green-50 dark:bg-green-900/20 border border-green-500/20"
-                                            : "text-zinc-400 bg-zinc-100 dark:bg-zinc-800 border border-transparent"}`}
+                                        className={`px-4 py-2 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest border ${btn.active
+                                            ? "text-emerald-600 bg-emerald-50 border-emerald-100 shadow-sm"
+                                            : "text-slate-300 bg-slate-50 border-slate-100"}`}
                                         title="Toggle Status"
                                     >
-                                        {btn.active ? <Check size={18} className="stroke-[3]" /> : <X size={18} className="stroke-[3]" />}
+                                        {btn.active ? "Enabled" : "Disabled"}
                                     </button>
+                                    <div className="h-8 w-px bg-slate-100 mx-1 hidden sm:block"></div>
                                     <button
                                         onClick={() => openEditModal(btn)}
-                                        className="p-2.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all border border-transparent hover:border-blue-500/20"
-                                        title="Edit"
+                                        className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all group/edit"
+                                        title="Modify Configuration"
                                     >
-                                        <Edit2 size={18} />
+                                        <Edit2 size={18} className="group-hover/edit:scale-110 transition-transform" />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(btn._id)}
-                                        className="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all border border-transparent hover:border-red-500/20"
-                                        title="Delete"
+                                        className="p-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all group/trash"
+                                        title="Delete Asset"
                                     >
-                                        <Trash2 size={18} />
+                                        <Trash2 size={18} className="group-hover/trash:scale-110 transition-transform" />
                                     </button>
                                 </div>
                             </div>
@@ -275,160 +292,171 @@ export default function MenuPage() {
 
             {/* Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-zinc-900 w-full max-w-2xl rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center sticky top-0 bg-white dark:bg-zinc-900 z-10">
-                            <h2 className="text-xl font-bold">{editingId ? "Edit Button" : "Create Button"}</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full">
-                                <X size={20} />
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl max-h-[90vh] overflow-hidden flex flex-col border border-white/20">
+                        <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-white sticky top-0 z-10">
+                            <div>
+                                <h2 className="text-2xl font-black text-slate-900 tracking-tight">{editingId ? "Edit Trigger" : "New Trigger"}</h2>
+                                <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mt-1">Configure button-response logic</p>
+                            </div>
+                            <button onClick={() => setIsModalOpen(false)} className="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-all hover:rotate-90">
+                                <X size={20} strokeWidth={3} />
                             </button>
                         </div>
 
-                        <div className="p-6 space-y-6">
+                        <div className="p-8 space-y-10 overflow-y-auto custom-scrollbar flex-1">
                             {/* Main Config */}
-                            <div className="flex flex-col sm:grid sm:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-4 gap-8">
                                 <div className="sm:col-span-3">
-                                    <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-zinc-500">Button Label (Keyboard)</label>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.2em] mb-3 text-slate-400 ml-1">Keyboard Label / बटन का नाम</label>
                                     <input
                                         type="text"
                                         value={formData.text}
                                         onChange={(e) => setFormData({ ...formData, text: e.target.value })}
-                                        className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
-                                        placeholder="e.g. VIP Plan"
+                                        className="w-full p-4 bg-slate-50 rounded-2xl border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none font-bold placeholder-slate-300 shadow-inner"
+                                        placeholder="e.g. 💎 VIP ACCESS"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold mb-1.5 uppercase tracking-wider text-zinc-500">Order</label>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.2em] mb-3 text-slate-400 ml-1">Sequence</label>
                                     <input
                                         type="number"
                                         value={formData.order}
                                         onChange={(e) => setFormData({ ...formData, order: Number(e.target.value) })}
-                                        className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                                        className="w-full p-4 bg-slate-50 rounded-2xl border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none font-black text-blue-600 shadow-inner"
                                     />
                                 </div>
                             </div>
 
-                            <hr className="border-zinc-200 dark:border-zinc-800" />
-
-                            <h3 className="font-semibold text-lg text-blue-500">Bot Response Configuration</h3>
-                            <p className="text-sm text-zinc-500 -mt-4 mb-4">What should the bot send when this button is clicked?</p>
+                            <div className="relative">
+                                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
+                                <div className="relative flex justify-center uppercase tracking-widest text-[9px] font-black"><span className="bg-white px-4 text-slate-300">Logic Definition</span></div>
+                            </div>
 
                             {/* Response Message */}
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Response Message</label>
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-black text-[12px]">01</div>
+                                    <h3 className="font-black text-slate-900 tracking-tight text-[15px]">Automated Response / उत्तर</h3>
+                                </div>
                                 <textarea
                                     value={formData.responseMessage}
                                     onChange={(e) => setFormData({ ...formData, responseMessage: e.target.value })}
-                                    rows={4}
-                                    className="w-full p-2 bg-zinc-50 dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700 font-mono text-sm"
-                                    placeholder="Type the message here..."
+                                    rows={5}
+                                    className="w-full p-6 bg-slate-50 rounded-[28px] border border-slate-100 focus:bg-white focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all font-medium text-[14px] leading-relaxed shadow-inner placeholder-slate-300"
+                                    placeholder="Type the message the bot should send..."
                                 />
-                                <p className="text-[10px] text-zinc-400 mt-1 uppercase tracking-wider font-bold">
-                                    Markdown Supported: *bold*, _italic_, [link](url)
-                                </p>
+                                <div className="flex gap-4 px-2">
+                                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">*Bold*</span>
+                                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">_Italic_</span>
+                                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">[Link](Url)</span>
+                                </div>
                             </div>
 
                             {/* Media Upload */}
-                            <div>
-                                <label className="block text-sm font-bold mb-2 uppercase tracking-wider text-zinc-500">Media — Image, Video, or Audio (Optional)</label>
-                                <div className="flex flex-col sm:flex-row items-center gap-4">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-black text-[12px]">02</div>
+                                    <h3 className="font-black text-slate-900 tracking-tight text-[15px]">Rich Media Attachment / मीडिया</h3>
+                                </div>
+                                <div className="flex flex-col sm:flex-row items-start gap-6 p-6 bg-slate-50 rounded-[32px] border border-slate-100 shadow-inner">
                                     {formData.mediaUrl && (
-                                        <div className="relative w-full sm:w-32 h-32 sm:h-24 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden bg-black flex items-center justify-center shadow-md">
+                                        <div className="relative w-full sm:w-40 h-40 rounded-[24px] border border-slate-200 overflow-hidden bg-white shadow-lg group/preview shrink-0">
                                             {formData.mediaType === 'video' ? (
-                                                <video
-                                                    src={formData.mediaUrl}
-                                                    className="w-full h-full object-cover"
-                                                    muted
-                                                    playsInline
-                                                    controls
-                                                />
+                                                <video src={formData.mediaUrl} className="w-full h-full object-cover" muted />
                                             ) : formData.mediaType === 'audio' ? (
-                                                <audio
-                                                    src={formData.mediaUrl}
-                                                    className="w-full p-2"
-                                                    controls
-                                                />
+                                                <div className="w-full h-full flex items-center justify-center bg-orange-50 text-orange-500"><Upload size={32} /></div>
                                             ) : (
                                                 <img src={formData.mediaUrl} alt="Response" className="w-full h-full object-cover" />
                                             )}
-                                            <button
-                                                onClick={() => setFormData({ ...formData, mediaUrl: "", mediaType: "" })}
-                                                className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-lg shadow-lg active:scale-90 transition-all"
-                                            >
-                                                <X size={14} />
-                                            </button>
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center justify-center">
+                                                <button
+                                                    onClick={() => setFormData({ ...formData, mediaUrl: "", mediaType: "" })}
+                                                    className="bg-white text-rose-500 p-2.5 rounded-xl shadow-2xl active:scale-90 transition-all"
+                                                >
+                                                    <X size={16} strokeWidth={3} />
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
-                                    <div className="flex-1 w-full">
+                                    <div className="flex-1 w-full space-y-4">
                                         <input
                                             type="file"
                                             accept="image/*,video/mp4,video/webm,video/quicktime,audio/*"
                                             onChange={handleFileUpload}
-                                            className="block w-full text-sm text-zinc-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
+                                            className="block w-full text-[13px] text-slate-500 file:mr-6 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-[11px] file:font-black file:uppercase file:bg-blue-600 file:text-white hover:file:bg-black cursor-pointer shadow-sm"
                                         />
-                                        <p className="text-[10px] text-zinc-400 mt-2 font-medium tracking-wide">JPG, PNG, WebP, MP4, MOV, MP3, WAV, OGG</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 leading-relaxed px-1">Supports HD Images • 4K Video • Voice Notes • High Quality MP3</p>
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                readOnly
+                                                value={formData.mediaUrl}
+                                                className="w-full p-3 pl-8 bg-white border border-slate-100 text-[10px] font-mono text-slate-400 rounded-lg shadow-sm truncate"
+                                                placeholder="Media asset link..."
+                                            />
+                                            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-200"><Save size={12} /></div>
+                                        </div>
                                     </div>
                                 </div>
-                                {/* URL Display */}
-                                <input
-                                    type="text"
-                                    readOnly
-                                    value={formData.mediaUrl}
-                                    className="w-full mt-3 p-2 text-[10px] bg-zinc-100 dark:bg-zinc-950/50 text-zinc-500 rounded-lg border border-zinc-200 dark:border-zinc-800 font-mono truncate"
-                                    placeholder="Media URL will appear here..."
-                                />
                             </div>
 
-
-
                             {/* Inline Buttons */}
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <label className="block text-sm font-medium">Response Inline Buttons</label>
-                                    <button onClick={addInlineButton} className="text-xs text-blue-500 hover:underline flex items-center gap-1">
-                                        <Plus size={14} /> Add Button
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center font-black text-[12px]">03</div>
+                                        <h3 className="font-black text-slate-900 tracking-tight text-[15px]">Interactive Triggers / कॉल-टू-एक्शन</h3>
+                                    </div>
+                                    <button onClick={addInlineButton} className="px-4 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all hover:bg-blue-600 hover:text-white">
+                                        + Add New
                                     </button>
                                 </div>
-                                <div className="space-y-4">
+                                <div className="grid gap-3">
                                     {formData.responseButtons.map((btn, idx) => (
-                                        <div key={idx} className="flex flex-col sm:flex-row gap-2 bg-zinc-50 dark:bg-zinc-950/30 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                                        <div key={idx} className="flex flex-col sm:flex-row gap-3 items-center bg-white p-3 rounded-[20px] border border-slate-100 shadow-sm group/btn hover:shadow-md transition-all animate-in slide-in-from-right-4 duration-300">
+                                            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-300 border border-slate-50 shrink-0">
+                                                {idx + 1}
+                                            </div>
                                             <input
-                                                placeholder="Button Label"
+                                                placeholder="Label text..."
                                                 value={btn.text}
                                                 onChange={(e) => updateInlineButton(idx, 'text', e.target.value)}
-                                                className="flex-1 p-2.5 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                                                className="flex-1 p-3 bg-slate-50 rounded-xl border border-slate-50 text-[13px] font-bold text-slate-700 outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/10"
                                             />
                                             <input
-                                                placeholder="URL (https://...)"
+                                                placeholder="Destination URL..."
                                                 value={btn.url}
                                                 onChange={(e) => updateInlineButton(idx, 'url', e.target.value)}
-                                                className="flex-1 p-2.5 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                                                className="flex-[2] w-full p-3 bg-slate-50 rounded-xl border border-slate-50 text-[13px] font-medium font-mono text-slate-500 outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/10"
                                             />
-                                            <button onClick={() => removeInlineButton(idx)} className="self-end sm:self-auto p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all active:scale-95">
+                                            <button onClick={() => removeInlineButton(idx)} className="p-3 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all">
                                                 <Trash2 size={18} />
                                             </button>
                                         </div>
                                     ))}
                                     {formData.responseButtons.length === 0 && (
-                                        <p className="text-xs text-zinc-400 italic bg-zinc-50 dark:bg-zinc-950/30 p-4 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 text-center uppercase tracking-widest font-black">No buttons added.</p>
+                                        <div className="p-10 border-2 border-dotted border-slate-100 rounded-[28px] text-center">
+                                            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-300 italic">No secondary actions configured</p>
+                                        </div>
                                     )}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex justify-end gap-3 sticky bottom-0">
+                        <div className="p-8 border-t border-slate-50 bg-slate-50/10 flex flex-col sm:flex-row justify-end gap-4 sticky bottom-0 z-10">
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="px-4 py-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded text-zinc-700 dark:text-zinc-300"
+                                className="px-8 py-4 text-slate-400 font-black text-[11px] uppercase tracking-[0.2em] hover:text-slate-900 transition-all"
                             >
-                                Cancel
+                                Discard Changes
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow-lg shadow-blue-500/20 flex items-center gap-2 font-medium"
+                                className="px-10 py-4 bg-slate-900 hover:bg-black text-white rounded-[20px] shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3 font-black text-[13px] uppercase tracking-widest transition-all active:scale-95"
                             >
-                                <Save size={18} />
-                                Save Configuration
+                                <Save size={18} strokeWidth={2.5} />
+                                <span>Deploy Configuration</span>
                             </button>
                         </div>
                     </div>

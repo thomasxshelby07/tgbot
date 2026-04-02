@@ -67,114 +67,145 @@ export default function ChannelsPage() {
     };
 
     return (
-        <div className="p-4 sm:p-6 pb-20">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 px-1">
-                <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 italic tracking-tight underline decoration-blue-500/30 decoration-4 underline-offset-8">Channels</h1>
+        <div className="p-8 sm:p-12 pb-32 max-w-7xl mx-auto">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-6">
+                <div className="flex flex-col gap-1">
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight italic uppercase">Signal Hub</h1>
+                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400 ml-1">Broadcast Channel Configuration</p>
+                </div>
                 <button
                     onClick={() => setShowForm(!showForm)}
-                    className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 font-bold transition-all active:scale-95"
+                    className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-slate-900 text-white rounded-[20px] shadow-xl shadow-blue-500/20 flex items-center justify-center gap-3 font-black text-[11px] uppercase tracking-widest transition-all active:scale-95"
                 >
-                    <Plus size={20} className="stroke-[3]" />
-                    <span>ADD CHANNEL</span>
+                    <Plus size={18} strokeWidth={3} />
+                    <span>Deploy New Signal</span>
                 </button>
             </div>
 
             {showForm && (
-                <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 mb-6 animate-in slide-in-from-top-4">
-                    <h2 className="text-lg font-semibold mb-4 text-zinc-800 dark:text-zinc-100">Add New Channel</h2>
-                    <form onSubmit={handleAddChannel} className="flex flex-col gap-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white p-8 rounded-[32px] shadow-2xl shadow-slate-900/[0.03] border border-slate-100 mb-10 animate-in slide-in-from-top-6 duration-500">
+                    <div className="flex items-center gap-3 mb-8">
+                         <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner">
+                            <Radio size={20} strokeWidth={2.5} />
+                         </div>
+                         <h2 className="text-xl font-black text-slate-900 tracking-tight italic uppercase">Provision Signal</h2>
+                    </div>
+                    <form onSubmit={handleAddChannel} className="flex flex-col gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="w-full">
-                                <label className="block text-xs font-black uppercase tracking-widest text-zinc-500 mb-2">
-                                    Channel Name
+                                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3 ml-1">
+                                    Display Identity / चैनल का नाम
                                 </label>
                                 <input
                                     type="text"
                                     value={newChannel.name}
                                     onChange={(e) => setNewChannel({ ...newChannel, name: e.target.value })}
-                                    className="w-full px-4 py-3 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold placeholder:font-medium"
-                                    placeholder="e.g. Cricket Updates"
+                                    className="w-full px-6 py-4 border border-slate-100 rounded-3xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all font-black text-slate-900 placeholder:font-medium placeholder:text-slate-300 shadow-inner"
+                                    placeholder="Secure Signal Alpha"
                                     required
                                 />
                             </div>
                             <div className="w-full">
-                                <label className="block text-xs font-black uppercase tracking-widest text-zinc-500 mb-2">
-                                    Chat ID
+                                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3 ml-1">
+                                    Telegram Endpoint / चैट आईडी
                                 </label>
                                 <input
                                     type="text"
                                     value={newChannel.chatId}
                                     onChange={(e) => setNewChannel({ ...newChannel, chatId: e.target.value })}
-                                    className="w-full px-4 py-3 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono text-sm"
-                                    placeholder="-1001234567890"
+                                    className="w-full px-6 py-4 border border-slate-100 rounded-3xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all font-mono text-[13px] font-bold text-slate-500 shadow-inner"
+                                    placeholder="-100XXXXXXXXXXXXXXXX"
                                     required
                                 />
                             </div>
                         </div>
-                        <button
-                            type="submit"
-                            className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all w-full md:w-auto md:self-end shadow-lg shadow-green-500/20 active:scale-95"
-                        >
-                            Save Channel
-                        </button>
+                        <div className="flex justify-end gap-4 border-t border-slate-50 pt-8">
+                            <button
+                                type="button"
+                                onClick={() => setShowForm(false)}
+                                className="px-8 py-4 text-slate-400 font-black text-[11px] uppercase tracking-[0.2em] hover:text-slate-900 transition-all"
+                            >
+                                Discard
+                            </button>
+                            <button
+                                type="submit"
+                                className="bg-slate-900 hover:bg-emerald-600 text-white px-10 py-4 rounded-[20px] font-black uppercase tracking-widest text-[11px] transition-all shadow-xl shadow-slate-900/10 active:scale-95"
+                            >
+                                Deploy Configuration
+                            </button>
+                        </div>
                     </form>
                 </div>
             )}
 
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+            <div className="bg-white rounded-[40px] shadow-2xl shadow-slate-900/[0.02] border border-slate-100 overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[600px]">
+                    <table className="w-full text-left border-collapse min-w-[700px]">
                         <thead>
-                            <tr className="bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
-                                <th className="px-6 py-4 text-[10px] font-black text-zinc-400 uppercase tracking-widest">Channel Name</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-zinc-400 uppercase tracking-widest">Telegram Chat ID</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-zinc-400 uppercase tracking-widest">Status</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-right">Actions</th>
+                            <tr className="bg-slate-50/50 border-b border-slate-50">
+                                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.25em]">Endpoint Identity</th>
+                                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.25em]">Cloud Address</th>
+                                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.25em]">Logic Status</th>
+                                <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] text-right">Ops</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800/50">
+                        <tbody className="divide-y divide-slate-50">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-8 text-center text-zinc-500">Loading channels...</td>
+                                    <td colSpan={4} className="px-8 py-20 text-center">
+                                        <div className="flex flex-col items-center gap-4 animate-pulse">
+                                            <div className="w-8 h-8 rounded-full border-2 border-slate-200 border-t-blue-600 animate-spin"></div>
+                                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Syncing with Mainframe...</span>
+                                        </div>
+                                    </td>
                                 </tr>
                             ) : channels.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-8 text-center text-zinc-500">No channels added yet.</td>
+                                    <td colSpan={4} className="px-8 py-20 text-center">
+                                         <div className="flex flex-col items-center gap-4 opacity-30">
+                                            <Radio size={48} strokeWidth={1} className="text-slate-300" />
+                                            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">No Signal Nodes Detected</p>
+                                        </div>
+                                    </td>
                                 </tr>
                             ) : (
                                 channels.map((channel) => (
-                                    <tr key={channel._id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-all">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center">
-                                                    <Radio size={14} />
+                                    <tr key={channel._id} className="hover:bg-slate-50/50 transition-all group">
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-inner transition-all group-hover:scale-110 ${channel.active ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
+                                                    <Radio size={16} strokeWidth={2.5} className={channel.active ? 'animate-pulse' : ''} />
                                                 </div>
-                                                <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{channel.name}</span>
+                                                <span className="text-[15px] font-black text-slate-900 tracking-tight transition-colors group-hover:text-blue-600">{channel.name}</span>
                                             </div>
                                         </td>
-                                    <td className="px-6 py-4 text-sm text-zinc-500 font-mono">{channel.chatId}</td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-8 py-5">
+                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-xl w-fit border border-slate-100 shadow-inner">
+                                            <span className="text-[12px] text-slate-400 font-mono font-bold tracking-tight">{channel.chatId}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-5">
                                         <button
                                             onClick={() => toggleChannel(channel._id)}
-                                            className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-colors ${channel.active
-                                                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                                    : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                            className={`flex items-center gap-3 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${channel.active
+                                                    ? "bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100"
+                                                    : "bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100"
                                                 }`}
                                         >
                                             {channel.active ? (
-                                                <><ToggleRight size={16} /> Active</>
+                                                <><ToggleRight size={18} strokeWidth={2.5} /> Active</>
                                             ) : (
-                                                <><ToggleLeft size={16} /> Inactive</>
+                                                <><ToggleLeft size={18} strokeWidth={2.5} /> Disabled</>
                                             )}
                                         </button>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-8 py-5 text-right">
                                         <button
                                             onClick={() => deleteChannel(channel._id)}
-                                            className="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                            title="Delete Channel"
+                                            className="text-slate-300 hover:text-rose-600 p-3 hover:bg-rose-50 rounded-2xl transition-all border border-transparent hover:border-rose-100 group/del"
+                                            title="Purge Signal Node"
                                         >
-                                            <Trash2 size={18} />
+                                            <Trash2 size={20} strokeWidth={2} className="transition-transform group-hover/del:scale-110" />
                                         </button>
                                     </td>
                                 </tr>

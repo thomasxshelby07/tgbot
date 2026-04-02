@@ -341,18 +341,60 @@ export const initBot = async () => {
             // --- 3. Async Chat Routing (Expensive DB Operations) ---
             // Only run if the user isn't clicking a predefined button to massively optimize menu speed
             if (!isAnyBotMenuButton) {
-                const openTicket = await SupportTicket.findOne({ telegramId: ctx.from.id.toString(), status: 'open' });
+                const tgIdStr = ctx.from.id.toString();
+                const msgId = ctx.message.message_id.toString();
+
+                // 1. Check for Active Direct Terminal (ChatSession)
+                const activeSession = await ChatSession.findOne({ telegramId: tgIdStr, status: 'active' });
+                
+                if (activeSession) {
+                    try {
+                        await ChatMessage.create({
+                            sessionId: activeSession._id,
+                            sender: 'user',
+                            content: text,
+                            messageType: 'text',
+                            telegramMessageId: msgId
+                        });
+                        
+                        await ChatSession.updateOne(
+                            { _id: activeSession._id },
+                            { $set: { updatedAt: new Date() } }
+                        );
+                        
+                        await cache.del('chat_sessions_admin');
+                        return; // Successfully routed to direct terminal
+                    } catch (err: any) {
+                        if (err.code === 11000) return; // Duplicate message, ignore
+                        console.error("Error saving terminal message:", err);
+                    }
+                }
+
+                // 2. Check for Open Support Ticket
+                const openTicket = await SupportTicket.findOne({ telegramId: tgIdStr, status: 'open' });
 
                 if (openTicket) {
-                    await SupportTicket.updateOne(
-                        { _id: openTicket._id },
-                        { 
-                            $inc: { unreadCount: 1 },
-                            $set: { updatedAt: new Date() }
-                        }
-                    );
-                    await ChatMessage.create({ ticketId: openTicket._id, sender: 'user', content: text, messageType: 'text' });
-                    return; // Skip everything else, user is purely sending a chat message to a ticket
+                    try {
+                        await ChatMessage.create({ 
+                            ticketId: openTicket._id, 
+                            sender: 'user', 
+                            content: text, 
+                            messageType: 'text',
+                            telegramMessageId: msgId
+                        });
+
+                        await SupportTicket.updateOne(
+                            { _id: openTicket._id },
+                            { 
+                                $inc: { unreadCount: 1 },
+                                $set: { updatedAt: new Date() }
+                            }
+                        );
+                        return; // Successfully routed to ticket
+                    } catch (err: any) {
+                        if (err.code === 11000) return;
+                        console.error("Error saving ticket message:", err);
+                    }
                 }
             } else {
                 // If they explicitly clicked a button, instantly break them out of chat
@@ -403,12 +445,17 @@ export const initBot = async () => {
     // 5a. Handle Media Messages from User (Live Chat)
     bot.on(["message:photo", "message:video", "message:audio", "message:voice", "message:document"], async (ctx) => {
         try {
-            const openTicket = await SupportTicket.findOne({ telegramId: ctx.from.id.toString(), status: 'open' });
+            const tgIdStr = ctx.from.id.toString();
+            const msgId = ctx.message.message_id.toString();
 
-            if (openTicket) {
-                const msg = ctx.message;
+            // Check if either an active session or an open ticket exists
+            const activeSession = await ChatSession.findOne({ telegramId: tgIdStr, status: 'active' });
+            const openTicket = await SupportTicket.findOne({ telegramId: tgIdStr, status: 'open' });
+
+            if (activeSession || openTicket) {
+                const msg = ctx.message as any;
                 let fileId = "";
-                let msgType = "photo";
+                let msgType: any = "photo";
 
                 if (msg.photo) {
                     fileId = msg.photo[msg.photo.length - 1].file_id;
@@ -437,27 +484,42 @@ export const initBot = async () => {
                     resource_type: 'auto'
                 });
                 
-                const caption = ctx.message.caption || '';
+                const caption = msg.caption || '';
                 
-                if (openTicket) {
-                    await SupportTicket.updateOne(
-                        { _id: openTicket._id },
-                        { 
-                            $inc: { unreadCount: 1 },
-                            $set: { updatedAt: new Date() }
-                        }
-                    );
-                    await ChatMessage.create({
-                        ticketId: openTicket._id,
+                try {
+                    const messageData = {
+                        sessionId: activeSession?._id,
+                        ticketId: openTicket?._id,
                         sender: 'user',
                         content: caption,
                         messageType: msgType,
-                        mediaUrl: uploadRes.secure_url
-                    });
+                        mediaUrl: uploadRes.secure_url,
+                        telegramMessageId: msgId
+                    };
+
+                    await ChatMessage.create(messageData);
+
+                    if (activeSession) {
+                        await ChatSession.updateOne({ _id: activeSession._id }, { $set: { updatedAt: new Date() } });
+                        await cache.del('chat_sessions_admin');
+                    }
+
+                    if (openTicket) {
+                        await SupportTicket.updateOne(
+                            { _id: openTicket._id },
+                            { 
+                                $inc: { unreadCount: 1 },
+                                $set: { updatedAt: new Date() }
+                            }
+                        );
+                    }
+                } catch (err: any) {
+                    if (err.code === 11000) return; // Duplicate
+                    console.error("Error saving media message:", err);
                 }
             }
         } catch (error) {
-            console.error("Error handling photo message:", error);
+            console.error("Error handling media message:", error);
         }
     });
 

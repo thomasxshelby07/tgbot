@@ -89,147 +89,173 @@ export default function BroadcastPage() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold mb-8">Broadcast Message</h1>
+        <div className="max-w-4xl mx-auto pb-10">
+            <h1 className="text-3xl font-black mb-8 text-slate-900 tracking-tight px-2">Broadcast Message</h1>
 
-            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-800 p-6 space-y-6">
+            <div className="bg-white rounded-[32px] shadow-sm border border-slate-200 p-8 space-y-8 relative overflow-hidden group shadow-indigo-500/5">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/30 rounded-full -mr-32 -mt-32 blur-3xl transition-all group-hover:scale-110 duration-1000"></div>
 
                 {/* Status Message */}
                 {status && (
-                    <div className={`p-4 rounded-lg ${status.type === "success" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}`}>
-                        {status.message}
+                    <div className={`p-4 rounded-2xl animate-in slide-in-from-top-2 duration-300 border ${status.type === "success" ? "bg-emerald-50 border-emerald-100 text-emerald-700" : "bg-rose-50 border-rose-100 text-rose-700"}`}>
+                        <div className="flex items-center gap-3">
+                            <div className={`w-2 h-2 rounded-full ${status.type === "success" ? "bg-emerald-500" : "bg-rose-500"}`}></div>
+                            <span className="text-[13px] font-bold">{status.message}</span>
+                        </div>
                     </div>
                 )}
 
                 {/* Message Input */}
-                <div>
-                    <label className="block text-sm font-medium mb-2">Message Text</label>
+                <div className="relative z-10">
+                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 mb-3 ml-1">Message Content / संदेश</label>
                     <textarea
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
-                        rows={5}
-                        className="w-full p-3 bg-gray-50 dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                        placeholder="Type your broadcast message here..."
+                        rows={6}
+                        className="w-full p-5 bg-slate-50 rounded-[24px] border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all placeholder-slate-300 font-medium text-[15px] leading-relaxed shadow-inner"
+                        placeholder="Type your professional broadcast message here... Markdown is supported."
                     />
                 </div>
 
-                {/* Image Upload */}
-                <div>
-                    <label className="block text-sm font-medium mb-2">Attach Image (Optional)</label>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                        <label className="cursor-pointer flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-zinc-800 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors w-full sm:w-auto">
-                            <Upload size={20} />
-                            <span>{uploading ? "Uploading..." : "Upload Image"}</span>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={handleImageUpload}
-                                disabled={uploading}
-                            />
-                        </label>
-                        {mediaUrl && (
-                            <div className="relative w-full sm:w-24 h-24 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700">
-                                <Image
-                                    src={mediaUrl}
-                                    alt="Preview"
-                                    fill
-                                    className="object-cover"
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                    {/* Image Upload */}
+                    <div className="space-y-3">
+                        <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">Attach Media (Optional) / मीडिया</label>
+                        <div className="flex flex-col gap-4">
+                            <label className="cursor-pointer flex flex-col items-center justify-center gap-3 p-8 bg-slate-50 rounded-[28px] border-2 border-dashed border-slate-200 hover:border-blue-400 hover:bg-blue-50/30 transition-all group/upload relative overflow-hidden h-40">
+                                <div className="p-3 bg-white rounded-xl shadow-sm text-slate-400 group-hover/upload:text-blue-500 transition-colors">
+                                    <Upload size={24} />
+                                </div>
+                                <span className="text-[13px] font-bold text-slate-500">{uploading ? "Analyzing & Uploading..." : "Tap to Upload Photo"}</span>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleImageUpload}
+                                    disabled={uploading}
                                 />
+                            </label>
+                            {mediaUrl && (
+                                <div className="relative w-full aspect-video rounded-[24px] overflow-hidden border border-slate-200 shadow-xl group/preview">
+                                    <Image
+                                        src={mediaUrl}
+                                        alt="Preview"
+                                        fill
+                                        className="object-cover transition-transform duration-700 group-hover/preview:scale-110"
+                                    />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center justify-center">
+                                        <button
+                                            onClick={() => setMediaUrl("")}
+                                            className="p-3 bg-white text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-2xl scale-125"
+                                        >
+                                            <Trash2 size={20} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Target Audience Selector */}
+                    <div className="space-y-4">
+                        <div className="space-y-3">
+                            <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">Delivery Limit / वितरण सीमा</label>
+                            <select
+                                value={limit}
+                                onChange={(e) => setLimit(Number(e.target.value))}
+                                className="w-full p-4 bg-slate-50 rounded-[20px] border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all appearance-none cursor-pointer font-bold text-slate-700 text-[14px] shadow-sm"
+                            >
+                                <option value={0}>🚀 All Active Users (Full Reach)</option>
+                                <option value={1}>🧪 Test Run (Latest 1 User)</option>
+                                <option value={5}>Latest 5 Users</option>
+                                <option value={10}>Latest 10 Users</option>
+                                <option value={100}>Latest 100 Users</option>
+                                <option value={500}>Latest 500 Users</option>
+                                <option value={1000}>Latest 1000 Users</option>
+                            </select>
+                            <p className="text-[11px] text-slate-400 font-medium px-1 flex items-center gap-1.5 leading-relaxed">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                                Messages are queued for background processing (1,500/min).
+                            </p>
+                        </div>
+                        
+                        <div className="h-px w-full bg-slate-100 my-4"></div>
+
+                        {/* Inline Buttons Summary */}
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between ml-1">
+                                <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Interactive Buttons / बटन</label>
                                 <button
-                                    onClick={() => setMediaUrl("")}
-                                    className="absolute top-0 right-0 p-1.5 bg-red-500 text-white rounded-bl-lg hover:bg-red-600 shadow-lg"
+                                    onClick={addButton}
+                                    className="text-[11px] font-black uppercase tracking-wider text-blue-600 hover:scale-105 transition-all bg-blue-50 px-3 py-1 rounded-lg"
                                 >
-                                    <Trash2 size={14} />
+                                    + Add New
                                 </button>
                             </div>
-                        )}
-                    </div>
-                </div>
 
-                {/* Dynamic Buttons */}
-                <div>
-                    <div className="flex items-center justify-between mb-2">
-                        <label className="block text-sm font-medium">Inline Buttons (Optional)</label>
-                        <button
-                            onClick={addButton}
-                            className="text-sm text-blue-500 hover:text-blue-600 flex items-center gap-1"
-                        >
-                            <Plus size={16} /> Add Button
-                        </button>
-                    </div>
-
-                    <div className="space-y-4 sm:space-y-3">
-                        {buttons.map((btn, index) => (
-                            <div key={index} className="flex flex-col sm:flex-row gap-2 bg-gray-50 dark:bg-zinc-950/30 p-3 sm:p-0 rounded-lg sm:bg-transparent border border-gray-100 dark:border-zinc-800 sm:border-0">
-                                <input
-                                    type="text"
-                                    placeholder="Button Label"
-                                    value={btn.text}
-                                    onChange={(e) => updateButton(index, "text", e.target.value)}
-                                    className="flex-1 p-2 bg-white sm:bg-gray-50 dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                                />
-                                <input
-                                    type="url"
-                                    placeholder="URL (https://...)"
-                                    value={btn.url}
-                                    onChange={(e) => updateButton(index, "url", e.target.value)}
-                                    className="flex-1 p-2 bg-white sm:bg-gray-50 dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                                />
-                                <button
-                                    onClick={() => removeButton(index)}
-                                    className="self-end sm:self-auto p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                >
-                                    <Trash2 size={20} />
-                                </button>
+                            <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
+                                {buttons.map((btn, index) => (
+                                    <div key={index} className="flex gap-2 animate-in slide-in-from-right-4 duration-300">
+                                        <input
+                                            type="text"
+                                            placeholder="Label"
+                                            value={btn.text}
+                                            onChange={(e) => updateButton(index, "text", e.target.value)}
+                                            className="flex-1 p-2.5 bg-slate-50 rounded-xl border border-slate-100 focus:bg-white focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none text-[12px] font-bold shadow-sm"
+                                        />
+                                        <input
+                                            type="url"
+                                            placeholder="https://..."
+                                            value={btn.url}
+                                            onChange={(e) => updateButton(index, "url", e.target.value)}
+                                            className="flex-[2] p-2.5 bg-slate-50 rounded-xl border border-slate-100 focus:bg-white focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none text-[12px] font-medium font-mono shadow-sm"
+                                        />
+                                        <button
+                                            onClick={() => removeButton(index)}
+                                            className="p-2.5 text-rose-400 hover:bg-rose-50 hover:text-rose-500 rounded-xl transition-all"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                ))}
+                                {buttons.length === 0 && (
+                                    <div className="py-4 border-2 border-dotted border-slate-100 rounded-xl flex items-center justify-center">
+                                        <p className="text-[11px] text-slate-300 font-bold uppercase tracking-widest italic">No buttons configured</p>
+                                    </div>
+                                )}
                             </div>
-                        ))}
-                        {buttons.length === 0 && (
-                            <p className="text-sm text-gray-500 italic">No buttons added.</p>
-                        )}
+                        </div>
                     </div>
-                </div>
-
-                {/* Target Audience Selector */}
-                <div>
-                    <label className="block text-sm font-medium mb-2">Target Audience</label>
-                    <select
-                        value={limit}
-                        onChange={(e) => setLimit(Number(e.target.value))}
-                        className="w-full p-3 bg-gray-50 dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    >
-                        <option value={0}>All Users</option>
-                        <option value={1}>Latest 1 User (Test)</option>
-                        <option value={5}>Latest 5 Users</option>
-                        <option value={10}>Latest 10 Users</option>
-                        <option value={100}>Latest 100 Users</option>
-                        <option value={200}>Latest 200 Users</option>
-                        <option value={500}>Latest 500 Users</option>
-                        <option value={1000}>Latest 1000 Users</option>
-                        <option value={2000}>Latest 2000 Users</option>
-                        <option value={5000}>Latest 5000 Users</option>
-                    </select>
-                    <p className="text-xs text-gray-500 mt-1">
-                        Select "All Users" to send to everyone, or limit to recent users for faster delivery.
-                    </p>
                 </div>
 
                 {/* Submit Action */}
-                <div className="pt-4 border-t border-gray-100 dark:border-zinc-800">
+                <div className="pt-8 relative z-10">
                     <button
                         onClick={handleBroadcast}
                         disabled={loading || uploading}
-                        className={`w-full py-3 px-6 rounded-lg text-white font-medium flex items-center justify-center gap-2 transition-all ${loading || uploading
-                            ? "bg-blue-400 cursor-not-allowed"
-                            : "bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20"
+                        className={`w-full py-5 px-8 rounded-[24px] text-white font-black text-[14px] uppercase tracking-[0.2em] flex items-center justify-center gap-4 transition-all shadow-xl active:scale-95 ${loading || uploading
+                            ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                            : "bg-slate-900 shadow-slate-900/10 hover:bg-black hover:shadow-slate-900/20"
                             }`}
                     >
-                        <Send size={20} />
-                        {loading ? "Queueing Broadcast..." : "Send Broadcast"}
+                        {loading ? (
+                            <>
+                                <div className="w-5 h-5 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
+                                <span>Distributing...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Send size={20} strokeWidth={2.5} />
+                                <span>Initiate Global Broadcast</span>
+                            </>
+                        )}
                     </button>
-                    <p className="text-xs text-center text-gray-500 mt-2">
-                        Messages are processed in the background (Max 1500/min).
-                    </p>
+                    <div className="mt-6 flex flex-col items-center gap-2">
+                        <div className="px-4 py-1.5 bg-slate-50 rounded-full border border-slate-100 flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping"></div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Secure AES Delivery Protocol</span>
+                        </div>
+                    </div>
                 </div>
 
             </div>

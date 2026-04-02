@@ -85,74 +85,75 @@ export default function WelcomeMessagePage() {
     };
 
     return (
-        <div className="w-full max-w-4xl mx-auto pb-10">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 px-1">
-                <div>
-                    <h1 className="text-3xl font-bold text-zinc-900 dark:text-white tracking-tight italic">Welcome Message</h1>
-                    <p className="text-zinc-500 dark:text-zinc-400 mt-2 text-sm">Configure the automatic message sent to new users.</p>
+        <div className="p-8 sm:p-12 pb-32 max-w-5xl mx-auto">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-6 px-1">
+                <div className="flex flex-col gap-1">
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight italic uppercase">Greeting Matrix</h1>
+                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400 ml-1">Universal Entry Protocol Configuration</p>
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-8">
+            <div className="bg-white rounded-[40px] shadow-2xl shadow-slate-900/[0.03] border border-slate-100 p-10 animate-in slide-in-from-bottom-8 duration-500">
                 {/* Welcome Message Text */}
-                <div className="mb-8">
-                    <label htmlFor="welcomeMessage" className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                        Message Text
+                <div className="mb-12">
+                    <label htmlFor="welcomeMessage" className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 ml-1">
+                        Payload Script / स्वागत संदेश
                     </label>
                     <textarea
                         id="welcomeMessage"
-                        className="w-full p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none h-48 leading-relaxed mb-2"
-                        placeholder="Enter the welcome message sent to new users..."
+                        className="w-full px-8 py-6 rounded-[32px] border border-slate-100 bg-slate-50 text-slate-900 placeholder-slate-300 focus:bg-white focus:outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all resize-none h-56 font-bold text-[15px] leading-relaxed shadow-inner"
+                        placeholder="Enter the automated greeting sequence..."
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                     />
-                    <p className="text-xs text-zinc-500 flex items-center gap-1">
-                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                        Supports standard text.
-                    </p>
+                    <div className="flex items-center gap-2 mt-4 px-2">
+                         <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                         <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Mainframe deployment active on update</p>
+                    </div>
                 </div>
 
-
-
                 {/* Inline Buttons */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between mb-4">
-                        <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                            Inline Buttons
+                <div className="mb-12">
+                    <div className="flex items-center justify-between mb-6 px-1">
+                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                            Interactive Call-to-Action Nodes
                         </label>
                         <button
                             type="button"
                             onClick={handleAddButton}
-                            className="text-sm font-medium text-blue-500 hover:text-blue-400 transition-colors flex items-center gap-1"
+                            className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm active:scale-90"
                         >
-                            + Add Button
+                            + Provision Node
                         </button>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {buttons.length === 0 && (
-                            <div className="text-center py-6 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-400 text-sm">
-                                No buttons added yet.
+                            <div className="text-center py-12 bg-slate-50 rounded-[32px] border border-dashed border-slate-200">
+                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
+                                    <Trash2 size={24} className="text-slate-200" />
+                                </div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">No active response nodes</p>
                             </div>
                         )}
                         {buttons.map((btn, index) => (
-                            <div key={index} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center p-4 bg-zinc-50 dark:bg-zinc-950/30 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm relative group">
+                            <div key={index} className="flex flex-col sm:flex-row gap-4 items-start sm:items-center p-6 bg-slate-50/50 rounded-[32px] border border-slate-100 shadow-inner relative group animate-in zoom-in-95 duration-200">
                                 <div className="flex-1 w-full">
-                                    <label className="block text-[10px] uppercase font-black tracking-widest text-zinc-400 mb-1 sm:hidden">Label</label>
+                                    <label className="block text-[9px] uppercase font-black tracking-widest text-slate-300 mb-2 ml-1">Display Label</label>
                                     <input
                                         type="text"
-                                        placeholder="Button Label"
-                                        className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-bold"
+                                        placeholder="Button Display Name"
+                                        className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-white text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all text-[14px] font-black shadow-sm"
                                         value={btn.text}
                                         onChange={(e) => handleButtonChange(index, 'text', e.target.value)}
                                     />
                                 </div>
                                 <div className="flex-[2] w-full">
-                                    <label className="block text-[10px] uppercase font-black tracking-widest text-zinc-400 mb-1 sm:hidden">URL</label>
+                                    <label className="block text-[9px] uppercase font-black tracking-widest text-slate-300 mb-2 ml-1">Redirect Endpoint</label>
                                     <input
                                         type="text"
-                                        placeholder="URL (https://...)"
-                                        className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-mono text-xs"
+                                        placeholder="https://..."
+                                        className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-white text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all font-mono font-bold text-[12px] shadow-sm"
                                         value={btn.url}
                                         onChange={(e) => handleButtonChange(index, 'url', e.target.value)}
                                     />
@@ -160,30 +161,39 @@ export default function WelcomeMessagePage() {
                                 <button
                                     type="button"
                                     onClick={() => handleRemoveButton(index)}
-                                    className="absolute -top-2 -right-2 sm:static p-2.5 text-white sm:text-zinc-400 bg-red-500 sm:bg-transparent sm:hover:text-red-500 sm:hover:bg-red-500/10 rounded-xl transition-all shadow-lg sm:shadow-none"
-                                    title="Remove Button"
+                                    className="p-4 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition-all self-end sm:self-center border border-transparent hover:border-rose-100"
+                                    title="Decomission Node"
                                 >
-                                    <Trash2 size={18} />
+                                    <Trash2 size={20} strokeWidth={2} />
                                 </button>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                <div className="flex items-center justify-center sm:justify-end pt-6 border-t border-zinc-100 dark:border-zinc-800">
+                <div className="flex items-center justify-between pt-10 border-t border-slate-50">
+                    <div className="hidden sm:block">
+                        {status && (
+                            <div className={`px-6 py-3 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-left-4 duration-300 ${status.type === 'success' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'}`}>
+                                <div className={`w-2 h-2 rounded-full ${status.type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'} animate-pulse`}></div>
+                                <span className="text-[11px] font-black uppercase tracking-widest">{status.text}</span>
+                            </div>
+                        )}
+                    </div>
                     <button
-                        className={`w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-xs py-4 px-10 rounded-2xl shadow-xl shadow-blue-500/20 transition-all active:scale-95 ${loading ? 'opacity-70 cursor-wait' : ''}`}
+                        className={`w-full sm:w-auto bg-slate-900 hover:bg-blue-600 text-white font-black uppercase tracking-[0.2em] text-[11px] py-5 px-12 rounded-[24px] shadow-2xl shadow-slate-900/10 transition-all active:scale-95 disabled:opacity-50 ${loading ? 'cursor-wait' : ''}`}
                         type="button"
                         onClick={handleSave}
                         disabled={loading}
                     >
-                        {loading ? 'Saving Changes...' : 'Save Welcome Config'}
+                        {loading ? 'Processing Logic...' : 'Deploy Protocol Sync'}
                     </button>
                 </div>
 
+                {/* Mobile status view */}
                 {status && (
-                    <div className={`mt-6 p-4 rounded-xl flex items-center text-sm font-medium animate-in fade-in slide-in-from-bottom-2 duration-300 ${status.type === 'success' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
-                        {status.text}
+                    <div className="sm:hidden mt-6 px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 text-center animate-in zoom-in-95">
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${status.type === 'success' ? 'text-emerald-600' : 'text-rose-600'}`}>{status.text}</span>
                     </div>
                 )}
             </div>

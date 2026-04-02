@@ -614,10 +614,31 @@ export default function SupportPage() {
                                 className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 z-10 relative custom-scrollbar flex flex-col scroll-smooth bg-white"
                             >
                                 {/* Problem Banner in message list */}
-                                <div className="self-center my-4 max-w-[90%] bg-indigo-100/50 backdrop-blur-sm border border-indigo-200/50 px-6 py-4 rounded-[28px] shadow-sm relative overflow-hidden">
-                                     <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none"><LifeBuoy size={60} strokeWidth={1} /></div>
-                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 block mb-2">Original Support Inquiry</span>
-                                     <p className="text-[14px] text-indigo-950 font-bold leading-relaxed">{selectedTicket.problem}</p>
+                                {/* Main Issue Banner - Highly Prominent as requested */}
+                                <div className="self-center my-6 max-w-[95%] w-full animate-in fade-in zoom-in duration-500">
+                                    <div className="bg-white border-2 border-blue-500/20 px-8 py-6 rounded-[32px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
+                                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-500/5 rounded-full -ml-12 -mb-12 blur-xl"></div>
+                                        
+                                        <div className="flex flex-col items-center gap-3 relative z-10 text-center">
+                                            <div className="px-4 py-1.5 bg-blue-50 rounded-full border border-blue-100 flex items-center gap-2.5">
+                                                <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></div>
+                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-700">Initial Problem / मुख्य समस्या</span>
+                                                <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></div>
+                                            </div>
+                                            
+                                            <div className="relative">
+                                                <span className="absolute -left-6 -top-2 text-4xl text-blue-100 font-serif">"</span>
+                                                <p className="text-[16px] sm:text-[18px] font-black text-slate-900 leading-relaxed tracking-tight">
+                                                    {selectedTicket.problem}
+                                                </p>
+                                                <span className="absolute -right-6 -bottom-4 text-4xl text-blue-100 font-serif">"</span>
+                                            </div>
+                                            
+                                            <div className="h-px w-20 bg-slate-100 mt-2"></div>
+                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Submitted via Telegram Support Bot</p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {messages.map((msg) => (

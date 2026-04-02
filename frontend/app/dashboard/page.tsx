@@ -28,50 +28,59 @@ export default function DashboardPage() {
     }, []);
 
     return (
-        <div>
-            <h1 className="text-3xl font-bold mb-6 text-zinc-800 dark:text-zinc-100">Dashboard Overview</h1>
+        <div className="bg-slate-50 min-h-full">
+            <h1 className="text-3xl font-black mb-8 text-slate-900 tracking-tight">Dashboard Overview</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 {/* Total Users */}
-                <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 flex items-center gap-4">
-                    <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg">
-                        <Users size={24} />
+                <div className="bg-white p-7 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:shadow-md transition-all duration-300 group">
+                    <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
+                        <Users size={28} />
                     </div>
                     <div>
-                        <p className="text-sm text-zinc-500 font-medium">Total Users</p>
-                        <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.total}</h3>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-1">Total Users</p>
+                        <h3 className="text-3xl font-black text-slate-900">{stats.total}</h3>
                     </div>
                 </div>
 
                 {/* Active Users */}
-                <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 flex items-center gap-4">
-                    <div className="p-3 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-lg">
-                        <UserCheck size={24} />
+                <div className="bg-white p-7 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:shadow-md transition-all duration-300 group">
+                    <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all duration-500">
+                        <UserCheck size={28} />
                     </div>
                     <div>
-                        <p className="text-sm text-zinc-500 font-medium">Active Users</p>
-                        <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.active}</h3>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-1">Active Users</p>
+                        <h3 className="text-3xl font-black text-slate-900">{stats.active}</h3>
                     </div>
                 </div>
 
                 {/* Blocked Users */}
-                <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 flex items-center gap-4">
-                    <div className="p-3 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-lg">
-                        <UserX size={24} />
+                <div className="bg-white p-7 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:shadow-md transition-all duration-300 group">
+                    <div className="p-4 bg-rose-50 text-rose-600 rounded-2xl group-hover:bg-rose-600 group-hover:text-white transition-all duration-500">
+                        <UserX size={28} />
                     </div>
                     <div>
-                        <p className="text-sm text-zinc-500 font-medium">Blocked Users</p>
-                        <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{stats.blocked}</h3>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-1">Blocked Users</p>
+                        <h3 className="text-3xl font-black text-slate-900 text-rose-600">{stats.blocked}</h3>
                     </div>
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-                <h2 className="text-lg font-semibold mb-2">Welcome Back!</h2>
-                <p className="text-zinc-600 dark:text-zinc-400">
-                    Use the sidebar to manage your bot settings, view users, or send broadcasts.
-                    Your bot is currently running and monitoring user status.
-                </p>
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/50 rounded-full -mr-32 -mt-32 blur-3xl transition-all group-hover:scale-110 duration-1000"></div>
+                <div className="relative z-10">
+                    <h2 className="text-xl font-black mb-3 text-slate-900">Welcome Back Admin!</h2>
+                    <p className="text-slate-500 font-medium leading-relaxed max-w-2xl text-[15px]">
+                        Manage your bot settings, view users, or send broadcasts from the sidebar. 
+                        Your system is currently active and monitoring <strong>{stats.total} users</strong> across all channels.
+                    </p>
+                    <div className="mt-8 flex gap-4">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-600 shadow-sm">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            System Operational
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

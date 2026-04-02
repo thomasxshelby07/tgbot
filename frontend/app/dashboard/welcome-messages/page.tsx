@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Save, AlertCircle, CheckCircle, Upload, Trash2 } from "lucide-react";
+import { Save, AlertCircle, CheckCircle, Upload, Trash2, Radio } from "lucide-react";
 import Image from "next/image";
 
 interface Channel {
@@ -132,24 +132,33 @@ export default function WelcomeMessagesPage() {
     };
 
     return (
-        <div className="p-6 max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold text-zinc-800 dark:text-zinc-100 mb-6">Welcome Message Configuration</h1>
+        <div className="p-8 sm:p-12 pb-32 max-w-7xl mx-auto">
+            <div className="flex flex-col gap-1 mb-12">
+                <h1 className="text-4xl font-black text-slate-900 tracking-tight italic uppercase">Funnel Engine</h1>
+                <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400 ml-1">Automated Welcome Sequences</p>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
                 {/* Channel Sidebar/Dropdown */}
-                <div className="md:col-span-1">
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Select Channel</label>
-                    <div className="flex flex-col gap-2">
+                <div className="lg:col-span-1 space-y-4">
+                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 ml-1">Active Signal Nodes</label>
+                    <div className="flex flex-col gap-2 relative">
+                         {/* Sidebar Decorative Line */}
+                        <div className="absolute left-0 top-0 bottom-0 w-px bg-slate-100 -ml-4 hidden lg:block"></div>
+                        
                         {channels.length === 0 ? (
-                            <p className="text-sm text-zinc-500">No active channels found.</p>
+                            <div className="p-8 text-center bg-slate-50 rounded-[32px] border border-dashed border-slate-200">
+                                <AlertCircle size={24} className="mx-auto text-slate-300 mb-2" />
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-relaxed">No active nodes found</p>
+                            </div>
                         ) : (
                             channels.map((channel) => (
                                 <button
                                     key={channel._id}
                                     onClick={() => setSelectedChannel(channel._id)}
-                                    className={`text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${selectedChannel === channel._id
-                                        ? "bg-blue-600 text-white shadow-md"
-                                        : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800"
+                                    className={`relative z-10 text-left px-6 py-4 rounded-[24px] text-[13px] font-black uppercase tracking-widest transition-all ${selectedChannel === channel._id
+                                        ? "bg-slate-900 text-white shadow-xl shadow-slate-900/10 -translate-x-1"
+                                        : "bg-white text-slate-400 hover:bg-slate-50 hover:text-slate-900 border border-slate-100"
                                         }`}
                                 >
                                     {channel.name}
@@ -160,15 +169,20 @@ export default function WelcomeMessagesPage() {
                 </div>
 
                 {/* Edit Form */}
-                <div className="md:col-span-3">
+                <div className="lg:col-span-3">
                     {selectedChannel ? (
-                        <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-                            <form onSubmit={handleSave} className="space-y-6">
+                        <div className="bg-white rounded-[40px] shadow-2xl shadow-slate-900/[0.03] border border-slate-100 p-10 animate-in slide-in-from-right-8 duration-500">
+                            <form onSubmit={handleSave} className="space-y-10">
                                 {/* Enabled Toggle */}
-                                <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg border border-zinc-100 dark:border-zinc-800">
-                                    <div>
-                                        <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Enable Welcome Message</h3>
-                                        <p className="text-xs text-zinc-500">Toggle this funnel for the selected channel</p>
+                                <div className="flex items-center justify-between p-8 bg-slate-50/50 rounded-[32px] border border-slate-100 shadow-inner group">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm ${formData.enabled ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                                            <CheckCircle size={20} strokeWidth={2.5} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-[14px] font-black text-slate-900 uppercase tracking-widest">Logic Gate</h3>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Status: {formData.enabled ? 'Active Sequence' : 'Standby Mode'}</p>
+                                        </div>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input
@@ -177,61 +191,66 @@ export default function WelcomeMessagesPage() {
                                             onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
                                             className="sr-only peer"
                                         />
-                                        <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                        <div className="w-14 h-8 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
                                     </label>
                                 </div>
 
                                 {/* Message Text */}
-                                <div>
-                                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                                        Message Text
-                                        <span className="text-xs font-normal text-zinc-500 ml-2">(Variables: {'{first_name}'}, {'{channel_name}'})</span>
-                                    </label>
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-end px-1">
+                                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                            Payload Text Content
+                                        </label>
+                                        <div className="flex gap-2 text-[9px] font-black uppercase tracking-widest text-blue-500/60 bg-blue-50 px-3 py-1 rounded-full">
+                                            <span>{'{first_name}'}</span>
+                                            <span>{'{channel_name}'}</span>
+                                        </div>
+                                    </div>
                                     <textarea
-                                        rows={4}
+                                        rows={6}
                                         value={formData.messageText}
                                         onChange={(e) => setFormData({ ...formData, messageText: e.target.value })}
-                                        className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full px-6 py-5 border border-slate-100 rounded-[32px] bg-slate-50 focus:bg-white focus:outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all font-bold text-slate-900 placeholder:text-slate-300 shadow-inner"
+                                        placeholder="Enter the welcome script..."
                                         required
                                     />
                                 </div>
 
                                 {/* Buttons & Media */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Button Text (Optional)</label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-4">
+                                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Button Call-to-Action</label>
                                         <input
                                             type="text"
                                             value={formData.buttonText}
                                             onChange={(e) => setFormData({ ...formData, buttonText: e.target.value })}
-                                            className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="JOIN NOW"
+                                            className="w-full px-6 py-4 border border-slate-100 rounded-2xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all font-black text-slate-900 placeholder:text-slate-300 shadow-inner"
+                                            placeholder="e.g. GET STARTED"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Button URL (Optional)</label>
+                                    <div className="space-y-4">
+                                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Redirect Endpoint URL</label>
                                         <input
                                             type="text"
                                             value={formData.buttonUrl}
                                             onChange={(e) => setFormData({ ...formData, buttonUrl: e.target.value })}
-                                            className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full px-6 py-4 border border-slate-100 rounded-2xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all font-mono font-bold text-slate-500 placeholder:text-slate-300 shadow-inner"
                                             placeholder="https://..."
                                         />
                                     </div>
-                                    <div className="col-span-1 md:col-span-2">
-                                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Media URL (Optional)</label>
-                                        <div className="flex flex-col gap-3">
-                                            <input
-                                                type="text"
-                                                value={formData.mediaUrl}
-                                                onChange={(e) => setFormData({ ...formData, mediaUrl: e.target.value })}
-                                                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                placeholder="https://... (Image/Video URL here or upload below)"
-                                            />
-                                            <div className="flex items-center gap-4">
-                                                <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors shadow-sm">
-                                                    <Upload size={18} />
-                                                    <span className="text-sm font-medium">{uploading ? "Uploading..." : "Upload File"}</span>
+                                    <div className="col-span-1 md:col-span-2 space-y-4">
+                                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Media Payload (Image/Video)</label>
+                                        <div className="flex flex-col gap-4">
+                                            <div className="flex gap-4">
+                                                <input
+                                                    type="text"
+                                                    value={formData.mediaUrl}
+                                                    onChange={(e) => setFormData({ ...formData, mediaUrl: e.target.value })}
+                                                    className="flex-1 px-6 py-4 border border-slate-100 rounded-2xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all font-mono font-bold text-slate-400 text-[12px] shadow-inner"
+                                                    placeholder="Remote URL or auto-populated on upload"
+                                                />
+                                                <label className="shrink-0 cursor-pointer flex items-center justify-center p-4 bg-slate-900 text-white rounded-2xl hover:bg-blue-600 transition-all shadow-xl shadow-slate-900/10 active:scale-90">
+                                                    {uploading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <Upload size={20} strokeWidth={2.5} />}
                                                     <input
                                                         type="file"
                                                         accept="image/*,video/*"
@@ -240,65 +259,71 @@ export default function WelcomeMessagesPage() {
                                                         disabled={uploading}
                                                     />
                                                 </label>
-                                                {formData.mediaUrl && (
-                                                    <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700 shadow-sm">
-                                                        {formData.mediaUrl.match(/\.(mp4|webm|ogg)$/i) ? (
-                                                            <video src={formData.mediaUrl} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <Image
-                                                                src={formData.mediaUrl}
-                                                                alt="Media Preview"
-                                                                fill
-                                                                className="object-cover"
-                                                                onError={(e) => {
-                                                                    // Fallback for invalid URLs that are not actual images
-                                                                    e.currentTarget.style.display = 'none';
-                                                                }}
-                                                            />
-                                                        )}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setFormData({ ...formData, mediaUrl: "" })}
-                                                            className="absolute top-0 right-0 p-1 bg-red-500/90 text-white rounded-bl-lg hover:bg-red-600 transition-colors backdrop-blur-sm"
-                                                        >
-                                                            <Trash2 size={12} />
-                                                        </button>
-                                                    </div>
-                                                )}
                                             </div>
+                                            
+                                            {formData.mediaUrl && (
+                                                <div className="relative group w-full h-48 bg-slate-50 rounded-[32px] overflow-hidden border border-slate-100 shadow-inner mt-2">
+                                                    {formData.mediaUrl.match(/\.(mp4|webm|ogg)$/i) ? (
+                                                        <video src={formData.mediaUrl} className="w-full h-full object-contain" />
+                                                    ) : (
+                                                        <Image
+                                                            src={formData.mediaUrl}
+                                                            alt="Media Preview"
+                                                            fill
+                                                            className="object-contain p-4"
+                                                            onError={(e) => {
+                                                                e.currentTarget.style.display = 'none';
+                                                            }}
+                                                        />
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, mediaUrl: "" })}
+                                                        className="absolute top-4 right-4 p-3 bg-rose-600 text-white rounded-xl hover:scale-110 transition-all shadow-xl opacity-0 group-hover:opacity-100"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Delay (seconds)</label>
+                                    <div className="space-y-4">
+                                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Sequence Delay (SEC)</label>
                                         <input
                                             type="number"
                                             min="0"
                                             value={formData.delaySec}
                                             onChange={(e) => setFormData({ ...formData, delaySec: parseInt(e.target.value) || 0 })}
-                                            className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full px-6 py-4 border border-slate-100 rounded-2xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all font-black text-slate-900 shadow-inner"
                                         />
                                     </div>
                                 </div>
 
                                 {message && (
-                                    <div className={`p-4 rounded-lg flex items-center gap-2 ${message.type === 'success' ? 'bg-green-100 text-green-700 dark:bg-green-900/30' : 'bg-red-100 text-red-700 dark:bg-red-900/30'}`}>
-                                        {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
-                                        <span className="text-sm font-medium">{message.text}</span>
+                                    <div className={`p-6 rounded-3xl flex items-center gap-3 animate-in zoom-in-95 ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'}`}>
+                                        {message.type === 'success' ? <CheckCircle size={20} strokeWidth={2.5} /> : <AlertCircle size={20} strokeWidth={2.5} />}
+                                        <span className="text-[12px] font-black uppercase tracking-widest">{message.text}</span>
                                     </div>
                                 )}
 
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors flex justify-center items-center gap-2"
-                                >
-                                    {loading ? "Saving..." : <><Save size={18} /> Save Settings</>}
-                                </button>
+                                <div className="border-t border-slate-50 pt-10">
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-full sm:w-auto bg-slate-900 hover:bg-blue-600 text-white px-12 py-5 rounded-[24px] font-black text-[13px] uppercase tracking-[0.25em] transition-all flex justify-center items-center gap-3 shadow-2xl shadow-slate-900/10 active:scale-95 disabled:opacity-50"
+                                    >
+                                        {loading ? "Deploying..." : <><Save size={18} strokeWidth={2.5} /> Confirm Sequence Update</>}
+                                    </button>
+                                </div>
                             </form>
                         </div>
                     ) : (
-                        <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-12 text-center text-zinc-500">
-                            <p>Please select a channel to configure its welcome message.</p>
+                        <div className="bg-white rounded-[40px] shadow-2xl shadow-slate-900/[0.02] border border-slate-100 p-24 text-center">
+                             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
+                                <Radio size={32} />
+                             </div>
+                             <h3 className="text-xl font-black text-slate-900 tracking-tight italic uppercase mb-2">Select Logic Node</h3>
+                             <p className="text-[12px] font-medium text-slate-400 max-w-xs mx-auto leading-relaxed">Please select a validated signal node from the sidebar to configure its automation sequence.</p>
                         </div>
                     )}
                 </div>

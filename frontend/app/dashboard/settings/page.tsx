@@ -108,140 +108,164 @@ export default function SettingsPage() {
         }));
     };
 
-    if (loading) return <div className="p-8 text-center text-zinc-500">Loading settings...</div>;
+    if (loading) return <div className="p-20 text-center flex flex-col items-center gap-4">
+        <div className="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+        <span className="text-[13px] font-black uppercase tracking-widest text-slate-400">Loading Configuration...</span>
+    </div>;
 
     return (
-        <div className="max-w-4xl mx-auto pb-20">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 italic tracking-tight">Bot Settings</h1>
+        <div className="max-w-4xl mx-auto pb-20 bg-slate-50 min-h-screen">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4 px-2">
+                <div>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight italic">Bot Configuration</h1>
+                    <p className="text-slate-500 font-medium mt-1">Configure global bot behavior and automation.</p>
+                </div>
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center gap-2 font-medium disabled:opacity-50 shadow-lg shadow-blue-500/20 transition-all active:scale-95"
+                    className="w-full sm:w-auto px-8 py-3.5 bg-slate-900 hover:bg-black text-white rounded-[20px] flex items-center justify-center gap-3 font-black text-[13px] uppercase tracking-widest disabled:opacity-50 shadow-xl shadow-slate-900/10 transition-all active:scale-95"
                 >
                     {saving ? (
                         <>
                             <Loader2 size={18} className="animate-spin" />
-                            Saving...
+                            <span>Optimizing...</span>
                         </>
                     ) : (
                         <>
-                            <Save size={18} />
-                            Save Changes
+                            <Save size={18} strokeWidth={2.5} />
+                            <span>Deploy Changes</span>
                         </>
                     )}
                 </button>
             </div>
 
-            <div className="grid gap-8">
+            <div className="grid gap-10">
                 {/* Welcome Message Section */}
-                <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm">
-                    <h2 className="text-xl font-semibold mb-4 text-zinc-800 dark:text-zinc-200">Welcome Message</h2>
+                <div className="bg-white rounded-[32px] border border-slate-200 p-8 shadow-sm shadow-indigo-500/5 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50/50 rounded-full -mr-32 -mt-32 blur-3xl transition-all group-hover:scale-110 duration-1000"></div>
+                    
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-100">
+                                <Plus size={20} strokeWidth={3} />
+                            </div>
+                            <h2 className="text-xl font-black text-slate-900 tracking-tight">Welcome Automation / स्वागत संदेश</h2>
+                        </div>
 
-                    {/* Media Upload */}
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium mb-3 text-zinc-700 dark:text-zinc-300">Welcome Image / Video (Optional)</label>
-                        <div className="flex flex-col md:flex-row items-start gap-6">
-                            {formData.welcomeMessageMediaUrl ? (
-                                <div className="relative w-full md:w-48 h-48 md:h-40 rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden bg-zinc-50 dark:bg-zinc-800 shadow-md">
-                                    <img
-                                        src={formData.welcomeMessageMediaUrl}
-                                        alt="Welcome Media"
-                                        className="w-full h-full object-cover"
-                                    />
-                                    <button
-                                        onClick={() => setFormData(prev => ({ ...prev, welcomeMessageMediaUrl: "" }))}
-                                        className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-lg hover:bg-red-600 shadow-lg transition-all active:scale-90"
-                                    >
-                                        <X size={16} />
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="w-full md:w-40 h-40 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 flex flex-col items-center justify-center text-zinc-400 gap-2 bg-zinc-50 dark:bg-zinc-800/50">
-                                    <Upload size={24} />
-                                    <span className="text-xs font-medium uppercase tracking-wider">No media</span>
-                                </div>
-                            )}
+                        {/* Media Upload */}
+                        <div className="mb-8">
+                            <label className="block text-[11px] font-black uppercase tracking-[0.2em] mb-4 text-slate-400 ml-1">Media Asset (Photo/Video)</label>
+                            <div className="flex flex-col md:flex-row items-start gap-8">
+                                {formData.welcomeMessageMediaUrl ? (
+                                    <div className="relative w-full md:w-56 h-56 md:h-48 rounded-[24px] border border-slate-200 overflow-hidden bg-slate-50 shadow-lg group/media">
+                                        <img
+                                            src={formData.welcomeMessageMediaUrl}
+                                            alt="Welcome Media"
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover/media:scale-110"
+                                        />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/media:opacity-100 transition-opacity flex items-center justify-center">
+                                            <button
+                                                onClick={() => setFormData(prev => ({ ...prev, welcomeMessageMediaUrl: "" }))}
+                                                className="bg-white text-rose-500 p-3 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-2xl scale-125"
+                                            >
+                                                <X size={20} strokeWidth={3} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="w-full md:w-48 h-48 rounded-[24px] border-4 border-dotted border-slate-100 flex flex-col items-center justify-center text-slate-300 gap-3 bg-slate-50 relative group/empty">
+                                        <Upload size={32} strokeWidth={1} className="group-hover/empty:text-blue-400 transition-colors" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">No Media Attached</span>
+                                    </div>
+                                )}
 
-                            <div className="flex-1 w-full">
-                                <div className="bg-zinc-50 dark:bg-zinc-950/30 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
-                                    <input
-                                        type="file"
-                                        accept="image/*,video/*"
-                                        onChange={handleFileUpload}
-                                        className="block w-full text-sm text-zinc-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer"
-                                    />
-                                    <p className="mt-3 text-xs text-zinc-500 leading-relaxed">
-                                        ✨ Supports Images and Videos. High quality recommended.
-                                    </p>
+                                <div className="flex-1 w-full space-y-4">
+                                    <div className="bg-slate-50 p-6 rounded-[24px] border border-slate-100 shadow-inner">
+                                        <input
+                                            type="file"
+                                            accept="image/*,video/*"
+                                            onChange={handleFileUpload}
+                                            className="block w-full text-[13px] text-slate-500 file:mr-6 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-[11px] file:font-black file:uppercase file:tracking-widest file:bg-blue-600 file:text-white hover:file:bg-black file:transition-all cursor-pointer"
+                                        />
+                                        <p className="mt-4 text-[11px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                            High resolution assets recommended
+                                        </p>
+                                    </div>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            readOnly
+                                            value={formData.welcomeMessageMediaUrl}
+                                            className="w-full p-4 pl-10 text-[11px] bg-white text-slate-400 rounded-xl border border-slate-100 font-mono tracking-tighter shadow-sm overflow-hidden text-ellipsis"
+                                            placeholder="Asset deep link will appear here..."
+                                        />
+                                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300">
+                                            <Save size={14} />
+                                        </div>
+                                    </div>
                                 </div>
-                                <input
-                                    type="text"
-                                    readOnly
-                                    value={formData.welcomeMessageMediaUrl}
-                                    className="w-full mt-3 p-3 text-[10px] bg-zinc-100 dark:bg-zinc-950/50 text-zinc-500 rounded-lg border border-zinc-200 dark:border-zinc-800 font-mono tracking-tighter"
-                                    placeholder="Media URL will appear here..."
-                                />
                             </div>
                         </div>
-                    </div>
 
-                    {/* Message Text */}
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">Message Text</label>
-                        <textarea
-                            value={formData.welcomeMessage}
-                            onChange={(e) => setFormData(prev => ({ ...prev, welcomeMessage: e.target.value }))}
-                            rows={6}
-                            className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-sm"
-                            placeholder="Enter your welcome message here..."
-                        />
-                    </div>
-
-                    {/* Inline Buttons */}
-                    <div>
-                        <div className="flex justify-between items-center mb-3">
-                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Inline Buttons (Optional)</label>
-                            <button
-                                onClick={addInlineButton}
-                                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-                            >
-                                <Plus size={16} /> Add Button
-                            </button>
+                        {/* Message Text */}
+                        <div className="mb-8">
+                            <label className="block text-[11px] font-black uppercase tracking-[0.2em] mb-3 text-slate-400 ml-1">Caption / मुख्य संदेश</label>
+                            <textarea
+                                value={formData.welcomeMessage}
+                                onChange={(e) => setFormData(prev => ({ ...prev, welcomeMessage: e.target.value }))}
+                                rows={8}
+                                className="w-full p-6 bg-slate-50 rounded-[28px] border border-slate-100 focus:bg-white focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all font-medium text-[15px] leading-relaxed shadow-inner placeholder-slate-300"
+                                placeholder="Enter the text your users see the first time they interact with the bot..."
+                            />
                         </div>
 
-                        <div className="space-y-4">
-                            {formData.welcomeMessageButtons.map((btn, idx) => (
-                                <div key={idx} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md">
-                                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                                        <span className="text-zinc-400 font-mono text-xs font-bold w-6 uppercase tracking-widest">{idx + 1}.</span>
+                        {/* Inline Buttons */}
+                        <div className="border-t border-slate-50 pt-8">
+                            <div className="flex justify-between items-center mb-6">
+                                <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Interactive Triggers / बटन</label>
+                                <button
+                                    onClick={addInlineButton}
+                                    className="text-[11px] font-black uppercase tracking-wider text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all px-4 py-1.5 rounded-lg border border-blue-100"
+                                >
+                                    + Add Trigger
+                                </button>
+                            </div>
+
+                            <div className="grid gap-3">
+                                {formData.welcomeMessageButtons.map((btn, idx) => (
+                                    <div key={idx} className="flex flex-col sm:flex-row gap-3 items-center bg-white p-2 rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md animate-in slide-in-from-right-4 duration-300">
+                                        <div className="flex items-center gap-3 w-full sm:w-auto flex-1">
+                                            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-100">
+                                                {idx + 1}
+                                            </div>
+                                            <input
+                                                placeholder="Label Text"
+                                                value={btn.text}
+                                                onChange={(e) => updateInlineButton(idx, 'text', e.target.value)}
+                                                className="flex-1 p-3 bg-slate-50 rounded-xl border border-slate-50 text-[13px] font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none"
+                                            />
+                                        </div>
                                         <input
-                                            placeholder="Button Text"
-                                            value={btn.text}
-                                            onChange={(e) => updateInlineButton(idx, 'text', e.target.value)}
-                                            className="flex-1 sm:w-40 p-2.5 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                                            placeholder="Destination URL (https://...)"
+                                            value={btn.url}
+                                            onChange={(e) => updateInlineButton(idx, 'url', e.target.value)}
+                                            className="flex-[2] w-full p-3 bg-slate-50 rounded-xl border border-slate-50 text-[13px] font-medium font-mono text-slate-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none shadow-inner"
                                         />
+                                        <button
+                                            onClick={() => removeInlineButton(idx)}
+                                            className="p-3 text-rose-400 hover:bg-rose-50 hover:text-rose-500 rounded-xl transition-all"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
                                     </div>
-                                    <input
-                                        placeholder="URL (https://...)"
-                                        value={btn.url}
-                                        onChange={(e) => updateInlineButton(idx, 'url', e.target.value)}
-                                        className="flex-1 w-full p-2.5 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
-                                    />
-                                    <button
-                                        onClick={() => removeInlineButton(idx)}
-                                        className="self-end sm:self-auto p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all active:scale-90"
-                                        title="Remove Button"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                </div>
-                            ))}
-                            {formData.welcomeMessageButtons.length === 0 && (
-                                <div className="text-center py-8 border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-lg text-zinc-400 text-sm">
-                                    No buttons added yet.
-                                </div>
-                            )}
+                                ))}
+                                {formData.welcomeMessageButtons.length === 0 && (
+                                    <div className="text-center py-12 border-2 border-dotted border-slate-100 rounded-[24px] bg-slate-50/50">
+                                        <p className="text-[11px] text-slate-300 font-bold uppercase tracking-[0.2em] italic">No active triggers configured</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
