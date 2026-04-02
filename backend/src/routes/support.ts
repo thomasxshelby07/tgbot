@@ -167,6 +167,9 @@ export const supportRoutes = async (fastify: FastifyInstance) => {
                 isRead: true
             });
 
+            // Update ticket updatedAt to bring it to the top of the list
+            await SupportTicket.findByIdAndUpdate(ticket._id, { updatedAt: new Date() });
+
             return reply.send(newMessage);
         } catch (error) {
             console.error('Error sending ticket reply:', error);

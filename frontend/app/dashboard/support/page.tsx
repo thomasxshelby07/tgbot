@@ -252,69 +252,82 @@ export default function SupportPage() {
             const matchesUnread = !showOnlyUnread || ticket.unreadCount > 0;
             return matchesSearch && matchesType && matchesStatus && matchesUnread;
         })
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        .sort((a, b) => {
+            if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
+            if (b.unreadCount > 0 && a.unreadCount === 0) return 1;
+            return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        });
 
     const totalUnread = tickets.reduce((acc, t) => acc + (t.unreadCount || 0), 0);
+    const bgColors = ['bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-rose-500', 'bg-orange-500', 'bg-amber-500', 'bg-emerald-500', 'bg-cyan-500', 'bg-blue-500'];
 
     const canSeeDepositWithdraw = adminRole === 'superadmin' || permissions.includes('deposit_withdraw');
     const canSeeIdOther = adminRole === 'superadmin' || permissions.includes('id_other');
 
     return (
-        <div className="flex flex-col h-[100dvh] w-full bg-zinc-50 dark:bg-zinc-950 overflow-hidden font-sans">
-            {/* Top Navigation Bar */}
-            <div className="h-14 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-4 shrink-0 shadow-sm z-10">
-                <div className="flex items-center gap-4">
+        <div className="flex flex-col h-[100dvh] w-full bg-[#f8fafc] text-slate-900 overflow-hidden font-sans selection:bg-indigo-100 selection:text-indigo-900">
+            {/* Top Navigation Bar - Premium Glassmorphism */}
+            <div className="h-14 bg-white/70 backdrop-blur-xl border-b border-slate-200/60 flex items-center justify-between px-6 shrink-0 z-30 sticky top-0 shadow-[0_1px_3px_0_rgba(0,0,0,0.02)]">
+                <div className="flex items-center gap-5">
                     <button 
                         onClick={() => window.location.href = '/dashboard'}
-                        className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-600 dark:text-zinc-300 transition-colors flex items-center gap-1.5 text-sm font-medium"
+                        className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-indigo-600 transition-all active:scale-95 flex items-center gap-2 text-sm font-semibold"
                         title="Back to Dashboard"
                     >
-                        <ArrowLeft size={16} /> Back
+                        <ArrowLeft size={18} strokeWidth={2.5} /> <span className="hidden sm:inline">Dashboard</span>
                     </button>
-                    <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
-                    <div className="flex items-center gap-2">
-                        <h1 className="text-sm font-bold dark:text-white">Support Tickets</h1>
+                    <div className="h-4 w-px bg-slate-200"></div>
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 uppercase tracking-tight">Support Tickets</h1>
                         {totalUnread > 0 && (
-                            <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
-                                {totalUnread} New
+                            <span className="bg-indigo-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg shadow-indigo-600/20 ring-2 ring-white">
+                                {totalUnread}
                             </span>
                         )}
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="hidden md:flex flex-col items-end">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Status</span>
+                        <span className="text-[12px] font-bold text-emerald-500 leading-tight">System Online</span>
                     </div>
                 </div>
             </div>
 
             <div className="flex flex-1 min-h-0 relative">
-                {/* Left Side: Tickets List */}
-                <div className={`w-full md:w-[320px] lg:w-[350px] shrink-0 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col ${selectedTicket ? 'hidden md:flex' : 'flex'}`}>
-                    <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 space-y-2 bg-zinc-50/50 dark:bg-zinc-950/50 shrink-0">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
+                {/* Left Side: Tickets List - Sleeker Sidebar */}
+                <div className={`w-full md:w-[340px] shrink-0 bg-white border-r border-slate-200/60 flex flex-col z-20 ${selectedTicket ? 'hidden md:flex' : 'flex'}`}>
+                    <div className="p-4 border-b border-slate-100 space-y-3 bg-slate-50/30 shrink-0">
+                        <div className="relative group">
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={16} />
                             <input
                                 type="text"
                                 placeholder="Search Name, Phone, ID..."
-                                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-blue-500 text-white"
+                                className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500/50 transition-all placeholder-slate-400 font-medium"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
                         <div className="flex gap-2">
-                            <select
-                                value={filterType}
-                                onChange={(e) => setFilterType(e.target.value)}
-                                className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
-                            >
-                                <option value="all">All Types</option>
-                                {canSeeDepositWithdraw && <option value="Withdrawal">Withdrawal</option>}
-                                {canSeeDepositWithdraw && <option value="Deposit">Deposit</option>}
-                                {canSeeIdOther && <option value="ID">ID Issue</option>}
-                                {canSeeIdOther && <option value="Other">Other</option>}
-                            </select>
+                            <div className="relative flex-1">
+                                <select
+                                    value={filterType}
+                                    onChange={(e) => setFilterType(e.target.value)}
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-[12px] font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all appearance-none cursor-pointer"
+                                >
+                                    <option value="all">All Issues</option>
+                                    {canSeeDepositWithdraw && <option value="Withdrawal">Withdrawal</option>}
+                                    {canSeeDepositWithdraw && <option value="Deposit">Deposit</option>}
+                                    {canSeeIdOther && <option value="ID">ID Issue</option>}
+                                    {canSeeIdOther && <option value="Other">Other</option>}
+                                </select>
+                            </div>
                             <button
                                 onClick={() => setShowOnlyUnread(!showOnlyUnread)}
-                                className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
+                                className={`px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all border ${
                                     showOnlyUnread 
-                                        ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-600/20' 
-                                        : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-600'
+                                        ? 'bg-indigo-600 border-indigo-500 text-white shadow-md shadow-indigo-600/20' 
+                                        : 'bg-white border-slate-200 text-slate-400 hover:border-slate-300'
                                 }`}
                             >
                                 Unread
@@ -322,125 +335,139 @@ export default function SupportPage() {
                             <select
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
-                                className="w-[100px] bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                                className="w-[85px] bg-white border border-slate-200 rounded-xl px-2 py-2 text-[11px] font-black text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 appearance-none cursor-pointer text-center"
                             >
                                 <option value="open">Open</option>
-                                <option value="resolved">Resolved</option>
-                                <option value="all">All</option>
+                                <option value="resolved">Closed</option>
+                                <option value="all">Both</option>
                             </select>
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-2 space-y-1.5 custom-scrollbar bg-slate-50/20">
                         {loading ? (
-                            <div className="text-center text-zinc-500 text-sm py-10">Loading tickets...</div>
+                            <div className="flex flex-col items-center justify-center py-20 gap-3 opacity-40">
+                                <div className="w-8 h-8 border-2 border-slate-300 border-t-indigo-600 rounded-full animate-spin"></div>
+                                <span className="text-[11px] font-bold uppercase tracking-widest">Loading...</span>
+                            </div>
                         ) : filteredTickets.length === 0 ? (
-                            <div className="text-center text-zinc-500 text-sm py-10">No tickets found.</div>
+                            <div className="flex flex-col items-center justify-center py-20 gap-2 opacity-30">
+                                <Search size={40} strokeWidth={1} />
+                                <span className="text-[13px] font-medium">No results found</span>
+                            </div>
                         ) : (
-                            filteredTickets.map(ticket => (
+                            filteredTickets.map(ticket => {
+                                const colorIndex = ticket.name.charCodeAt(0) % bgColors.length;
+                                const avatarColor = bgColors[colorIndex] || 'bg-indigo-500';
+                                const isSelected = selectedTicket?._id === ticket._id;
+                                
+                                return (
                                 <div
                                     key={ticket._id}
                                     onClick={() => {
                                         setSelectedTicket(ticket);
-                                        // Reset unread count locally for instant feedback
                                         setTickets(prev => prev.map(t => t._id === ticket._id ? { ...t, unreadCount: 0 } : t));
                                         lastTicketsRef.current = lastTicketsRef.current.map(t => t._id === ticket._id ? { ...t, unreadCount: 0 } : t);
                                     }}
-                                    className={`p-4 cursor-pointer transition-all border-b last:border-0 relative group ${
-                                        selectedTicket?._id === ticket._id 
-                                            ? 'bg-blue-600/10 dark:bg-blue-600/10 border-blue-500/50' 
-                                            : 'bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 border-zinc-100 dark:border-zinc-800/50'
-                                    } ${ticket.unreadCount > 0 ? 'ring-1 ring-blue-500/30' : ''}`}
+                                    className={`p-3 cursor-pointer transition-all rounded-2xl relative group border ${
+                                        isSelected 
+                                            ? 'bg-white border-indigo-100 shadow-[0_8px_20px_-10px_rgba(79,70,229,0.15)] ring-1 ring-indigo-500/5' 
+                                            : 'bg-transparent border-transparent hover:bg-white hover:border-slate-100'
+                                    }`}
                                 >
-                                    {ticket.unreadCount > 0 && (
-                                        <div className="absolute top-4 right-4 w-5 h-5 bg-blue-600 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-pulse shadow-lg shadow-blue-600/40 z-10">
-                                            {ticket.unreadCount}
-                                        </div>
-                                    )}
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div className={`font-bold text-[14px] truncate pr-4 transition-colors ${ticket.unreadCount > 0 ? 'text-blue-500' : 'text-zinc-900 dark:text-zinc-100 group-hover:text-blue-400'}`}>
-                                            {ticket.name}
-                                        </div>
-                                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded tracking-tighter ${
-                                            ticket.status === 'resolved' ? 'bg-zinc-800 text-zinc-500' : 
-                                            ticket.issueType === 'Deposit' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
-                                            ticket.issueType === 'Withdrawal' ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20' :
-                                            'bg-sky-500/10 text-sky-500 border border-sky-500/20'
-                                        }`}>
-                                            {ticket.issueType}
-                                        </span>
-                                    </div>
-                                    
-                                    <div className="space-y-1">
-                                        <div className="text-[11px] text-zinc-500 flex items-center gap-1.5 font-medium italic opacity-70">
-                                            <Hash size={10} className="text-blue-500" /> {ticket.dafabetId}
-                                        </div>
-                                        <div className="text-[11px] text-zinc-400 flex items-center gap-1.5">
-                                            <Smartphone size={10} /> {ticket.phoneNumber}
-                                        </div>
-                                        <div className={`text-[12px] line-clamp-2 mt-2 leading-relaxed h-8 transition-colors ${ticket.unreadCount > 0 ? 'text-zinc-200 font-semibold' : 'text-zinc-500 dark:text-zinc-400 underline-offset-4 decoration-zinc-800'}`}>
-                                            {ticket.problem}
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="mt-3 flex items-center justify-between opacity-40 group-hover:opacity-100 transition-opacity">
-                                        <span className="text-[9px] font-mono text-zinc-500">
-                                            {new Date(ticket.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
-                                        </span>
-                                        {ticket.status === 'open' && (
-                                            <div className="flex gap-1">
-                                                <div className="w-1 h-1 rounded-full bg-blue-500 animate-ping"></div>
-                                                <span className="text-[9px] uppercase font-bold text-blue-500">Active</span>
+                                    <div className="flex gap-3">
+                                        <div className="relative shrink-0 pt-0.5">
+                                            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-white font-bold text-[16px] shadow-sm transition-transform group-hover:scale-105 duration-300 ${avatarColor}`}>
+                                                {ticket.name.charAt(0).toUpperCase()}
                                             </div>
-                                        )}
+                                            {ticket.unreadCount > 0 && (
+                                                <div className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-indigo-600 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md z-10 p-0.5">
+                                                    {ticket.unreadCount}
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-start">
+                                                <div className={`font-bold text-[14px] truncate transition-colors ${ticket.unreadCount > 0 ? 'text-slate-950' : 'text-slate-700'} ${isSelected ? 'text-indigo-600' : ''}`}>
+                                                    {ticket.name}
+                                                </div>
+                                                <span className={`text-[10px] font-bold shrink-0 mt-0.5 flex flex-col items-end gap-0.5 ${ticket.unreadCount > 0 ? 'text-indigo-600' : 'text-slate-400'}`}>
+                                                    {new Date(ticket.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                                </span>
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-1.5 mt-0.5 opacity-60">
+                                                <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">#{ticket.telegramId.slice(-5)}</span>
+                                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                                <span className={`text-[10px] font-black uppercase tracking-tight ${
+                                                    ticket.status === 'resolved' ? 'text-slate-400' : 
+                                                    ticket.issueType === 'Deposit' ? 'text-emerald-500' :
+                                                    ticket.issueType === 'Withdrawal' ? 'text-orange-500' :
+                                                    'text-indigo-500'
+                                                }`}>
+                                                    {ticket.issueType}
+                                                </span>
+                                            </div>
+                                            
+                                            <div className={`text-[12px] line-clamp-1 leading-normal mt-1.5 ${ticket.unreadCount > 0 ? 'text-slate-800 font-semibold' : 'text-slate-500 font-medium'}`}>
+                                                {ticket.problem}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            ))
+                            )})
                         )}
                     </div>
                 </div>
 
-                {/* Right Side: Chat Area */}
-                <div className={`flex-1 flex-col bg-[#efefef] dark:bg-[#121212] min-w-0 relative ${selectedTicket ? 'flex' : 'hidden md:flex'}`}>
+                {/* Right Side: Chat Area - Pure WhatsApp Lite Style */}
+                <div className={`flex-1 flex-col bg-[#f1f5f9] min-w-0 relative z-10 ${selectedTicket ? 'flex' : 'hidden md:flex'}`}>
                     {!selectedTicket ? (
                         <>
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 to-zinc-900 pointer-events-none"></div>
-                            <div className="flex flex-col items-center z-10 opacity-60">
-                                <MessageSquare size={48} className="text-zinc-600 mb-4" />
-                                <h2 className="text-xl font-bold text-zinc-400">Select a Ticket</h2>
-                                <p className="text-sm text-zinc-500 mt-2">Choose a ticket from the left to start chatting</p>
+                            <div className="flex flex-col items-center justify-center h-full w-full px-4 animate-in fade-in duration-1000">
+                                <div className="w-24 h-24 bg-white/50 rounded-[40px] flex items-center justify-center mb-8 relative">
+                                    <div className="absolute inset-0 bg-indigo-500/5 blur-2xl rounded-full"></div>
+                                    <MessageSquare size={40} className="text-slate-400 relative z-10" strokeWidth={1.5} />
+                                </div>
+                                <h2 className="text-xl font-black text-slate-800">Support Terminal</h2>
+                                <p className="text-[13px] text-slate-400 mt-2 max-w-[280px] text-center font-medium leading-relaxed">
+                                    Select a user to begin high-speed real-time technical support via Telegram.
+                                </p>
                             </div>
                         </>
                     ) : (
                         <>
-                            <div className="absolute inset-0 z-0 opacity-[0.03] dark:opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
+                            {/* Chat Window Backdrop Pattern */}
+                            <div className="absolute inset-0 z-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
                             
-                            {/* Chat Header */}
-                            <div className="h-14 p-3 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0 flex justify-between items-center z-10 shadow-sm shadow-black/5">
-                                <div className="flex items-center gap-2 sm:gap-3">
+                            {/* Active Ticket Header - Glass */}
+                            <div className="h-16 px-6 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl shrink-0 flex justify-between items-center z-20 shadow-[0_1px_4px_-1px_rgba(0,0,0,0.03)] sticky top-0">
+                                <div className="flex items-center gap-4">
                                     <button 
                                         onClick={() => setSelectedTicket(null)}
-                                        className="md:hidden p-1.5 -ml-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-500 transition-colors"
+                                        className="md:hidden p-2 -ml-2 text-slate-400 hover:text-indigo-600 transition-colors"
                                     >
-                                        <ArrowLeft size={18} />
+                                        <ArrowLeft size={20} strokeWidth={2.5} />
                                     </button>
-                                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-[12px] shrink-0">
-                                        {(selectedTicket.name || 'U').charAt(0)}
+                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-[16px] text-white shadow-sm shrink-0 ${bgColors[selectedTicket.name.charCodeAt(0) % bgColors.length] || 'bg-indigo-500'}`}>
+                                        {(selectedTicket.name || 'U').charAt(0).toUpperCase()}
                                     </div>
-                                    <div>
-                                        <h2 className="font-bold text-[13px] dark:text-white leading-tight flex items-center gap-1">
-                                            {selectedTicket.status === 'open' ? <div className="w-2 h-2 rounded-full bg-green-500"></div> : <div className="w-2 h-2 rounded-full bg-red-500"></div>}
+                                    <div className="min-w-0">
+                                        <h2 className="font-bold text-[15px] text-slate-900 leading-none truncate">
                                             {selectedTicket.name}
                                         </h2>
-                                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight">ID: {selectedTicket.dafabetId} • {selectedTicket.issueType}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className={`flex h-1.5 w-1.5 rounded-full ${selectedTicket.status === 'open' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></span>
+                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">{selectedTicket.status === 'open' ? 'Active Technical Chat' : 'Archived Request'}</p>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
                                     {selectedTicket.status === 'open' && (
                                         <button 
                                             onClick={() => handleResolve(selectedTicket._id)} 
-                                            className="text-[11px] text-orange-600 hover:text-orange-700 dark:text-orange-400 bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/40 px-3 py-1.5 rounded-md font-bold transition-colors" 
-                                            title="End Chat & Resolve Ticket"
+                                            className="h-10 px-5 text-[12px] font-black uppercase tracking-wider text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all shadow-lg shadow-slate-900/10 active:scale-95"
                                         >
                                             End Chat
                                         </button>
@@ -448,83 +475,113 @@ export default function SupportPage() {
                                     {selectedTicket.status === 'resolved' && (
                                         <button 
                                             onClick={() => handleReopen(selectedTicket._id)} 
-                                            className="text-[11px] text-blue-600 hover:text-blue-700 dark:text-blue-400 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 px-3 py-1.5 rounded-md font-bold transition-colors" 
-                                            title="Reopen Ticket"
+                                            className="h-10 px-5 text-[12px] font-black uppercase tracking-wider text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-lg shadow-indigo-600/10"
                                         >
                                             Reopen
                                         </button>
                                     )}
                                     {adminRole === 'superadmin' && (
-                                        <button onClick={() => handleDelete(selectedTicket._id)} className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors" title="Delete Ticket">
-                                            <Trash2 size={18} />
+                                        <button onClick={() => handleDelete(selectedTicket._id)} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all">
+                                            <Trash2 size={18} strokeWidth={2} />
                                         </button>
                                     )}
-                                    <button onClick={() => setSelectedTicket(null)} className="hidden">
-                                    </button>
                                 </div>
                             </div>
                             
-                            {/* Original Problem Banner */}
-                            <div className="bg-blue-50 dark:bg-blue-900/10 border-b border-blue-100 dark:border-blue-900/30 p-3 shrink-0 z-10 mx-2 mt-2 rounded-lg">
-                                <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold mb-1 uppercase tracking-wider">Initial User Problem</p>
-                                <p className="text-[13px] text-blue-900 dark:text-blue-100 font-medium">{selectedTicket.problem}</p>
+                            {/* User Context Bar */}
+                            <div className="bg-indigo-600/5 border-b border-indigo-600/10 p-3 px-6 shrink-0 z-10 flex flex-wrap gap-x-6 gap-y-2 items-center">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500/60">Phone</span>
+                                    <span className="text-[13px] font-bold text-indigo-900 leading-none">{selectedTicket.phoneNumber}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500/60">System ID</span>
+                                    <span className="text-[13px] font-bold text-indigo-900 leading-none font-mono">DFA-{selectedTicket.dafabetId}</span>
+                                </div>
+                                {selectedTicket.issueType && (
+                                    <div className="ml-auto flex items-center gap-2">
+                                        <span className="text-[11px] font-black px-2.5 py-1 rounded-full bg-white shadow-sm ring-1 ring-indigo-500/10 text-indigo-600 uppercase tracking-tighter">{selectedTicket.issueType}</span>
+                                    </div>
+                                )}
                             </div>
 
-                            {/* Chat Messages */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-2 z-10 relative custom-scrollbar">
+                            {/* Chat Messages - WhatsApp-like compact bubbles */}
+                            <div className="flex-1 overflow-y-auto p-6 space-y-3 z-10 relative custom-scrollbar flex flex-col">
+                                {/* Problem Banner in message list */}
+                                <div className="self-center my-4 max-w-[90%] bg-indigo-100/50 backdrop-blur-sm border border-indigo-200/50 px-6 py-4 rounded-[28px] shadow-sm relative overflow-hidden">
+                                     <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none"><LifeBuoy size={60} strokeWidth={1} /></div>
+                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 block mb-2">Original Support Inquiry</span>
+                                     <p className="text-[14px] text-indigo-950 font-bold leading-relaxed">{selectedTicket.problem}</p>
+                                </div>
+
                                 {messages.map((msg, idx) => {
                                     const isAdmin = msg.sender === 'admin';
                                     return (
-                                        <div key={msg._id || idx} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`max-w-[85%] sm:max-w-[75%] px-3.5 py-2 relative shadow-sm ${isAdmin ? 'bg-[#d9fdd3] dark:bg-[#005c4b] text-gray-900 dark:text-gray-100 rounded-lg rounded-tr-none' : 'bg-white dark:bg-[#202c33] text-gray-900 dark:text-gray-100 rounded-lg rounded-tl-none border border-black/5 dark:border-transparent'}`}>
+                                        <div key={msg._id || idx} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+                                            <div className={`max-w-[85%] sm:max-w-[65%] px-4 py-2.5 relative shadow-[0_2px_10px_-5px_rgba(0,0,0,0.05)] ${
+                                                isAdmin 
+                                                    ? 'bg-indigo-600 text-white rounded-3xl rounded-tr-none' 
+                                                    : 'bg-white text-slate-800 rounded-3xl rounded-tl-none border border-slate-100'
+                                            }`}>
                                                 {msg.mediaUrl ? (
-                                                    <div className="mb-1">
+                                                    <div className="mb-1.5">
                                                         {msg.messageType === 'photo' ? (
-                                                            <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="block"><img src={msg.mediaUrl} alt="Shared photo" className="max-w-full max-h-[250px] rounded-md object-contain" /></a>
+                                                            <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-2xl border border-black/5"><img src={msg.mediaUrl} alt="Shared photo" className="max-w-full max-h-[300px] hover:scale-105 transition-transform duration-500" /></a>
                                                         ) : msg.messageType === 'video' ? (
-                                                            <video src={msg.mediaUrl} controls className="max-w-full max-h-[250px] rounded-md" />
+                                                            <video src={msg.mediaUrl} controls className="max-w-full max-h-[300px] rounded-2xl" />
                                                         ) : msg.messageType === 'audio' || msg.messageType === 'voice' ? (
-                                                            <audio src={msg.mediaUrl} controls className="max-w-full h-10" />
+                                                            <audio src={msg.mediaUrl} controls className={`max-w-full h-10 ${isAdmin ? 'invert hue-rotate-180 brightness-150' : ''}`} />
                                                         ) : (
-                                                            <a href={msg.mediaUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[13px] p-2 text-blue-500 underline font-medium bg-black/5 dark:bg-white/5 rounded-lg">
-                                                                📄 View Document
+                                                            <a href={msg.mediaUrl} target="_blank" rel="noreferrer" className="flex items-center gap-3 text-[13px] p-3 text-indigo-600 bg-indigo-50/50 rounded-2xl font-bold transition-all hover:bg-indigo-100/50">
+                                                                <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0 text-indigo-500"><FileAudio size={20} /></div> File Documentation
                                                             </a>
                                                         )}
-                                                        {msg.content && <p className="text-[13px] mt-1 whitespace-pre-wrap">{msg.content}</p>}
+                                                        {msg.content && <p className="text-[14px] mt-2 font-medium leading-relaxed">{msg.content}</p>}
                                                     </div>
                                                 ) : (
-                                                    <p className="text-[13px] whitespace-pre-wrap leading-relaxed pr-8">{msg.content}</p>
+                                                    <p className="text-[14px] font-medium leading-relaxed pr-6">{msg.content}</p>
                                                 )}
-                                                <p className={`text-[9px] mt-1 text-right opacity-60 ${msg.mediaUrl && !msg.content ? 'relative bottom-0 right-0 inline-block w-full' : 'absolute bottom-1.5 right-2'}`}>
-                                                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </p>
+                                                <div className={`flex items-center justify-end gap-1.5 mt-1 opacity-50 ${msg.mediaUrl && !msg.content ? 'relative' : ''}`}>
+                                                    <span className="text-[9px] font-black uppercase tracking-tighter">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                    {isAdmin && <CheckCircle size={10} strokeWidth={3} className="text-white/80" />}
+                                                </div>
                                             </div>
                                         </div>
                                     );
                                 })}
-                                <div ref={messagesEndRef} />
+                                <div ref={messagesEndRef} className="h-6" />
                             </div>
+                            
+                            {/* Input Center Overlay when resolution is processing */}
+                            {(isSending || uploadingMedia) && (
+                                <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-30 transition-all">
+                                     <div className="bg-white/80 backdrop-blur-md px-6 py-2 rounded-full border border-slate-200 shadow-xl flex items-center gap-3">
+                                         <div className="w-3 h-3 bg-indigo-600 rounded-full animate-ping"></div>
+                                         <span className="text-[11px] font-black uppercase tracking-widest text-slate-700">Syncing...</span>
+                                     </div>
+                                </div>
+                            )}
 
-                            {/* Input Area */}
-                            <div className="p-3 bg-white dark:bg-zinc-900 shrink-0 z-10 pb-6 sm:pb-3" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+                            {/* Input Area - Sleek floating bar */}
+                            <div className="p-4 bg-transparent shrink-0 z-20 sticky bottom-0">
                                 {selectedTicket.status === 'resolved' ? (
-                                    <div className="flex flex-col items-center justify-center py-2 gap-2">
-                                        <div className="text-center text-[12px] text-zinc-400">
-                                            This ticket has been resolved. Chat is closed.
-                                        </div>
+                                    <div className="flex flex-col items-center justify-center py-4 gap-3 bg-white/60 backdrop-blur-md rounded-3xl border border-slate-200/50 shadow-lg">
+                                        <div className="text-center text-[12px] font-bold text-slate-400 uppercase tracking-widest">Chat Session Archived</div>
                                         <button 
                                             onClick={() => handleReopen(selectedTicket._id)}
-                                            className="text-[12px] px-4 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                                            className="px-8 py-2.5 bg-indigo-600 text-white rounded-full font-black text-[12px] uppercase tracking-wider hover:bg-slate-900 transition-all shadow-xl shadow-indigo-600/20 active:scale-95"
                                         >
-                                            Reopen Ticket
+                                            Unarchive chat
                                         </button>
                                     </div>
                                 ) : (
-                                    <form onSubmit={handleSendMessage} className="flex items-center gap-2 max-w-4xl mx-auto relative">
-                                        <label className="w-10 h-10 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 flex items-center justify-center transition-colors shrink-0 cursor-pointer self-end mb-0.5">
-                                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleMediaUpload(e, 'photo')} disabled={uploadingMedia} />
-                                            {uploadingMedia ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <ImageIcon size={18} />}
-                                        </label>
+                                    <form onSubmit={handleSendMessage} className="max-w-5xl mx-auto flex items-end gap-2 bg-white/90 backdrop-blur-2xl p-2.5 rounded-[32px] border border-slate-200 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)] ring-4 ring-slate-100/30">
+                                        <div className="flex items-center gap-1">
+                                            <label className="w-11 h-11 rounded-full hover:bg-slate-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center transition-all shrink-0 cursor-pointer mb-0.5 active:scale-90">
+                                                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleMediaUpload(e, 'photo')} disabled={uploadingMedia} />
+                                                <ImageIcon size={22} strokeWidth={2} />
+                                            </label>
+                                        </div>
                                         <textarea
                                             value={newMessage}
                                             onChange={(e) => {
@@ -533,18 +590,18 @@ export default function SupportPage() {
                                                 e.target.style.height = `${e.target.scrollHeight}px`;
                                             }}
                                             onKeyDown={handleKeyDown}
-                                            placeholder={uploadingMedia ? "Uploading media..." : "Type a message... (Shift+Enter for new line)"}
-                                            disabled={uploadingMedia}
+                                            placeholder={uploadingMedia ? "Uploading to Cloud..." : "Start typing tech support..."}
+                                            disabled={uploadingMedia || isSending}
                                             rows={1}
-                                            className="flex-1 px-4 py-3 rounded-[20px] border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-[13px] focus:ring-1 focus:ring-blue-500/50 outline-none dark:text-white transition-all resize-none min-h-[44px] max-h-[120px] overflow-y-auto w-full custom-scrollbar leading-tight"
+                                            className="flex-1 py-3 px-2 bg-transparent text-[15px] focus:outline-none text-slate-900 transition-all resize-none min-h-[44px] max-h-[160px] overflow-y-auto w-full custom-scrollbar leading-relaxed placeholder-slate-400 font-medium"
                                             style={{ height: '44px' }}
                                         />
                                         <button 
                                             type="submit" 
                                             disabled={!newMessage.trim() || isSending || uploadingMedia}
-                                            className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-800 text-white flex items-center justify-center transition-colors shrink-0 shadow-sm self-end mb-0.5"
+                                            className="w-11 h-11 rounded-full bg-slate-950 hover:bg-indigo-600 disabled:bg-slate-100 disabled:text-slate-300 text-white flex items-center justify-center transition-all shrink-0 mb-0.5 shadow-lg active:scale-90"
                                         >
-                                            <Send size={16} className="-ml-0.5" />
+                                            <Send size={18} strokeWidth={3} className="-ml-1" />
                                         </button>
                                     </form>
                                 )}
@@ -555,15 +612,36 @@ export default function SupportPage() {
             </div>
             
             <style jsx global>{`
+                @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+                
+                :root {
+                    --font-sans: 'Plus Jakarta Sans', sans-serif;
+                }
+
+                * { font-family: var(--font-sans); }
+
                 .custom-scrollbar::-webkit-scrollbar {
-                    width: 6px;
+                    width: 5px;
                 }
                 .custom-scrollbar::-webkit-scrollbar-track {
                     background: transparent;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background-color: #3f3f46;
-                    border-radius: 10px;
+                    background-color: #e2e8f0;
+                    border-radius: 20px;
+                }
+                .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+                    background-color: #cbd5e1;
+                }
+
+                /* WhatsApp-like Tail effect (simplified with CSS for bubbles) */
+                .rounded-tr-none {
+                    border-bottom-right-radius: 24px;
+                    border-top-right-radius: 4px;
+                }
+                .rounded-tl-none {
+                    border-bottom-left-radius: 24px;
+                    border-top-left-radius: 4px;
                 }
             `}</style>
         </div>
