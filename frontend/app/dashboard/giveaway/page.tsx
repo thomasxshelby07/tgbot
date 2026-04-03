@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
     Gift, Plus, Trash2, Save, Users, Settings as SettingsIcon, 
-    Upload, FileText, ChevronRight, X, List, Hash, Type
+    Upload, FileText, ChevronRight, X, List, Hash, Type, Info
 } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 
@@ -315,7 +315,7 @@ export default function GiveawayPage() {
 }
 
 // Sub-components
-function Header({ activeTab, setActiveTab }: { activeTab: string, setActiveTab: (t: any) => void }) {
+function Header({ activeTab, setActiveTab }: { activeTab: 'setup' | 'participants', setActiveTab: (t: 'setup' | 'participants') => void }) {
     return (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
             <div>
@@ -336,7 +336,7 @@ function Header({ activeTab, setActiveTab }: { activeTab: string, setActiveTab: 
     );
 }
 
-function TabButton({ active, onClick, icon, label }: any) {
+function TabButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
     return (
         <button onClick={onClick} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[12px] font-black uppercase tracking-widest transition-all ${active ? 'bg-slate-900 text-white shadow-lg shadow-black/10' : 'text-slate-400 hover:text-slate-900 hover:bg-slate-50'}`}>
             {icon} {label}
@@ -344,7 +344,7 @@ function TabButton({ active, onClick, icon, label }: any) {
     );
 }
 
-function SectionTitle({ icon, title }: any) {
+function SectionTitle({ icon, title }: { icon: React.ReactNode, title: string }) {
     return (
         <div className="flex items-center gap-3 mb-6">
             <div className="w-8 h-8 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center">
@@ -355,7 +355,7 @@ function SectionTitle({ icon, title }: any) {
     );
 }
 
-function InputGroup({ label, value, onChange, placeholder }: any) {
+function InputGroup({ label, value, onChange, placeholder }: { label: string, value: string, onChange: (v: string) => void, placeholder?: string }) {
     return (
         <div className="space-y-2">
             <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">{label} / नाम</label>
@@ -369,7 +369,7 @@ function InputGroup({ label, value, onChange, placeholder }: any) {
     );
 }
 
-function QuestionCard({ index, question, onUpdate, onRemove }: any) {
+function QuestionCard({ index, question, onUpdate, onRemove }: { index: number, question: Question, onUpdate: (i: number, k: keyof Question, v: any) => void, onRemove: (i: number) => void }) {
     return (
         <div className="p-6 bg-slate-50/50 rounded-[24px] border border-slate-100 space-y-4 group/q relative animate-in zoom-in-95 duration-300">
             <div className="flex items-center justify-between">
@@ -377,7 +377,7 @@ function QuestionCard({ index, question, onUpdate, onRemove }: any) {
                     <span className="w-6 h-6 rounded-lg bg-blue-600 text-white text-[10px] font-black flex items-center justify-center shadow-md shadow-blue-600/20">{index + 1}</span>
                     <select 
                         value={question.type} 
-                        onChange={(e) => onUpdate(index, 'type', e.target.value)}
+                        onChange={(e) => onUpdate(index, 'type', e.target.value as any)}
                         className="bg-transparent text-[11px] font-black uppercase tracking-widest text-slate-400 outline-none cursor-pointer hover:text-slate-900 transition-colors"
                     >
                         <option value="text">✎ Text Input</option>
@@ -403,7 +403,7 @@ function QuestionCard({ index, question, onUpdate, onRemove }: any) {
                             <div key={oi} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm">
                                 <span className="text-[12px] font-bold text-slate-700">{opt}</span>
                                 <button onClick={() => {
-                                    const next = question.options.filter((_: any, i: any) => i !== oi);
+                                    const next = question.options.filter((_, i) => i !== oi);
                                     onUpdate(index, 'options', next);
                                 }} className="text-slate-300 hover:text-rose-500">
                                     <X size={12}/>
@@ -417,10 +417,10 @@ function QuestionCard({ index, question, onUpdate, onRemove }: any) {
                             className="bg-white border text-[12px] px-3 py-1.5 rounded-lg outline-none w-32 font-medium"
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
-                                    const val = (e.target as any).value;
+                                    const val = (e.currentTarget as HTMLInputElement).value;
                                     if(val) {
                                         onUpdate(index, 'options', [...question.options, val]);
-                                        (e.target as any).value = '';
+                                        (e.currentTarget as HTMLInputElement).value = '';
                                     }
                                 }
                             }}
@@ -432,7 +432,7 @@ function QuestionCard({ index, question, onUpdate, onRemove }: any) {
     );
 }
 
-function MediaUpload({ url, type, setUrl, setType, onUpload, uploading }: any) {
+function MediaUpload({ url, type, setUrl, setType, onUpload, uploading }: { url: string, type: 'photo' | 'video' | 'audio' | '', setUrl: (v: string) => void, setType: (v: 'photo' | 'video' | 'audio' | '') => void, onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void, uploading: boolean }) {
     return (
         <div className="space-y-2">
             <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Media Attachment / मीडिया</label>
@@ -440,7 +440,8 @@ function MediaUpload({ url, type, setUrl, setType, onUpload, uploading }: any) {
                 {['photo', 'video', 'audio'].map((t) => (
                     <button 
                         key={t}
-                        onClick={() => setType(t)}
+                        onClick={() => setType(t as 'photo' | 'video' | 'audio')}
+                        type="button"
                         className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${type === t ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
                     >
                         {t}
@@ -463,7 +464,7 @@ function MediaUpload({ url, type, setUrl, setType, onUpload, uploading }: any) {
     );
 }
 
-function StatusToggle({ active, onToggle }: any) {
+function StatusToggle({ active, onToggle }: { active: boolean, onToggle: () => void }) {
     return (
         <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
             <div className="flex items-center gap-3">
