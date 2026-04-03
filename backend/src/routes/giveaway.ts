@@ -7,7 +7,30 @@ import { cache } from '../utils/cache';
 const SETTINGS_KEY = 'bot_settings';
 
 export const giveawayRoutes = async (fastify: FastifyInstance) => {
-    // Get current giveaway configuration
+    // Get all giveaways (for listing)
+    fastify.get('/all', async (req: FastifyRequest, reply: FastifyReply) => {
+        try {
+            const giveaways = await Giveaway.find().sort({ createdAt: -1 });
+            return reply.send(giveaways);
+        } catch (error: any) {
+            console.error('❌ [GIVEAWAY_ALL_ERROR]:', error.message);
+            return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
+    // Get specific giveaway configuration
+    fastify.get('/:id', async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+        try {
+            const giveaway = await Giveaway.findById(req.params.id);
+            if (!giveaway) return reply.status(404).send({ error: 'Giveaway not found' });
+            return reply.send(giveaway);
+        } catch (error: any) {
+            console.error('❌ [GIVEAWAY_FIND_ERROR]:', error.message);
+            return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
+    // Get the most recent giveaway (default)
     fastify.get('/', async (req: FastifyRequest, reply: FastifyReply) => {
         try {
             const giveaway = await Giveaway.findOne().sort({ createdAt: -1 });
@@ -65,11 +88,11 @@ export const giveawayRoutes = async (fastify: FastifyInstance) => {
             }
 
             // Generate CSV
-            let csv = 'Date,Name,Telegram,DafabetID,Answers\n';
+            let csv = 'Date,Name,Phone,Telegram,DafabetID,Answers\n';
             submissions.forEach(sub => {
                 const answers = sub.answers.map(a => `${a.question}: ${a.answer}`).join(' | ');
                 const date = new Date(sub.createdAt).toLocaleString().replace(/,/g, '');
-                csv += `${date},${sub.realName},${sub.username || sub.telegramId},${sub.dafabetId},"${answers}"\n`;
+                csv += `${date},${sub.realName},${sub.phoneNumber},${sub.username || sub.telegramId},${sub.dafabetId},"${answers}"\n`;
             });
 
             reply.header('Content-Type', 'text/csv');

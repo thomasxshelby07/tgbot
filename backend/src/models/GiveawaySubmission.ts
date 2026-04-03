@@ -8,6 +8,7 @@ export interface IGiveawaySubmission extends Document {
     username?: string;
     dafabetId: string;
     realName: string;
+    phoneNumber: string;
     answers: {
         question: string;
         answer: string;
@@ -24,6 +25,7 @@ const GiveawaySubmissionSchema: Schema = new Schema({
     username: { type: String },
     dafabetId: { type: String, required: true },
     realName: { type: String, required: true },
+    phoneNumber: { type: String, required: true },
     answers: [
         {
             question: { type: String, required: true },

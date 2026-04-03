@@ -31,6 +31,7 @@ interface Submission {
     firstName: string;
     username?: string;
     realName: string;
+    phoneNumber: string;
     dafabetId: string;
     answers: { question: string; answer: string }[];
     createdAt: string;
@@ -41,6 +42,8 @@ export default function GiveawayPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+    
+    const [allGiveaways, setAllGiveaways] = useState<GiveawayConfig[]>([]);
     
     const [config, setConfig] = useState<GiveawayConfig>({
         title: '',
@@ -55,30 +58,50 @@ export default function GiveawayPage() {
     const [submissions, setSubmissions] = useState<Submission[]>([]);
 
     useEffect(() => {
-        fetchConfig();
-        fetchSubmissions();
+        fetchAllGiveaways();
+        fetchInitialConfig();
     }, []);
 
     const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
-    const fetchConfig = async () => {
+    const fetchAllGiveaways = async () => {
+        try {
+            const res = await axios.get(`${getApiUrl()}/api/giveaway/all`);
+            setAllGiveaways(res.data);
+        } catch (error) {
+            console.error('Error fetching giveaway list:', error);
+        }
+    };
+
+    const fetchInitialConfig = async () => {
         try {
             const res = await axios.get(`${getApiUrl()}/api/giveaway`);
-            if (res.data._id) setConfig(res.data);
+            if (res.data._id) {
+                setConfig(res.data);
+                fetchSubmissions(res.data._id);
+            }
         } catch (error) {
-            toast.error('Failed to load giveaway config');
+            toast.error('Failed to load initial config');
         } finally {
             setLoading(false);
         }
     };
 
-    const fetchSubmissions = async () => {
+    const fetchSubmissions = async (giveawayId?: string) => {
+        const id = giveawayId || config._id;
+        if (!id) return;
         try {
-            const res = await axios.get(`${getApiUrl()}/api/giveaway/submissions`);
+            const res = await axios.get(`${getApiUrl()}/api/giveaway/submissions/${id}`);
             setSubmissions(res.data);
         } catch (error) {
             console.error('Error fetching submissions:', error);
         }
+    };
+
+    const handleSelectGiveaway = async (giveaway: GiveawayConfig) => {
+        setConfig(giveaway);
+        fetchSubmissions(giveaway._id);
+        setActiveTab('setup');
     };
 
     const handleSave = async () => {
@@ -86,6 +109,7 @@ export default function GiveawayPage() {
         try {
             const res = await axios.post(`${getApiUrl()}/api/giveaway`, config);
             setConfig(res.data);
+            fetchAllGiveaways(); // Refresh list
             toast.success('Giveaway configuration saved successfully!');
         } catch (error) {
             toast.error('Failed to save giveaway');
@@ -160,15 +184,8 @@ export default function GiveawayPage() {
         try {
             await axios.delete(`${getApiUrl()}/api/giveaway/${config._id}`);
             toast.success('Giveaway deleted successfully');
-            setConfig({
-                title: '',
-                description: '',
-                questions: [],
-                active: false,
-                mediaUrl: '',
-                mediaType: '',
-                buttonText: '🎁 Giveaway Offer'
-            });
+            fetchAllGiveaways();
+            handleNew();
         } catch (error) {
             toast.error('Failed to delete giveaway');
         }
@@ -190,7 +207,7 @@ export default function GiveawayPage() {
     if (loading) return <div className="p-8 text-center animate-pulse font-bold">Initializing System...</div>;
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
+        <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in duration-700 pb-20">
             <Toaster position="top-right" />
             
             <Header 
@@ -200,181 +217,230 @@ export default function GiveawayPage() {
                 handleNew={handleNew} 
             />
 
-            {activeTab === 'setup' ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Basic Settings */}
-                    <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 space-y-6">
-                        <SectionTitle icon={<SettingsIcon size={18}/>} title="General Configuration" />
+            <div className="flex flex-col xl:flex-row gap-8">
+                {/* List Sidebar */}
+                <div className="xl:w-[350px] space-y-4 shrink-0">
+                    <div className="bg-white rounded-[32px] p-6 shadow-sm border border-slate-100 flex flex-col h-[700px]">
+                        <div className="flex items-center justify-between mb-6 px-1">
+                            <h3 className="font-black text-slate-900 text-[12px] uppercase tracking-[0.2em]">Campaign List</h3>
+                            <button onClick={handleNew} className="p-2 bg-slate-900 text-white rounded-xl hover:bg-black transition-all">
+                                <Plus size={16}/>
+                            </button>
+                        </div>
                         
-                        <div className="space-y-4">
-                            <InputGroup label="Giveaway Title" value={config.title} onChange={(v) => setConfig({...config, title: v})} placeholder="e.g., Weekly IPL Raffle" />
-                            <div className="space-y-2">
-                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Bot Button Text / बटन टेक्स्ट</label>
-                                <input 
-                                    value={config.buttonText} 
-                                    onChange={(e) => setConfig({...config, buttonText: e.target.value})}
-                                    className="w-full p-4 bg-slate-50 rounded-2xl border border-slate-100 focus:bg-white outline-none transition-all font-bold text-blue-600"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Description / विवरण</label>
-                                <textarea 
-                                    value={config.description} 
-                                    onChange={(e) => setConfig({...config, description: e.target.value})}
-                                    rows={4}
-                                    className="w-full p-5 bg-slate-50 rounded-2xl border border-slate-100 focus:bg-white outline-none transition-all resize-none text-[14px]"
-                                    placeholder="Tell users what they can win..."
-                                />
-                            </div>
-
-                            <MediaUpload 
-                                url={config.mediaUrl} 
-                                type={config.mediaType} 
-                                setUrl={(v) => setConfig({...config, mediaUrl: v})} 
-                                setType={(v) => setConfig({...config, mediaType: v})}
-                                onUpload={handleMediaUpload}
-                                uploading={uploading}
-                            />
-
-                            <StatusToggle active={config.active} onToggle={() => setConfig({...config, active: !config.active})} />
-                        </div>
-
-                        <div className="flex gap-4">
-                            <button 
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-[13px] hover:bg-black transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 active:scale-95"
-                            >
-                                {saving ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <Save size={18}/>}
-                                {saving ? 'Saving...' : config._id ? 'Update Giveaway' : 'Create Giveaway'}
-                            </button>
-                            {config._id && (
+                        <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                            {allGiveaways.map((g) => (
                                 <button 
-                                    onClick={handleDelete}
-                                    className="px-6 py-4 bg-rose-50 text-rose-600 rounded-2xl font-black uppercase tracking-[0.15em] text-[13px] hover:bg-rose-100 transition-all flex items-center justify-center gap-2 border border-rose-100 active:scale-95"
-                                    title="Delete Giveaway"
+                                    key={g._id}
+                                    onClick={() => handleSelectGiveaway(g)}
+                                    className={`w-full text-left p-4 rounded-2xl border transition-all group relative ${config._id === g._id ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-600/20' : 'bg-slate-50 border-slate-50 hover:bg-white hover:border-slate-200'}`}
                                 >
-                                    <Trash2 size={18}/>
+                                    <div className="flex flex-col gap-1">
+                                        <div className="flex items-center justify-between">
+                                            <span className={`text-[10px] font-black uppercase tracking-widest ${config._id === g._id ? 'text-blue-100' : 'text-slate-400'}`}>
+                                                {new Date(g as any).toLocaleDateString()}
+                                            </span>
+                                            {g.active && (
+                                                <div className={`w-2 h-2 rounded-full ${config._id === g._id ? 'bg-white animate-pulse' : 'bg-emerald-500 animate-pulse'}`}></div>
+                                            )}
+                                        </div>
+                                        <h4 className={`font-bold text-[14px] truncate ${config._id === g._id ? 'text-white' : 'text-slate-700'}`}>
+                                            {g.title || 'Untitled Campaign'}
+                                        </h4>
+                                        <div className="flex items-center gap-3 mt-1">
+                                            <span className={`text-[10px] flex items-center gap-1 font-bold ${config._id === g._id ? 'text-blue-200' : 'text-slate-400'}`}>
+                                                <List size={10}/> {g.questions.length} steps
+                                            </span>
+                                        </div>
+                                    </div>
                                 </button>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Questions Flow */}
-                    <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 flex flex-col">
-                        <div className="flex items-center justify-between mb-8">
-                            <SectionTitle icon={<List size={18}/>} title="Question Funnel" />
-                            <button onClick={addQuestion} className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all">
-                                <Plus size={16}/> Add Question
-                            </button>
-                        </div>
-
-                        <div className="flex-1 space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                            {config.questions.length === 0 && (
-                                <div className="h-64 border-2 border-dashed border-slate-100 rounded-3xl flex flex-col items-center justify-center text-slate-300 gap-3 grayscale opacity-60">
-                                    <List size={48} strokeWidth={1}/>
-                                    <p className="font-bold uppercase tracking-widest text-[11px]">No custom questions added</p>
-                                </div>
-                            )}
-                            {config.questions.map((q, i) => (
-                                <QuestionCard 
-                                    key={i} 
-                                    index={i} 
-                                    question={q} 
-                                    onUpdate={updateQuestion} 
-                                    onRemove={removeQuestion}
-                                />
                             ))}
                         </div>
-                        
-                        <div className="mt-6 p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                            <div className="flex gap-3">
-                                <Info size={18} className="text-amber-600 shrink-0 mt-0.5" />
-                                <p className="text-[12px] text-amber-900 font-medium leading-relaxed">
-                                    The bot will automatically ask for <span className="font-bold underline">Real Name</span> and <span className="font-bold underline">Dafabet ID</span> after your custom questions.
-                                </p>
+                    </div>
+                </div>
+
+                {/* Main Content Area */}
+                <div className="flex-1">
+                    {activeTab === 'setup' ? (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* Basic Settings */}
+                            <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 space-y-6">
+                                <SectionTitle icon={<SettingsIcon size={18}/>} title="General Configuration" />
+                                
+                                <div className="space-y-4">
+                                    <InputGroup label="Giveaway Title" value={config.title} onChange={(v) => setConfig({...config, title: v})} placeholder="e.g., Weekly IPL Raffle" />
+                                    <div className="space-y-2">
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Bot Button Text / बटन टेक्स्ट</label>
+                                        <input 
+                                            value={config.buttonText} 
+                                            onChange={(e) => setConfig({...config, buttonText: e.target.value})}
+                                            className="w-full p-4 bg-slate-50 rounded-2xl border border-slate-100 focus:bg-white outline-none transition-all font-bold text-blue-600"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Description / विवरण</label>
+                                        <textarea 
+                                            value={config.description} 
+                                            onChange={(e) => setConfig({...config, description: e.target.value})}
+                                            rows={4}
+                                            className="w-full p-5 bg-slate-50 rounded-2xl border border-slate-100 focus:bg-white outline-none transition-all resize-none text-[14px]"
+                                            placeholder="Tell users what they can win..."
+                                        />
+                                    </div>
+
+                                    <MediaUpload 
+                                        url={config.mediaUrl} 
+                                        type={config.mediaType} 
+                                        setUrl={(v) => setConfig({...config, mediaUrl: v})} 
+                                        setType={(v) => setConfig({...config, mediaType: v})}
+                                        onUpload={handleMediaUpload}
+                                        uploading={uploading}
+                                    />
+
+                                    <StatusToggle active={config.active} onToggle={() => setConfig({...config, active: !config.active})} />
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <button 
+                                        onClick={handleSave}
+                                        disabled={saving}
+                                        className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-[13px] hover:bg-black transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 active:scale-95"
+                                    >
+                                        {saving ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <Save size={18}/>}
+                                        {saving ? 'Saving...' : config._id ? 'Update Giveaway' : 'Create Giveaway'}
+                                    </button>
+                                    {config._id && (
+                                        <button 
+                                            onClick={handleDelete}
+                                            className="px-6 py-4 bg-rose-50 text-rose-600 rounded-2xl font-black uppercase tracking-[0.15em] text-[13px] hover:bg-rose-100 transition-all flex items-center justify-center gap-2 border border-rose-100 active:scale-95"
+                                            title="Delete Giveaway"
+                                        >
+                                            <Trash2 size={18}/>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Questions Flow */}
+                            <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 flex flex-col">
+                                <div className="flex items-center justify-between mb-8">
+                                    <SectionTitle icon={<List size={18}/>} title="Question Funnel" />
+                                    <button onClick={addQuestion} className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all">
+                                        <Plus size={16}/> Add Question
+                                    </button>
+                                </div>
+
+                                <div className="flex-1 space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {config.questions.length === 0 && (
+                                        <div className="h-64 border-2 border-dashed border-slate-100 rounded-3xl flex flex-col items-center justify-center text-slate-300 gap-3 grayscale opacity-60">
+                                            <List size={48} strokeWidth={1}/>
+                                            <p className="font-bold uppercase tracking-widest text-[11px]">No custom questions added</p>
+                                        </div>
+                                    )}
+                                    {config.questions.map((q, i) => (
+                                        <QuestionCard 
+                                            key={i} 
+                                            index={i} 
+                                            question={q} 
+                                            onUpdate={updateQuestion} 
+                                            onRemove={removeQuestion}
+                                        />
+                                    ))}
+                                </div>
+                                
+                                <div className="mt-6 p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                                    <div className="flex gap-3">
+                                        <Info size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                                        <p className="text-[12px] text-amber-900 font-medium leading-relaxed">
+                                            The bot will automatically ask for <span className="font-bold underline">Mobile Number</span>, <span className="font-bold underline">Real Name</span> and <span className="font-bold underline">Dafabet ID</span> after your custom questions.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            ) : (
-                /* Participants Tab */
-                <div className="bg-white rounded-[32px] overflow-hidden border border-slate-100 shadow-sm">
-                    <div className="p-8 border-b border-slate-50 flex items-center justify-between">
-                        <div>
-                            <h2 className="text-xl font-black tracking-tight text-slate-900">Participant List</h2>
-                            <p className="text-[12px] text-slate-500 font-medium">Total Entries: {submissions.length}</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <button 
-                                onClick={handleExport}
-                                className="flex items-center gap-2 px-5 py-3 bg-emerald-50 text-emerald-600 rounded-2xl text-[12px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all border border-emerald-100/50"
-                            >
-                                <FileText size={16}/> Export CSV
-                            </button>
-                            <button 
-                                onClick={fetchSubmissions}
-                                className="p-3 bg-slate-50 text-slate-400 hover:text-slate-900 rounded-2xl transition-all border border-slate-100 hover:shadow-sm"
-                            >
-                                <ChevronRight className="rotate-90" size={20}/>
-                            </button>
-                            <button 
-                                onClick={clearSubmissions}
-                                className="flex items-center gap-2 px-5 py-3 bg-rose-50 text-rose-600 rounded-2xl text-[12px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all border border-rose-100/50"
-                            >
-                                <Trash2 size={16}/> Clear List
-                            </button>
-                        </div>
-                    </div>
+                    ) : (
+                        /* Participants Tab */
+                        <div className="bg-white rounded-[32px] overflow-hidden border border-slate-100 shadow-sm animate-in zoom-in-95 duration-300">
+                            <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-xl font-black tracking-tight text-slate-900">Participant List</h2>
+                                    <p className="text-[12px] text-slate-500 font-medium">Results for: <span className="text-blue-600 underline font-bold">{config.title || 'Selected Campaign'}</span> ({submissions.length} Entries)</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <button 
+                                        onClick={handleExport}
+                                        className="flex items-center gap-2 px-5 py-3 bg-emerald-50 text-emerald-600 rounded-2xl text-[12px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all border border-emerald-100/50"
+                                    >
+                                        <FileText size={16}/> Export CSV
+                                    </button>
+                                    <button 
+                                        onClick={() => fetchSubmissions()}
+                                        className="p-3 bg-slate-50 text-slate-400 hover:text-slate-900 rounded-2xl transition-all border border-slate-100 hover:shadow-sm"
+                                    >
+                                        <ChevronRight className="rotate-90" size={20}/>
+                                    </button>
+                                    <button 
+                                        onClick={clearSubmissions}
+                                        className="flex items-center gap-2 px-5 py-3 bg-rose-50 text-rose-600 rounded-2xl text-[12px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all border border-rose-100/50"
+                                    >
+                                        <Trash2 size={16}/> Clear List
+                                    </button>
+                                </div>
+                            </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="bg-slate-50/50">
-                                <tr>
-                                    <th className="px-8 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">User Details</th>
-                                    <th className="px-8 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Dafabet ID</th>
-                                    <th className="px-8 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Answers</th>
-                                    <th className="px-8 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Date</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {submissions.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={4} className="px-8 py-20 text-center font-bold text-slate-300 uppercase tracking-widest text-[12px]">No submissions found</td>
-                                    </tr>
-                                ) : (
-                                    submissions.map((sub) => (
-                                        <tr key={sub._id} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="px-8 py-5">
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-slate-900">{sub.realName || sub.firstName}</span>
-                                                    <span className="text-[11px] text-slate-400 font-mono">@{sub.username || sub.telegramId}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-8 py-5">
-                                                <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg font-black text-[12px]">{sub.dafabetId}</span>
-                                            </td>
-                                            <td className="px-8 py-5">
-                                                <div className="space-y-1">
-                                                    {sub.answers.map((ans, idx) => (
-                                                        <div key={idx} className="text-[11px] flex items-center gap-1.5">
-                                                            <span className="text-slate-400 font-bold">{ans.question}:</span>
-                                                            <span className="text-slate-700 font-medium">{ans.answer}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </td>
-                                            <td className="px-8 py-5 text-[11px] font-medium text-slate-400">
-                                                {new Date(sub.createdAt).toLocaleString()}
-                                            </td>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead className="bg-slate-50/50">
+                                        <tr>
+                                            <th className="px-8 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">User Details</th>
+                                            <th className="px-8 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Phone & ID</th>
+                                            <th className="px-8 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Custom Answers</th>
+                                            <th className="px-8 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Date</th>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {submissions.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={4} className="px-8 py-20 text-center font-bold text-slate-300 uppercase tracking-widest text-[12px]">No submissions found for this campaign</td>
+                                            </tr>
+                                        ) : (
+                                            submissions.map((sub) => (
+                                                <tr key={sub._id} className="hover:bg-slate-50/50 transition-colors">
+                                                    <td className="px-8 py-5">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-bold text-slate-900">{sub.realName || sub.firstName}</span>
+                                                            <span className="text-[11px] text-slate-400 font-mono">@{sub.username || sub.telegramId}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-5">
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-md font-bold text-[11px] w-fit italic">{sub.phoneNumber || 'No Phone'}</span>
+                                                            <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md font-black text-[11px] w-fit">{sub.dafabetId}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-5">
+                                                        <div className="space-y-1">
+                                                            {sub.answers.map((ans, idx) => (
+                                                                <div key={idx} className="text-[11px] flex items-center gap-1.5">
+                                                                    <span className="text-slate-400 font-bold">{ans.question.substring(0, 20)}...:</span>
+                                                                    <span className="text-slate-700 font-medium">{ans.answer}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-5 text-[11px] font-medium text-slate-400">
+                                                        {new Date(sub.createdAt).toLocaleString()}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
         </div>
     );
 }

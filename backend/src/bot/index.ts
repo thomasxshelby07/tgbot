@@ -36,6 +36,7 @@ interface SessionData {
     currentGiveawayId?: string;
     giveawayRealName?: string;
     giveawayDafabetId?: string;
+    giveawayPhoneNumber?: string;
 }
 type MyContext = Context & SessionFlavor<SessionData>;
 import fs from 'fs';
@@ -364,11 +365,17 @@ export const initBot = async () => {
                                 return await ctx.reply(msg, { parse_mode: "Markdown" });
                             }
                         } else {
-                            ctx.session.step = 'giveaway_name' as any;
-                            return await ctx.reply("✅ All setup questions done!\n\nAb apna *Full Name* daalo:", { parse_mode: "Markdown" });
+                            ctx.session.step = 'giveaway_phone' as any;
+                            return await ctx.reply("✅ Questions done! Now please enter your *Mobile Number* / मोबाइल नंबर डालें:", { parse_mode: "Markdown" });
                         }
                     }
                 }
+            }
+
+            if (ctx.session?.step === 'giveaway_phone') {
+                ctx.session.giveawayPhoneNumber = text;
+                ctx.session.step = 'giveaway_name' as any;
+                return await ctx.reply("✅ Number mil gaya! Ab apna *Full Name* daalo:", { parse_mode: "Markdown" });
             }
 
             if (ctx.session?.step === 'giveaway_name') {
@@ -380,7 +387,7 @@ export const initBot = async () => {
             if (ctx.session?.step === 'giveaway_id') {
                 ctx.session.giveawayDafabetId = text;
                 ctx.session.step = 'giveaway_review' as any;
-                const summary = `🎁 *Giveaway Entry Summary*\n\n👤 Name: ${ctx.session.giveawayRealName}\n🆔 ID: ${text}\n\nClick below to submit!`;
+                const summary = `🎁 *Giveaway Entry Summary*\n\n👤 Name: ${ctx.session.giveawayRealName}\n📞 Phone: ${ctx.session.giveawayPhoneNumber}\n🆔 ID: ${text}\n\nClick below to submit!`;
                 return await ctx.reply(summary, { parse_mode: "Markdown", reply_markup: new InlineKeyboard().text("✅ Submit Entries", "giveaway_submit") });
             }
 
@@ -817,8 +824,8 @@ export const initBot = async () => {
                 await ctx.editMessageText(msg, { parse_mode: "Markdown" });
             }
         } else {
-            ctx.session.step = 'giveaway_name';
-            await ctx.editMessageText("✅ Questions done! Now please enter your *Full Name*:", { parse_mode: "Markdown" });
+            ctx.session.step = 'giveaway_phone';
+            await ctx.editMessageText("✅ Questions done! Now please enter your *Mobile Number* / मोबाइल नंबर डालें:", { parse_mode: "Markdown" });
         }
     });
 
@@ -828,7 +835,7 @@ export const initBot = async () => {
         await ctx.answerCallbackQuery("Submitted!");
 
         try {
-            const { giveawayRealName, giveawayDafabetId, giveawayAnswers, currentGiveawayId } = ctx.session;
+            const { giveawayRealName, giveawayDafabetId, giveawayAnswers, currentGiveawayId, giveawayPhoneNumber } = ctx.session;
             
             await GiveawaySubmission.create({
                 giveawayId: currentGiveawayId,
@@ -838,6 +845,7 @@ export const initBot = async () => {
                 username: ctx.from.username,
                 realName: giveawayRealName,
                 dafabetId: giveawayDafabetId,
+                phoneNumber: giveawayPhoneNumber,
                 answers: giveawayAnswers
             });
 
