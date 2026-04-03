@@ -26,6 +26,7 @@ interface ChatMessage {
     messageType: string;
     mediaUrl?: string;
     createdAt: string;
+    isOptimistic?: boolean; // New flag for messages sent before server confirmation
 }
 
 // Memoized Ticket Item for performance
@@ -100,11 +101,13 @@ TicketItem.displayName = 'TicketItem';
 // Memoized Message Bubble for performance
 const MessageBubble = memo(({ msg }: { msg: ChatMessage }) => {
     const isAdmin = msg.sender === 'admin';
+    const isPending = msg.isOptimistic;
+    
     return (
         <div className={`flex ${isAdmin ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
             <div className={`max-w-[92%] sm:max-w-[75%] px-4 py-2 relative shadow-sm ${
                 isAdmin 
-                    ? 'bg-blue-600 text-white rounded-2xl rounded-tr-none' 
+                    ? `bg-blue-600 text-white rounded-2xl rounded-tr-none ${isPending ? 'opacity-70 saturate-50' : ''}` 
                     : 'bg-white text-slate-800 rounded-2xl rounded-tl-none border border-slate-200'
             }`}>
                 {msg.mediaUrl ? (
@@ -127,7 +130,13 @@ const MessageBubble = memo(({ msg }: { msg: ChatMessage }) => {
                 )}
                 <div className={`flex items-center justify-end gap-1.5 mt-1 opacity-50 ${msg.mediaUrl && !msg.content ? 'relative' : ''}`}>
                     <span className="text-[9px] font-black uppercase tracking-tighter">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    {isAdmin && <CheckCircle size={10} strokeWidth={3} className="text-white/80" />}
+                    {isAdmin && (
+                        isPending ? (
+                            <div className="w-2.5 h-2.5 border border-white/50 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                            <CheckCircle size={10} strokeWidth={3} className="text-white/80" />
+                        )
+                    )}
                 </div>
             </div>
         </div>
@@ -263,11 +272,36 @@ export default function SupportPage() {
             
             const newMessages = response.data;
             if (newMessages.length > 0) {
-                if (isInitial) {
-                    setMessages(newMessages);
-                } else {
-                    setMessages(prev => [...prev, ...newMessages]);
-                }
+                setMessages(prev => {
+                    if (isInitial) return newMessages;
+                    
+                    // Filter out any messages that already exist in state (by _id)
+                    const existingIds = new Set(prev.map(m => m._id));
+                    const uniqueNew = newMessages.filter((m: ChatMessage) => !existingIds.has(m._id));
+                    
+                    if (uniqueNew.length === 0) return prev;
+
+                    // When real messages arrive from admin, remove our optimistic equivalents
+                    // We check for sender and content match if they don't have IDs yet
+                    const optimisticIdsToRemove = new Set<string>();
+                    uniqueNew.forEach((nm: ChatMessage) => {
+                        if (nm.sender === 'admin') {
+                            const match = prev.find(pm => 
+                                pm.isOptimistic && 
+                                pm.sender === 'admin' && 
+                                pm.content === nm.content &&
+                                pm.messageType === nm.messageType
+                            );
+                            if (match) optimisticIdsToRemove.add(match._id);
+                        }
+                    });
+
+                    const filteredPrev = optimisticIdsToRemove.size > 0 
+                        ? prev.filter(m => !optimisticIdsToRemove.has(m._id))
+                        : prev;
+
+                    return [...filteredPrev, ...uniqueNew];
+                });
                 lastMessageTimeRef.current = newMessages[newMessages.length - 1].createdAt;
             }
         } catch (error) {
@@ -283,7 +317,7 @@ export default function SupportPage() {
         }
         
         fetchMessages(selectedTicket._id, true);
-        const interval = setInterval(() => fetchMessages(selectedTicket._id), 3000); // Poll chat every 3s
+        const interval = setInterval(() => fetchMessages(selectedTicket._id), 2000); // Polling faster (2s) for better UX
         return () => clearInterval(interval);
     }, [selectedTicket]);
 
@@ -333,24 +367,42 @@ export default function SupportPage() {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedTicket || (!newMessage.trim())) return;
+        const content = newMessage.trim();
+        if (!selectedTicket || !content || isSending) return;
 
         setIsSending(true);
+        // Optimistic Update
+        const tempId = `temp-${Date.now()}`;
+        const optimisticMsg: ChatMessage = {
+            _id: tempId,
+            sender: 'admin',
+            content: content,
+            messageType: 'text',
+            createdAt: new Date().toISOString(),
+            isOptimistic: true
+        };
+
+        setMessages(prev => [...prev, optimisticMsg]);
+        setNewMessage('');
+        
+        // Reset textarea height
+        const textarea = document.querySelector('textarea');
+        if (textarea) textarea.style.height = '44px';
+
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
             await axios.post(`${apiUrl}/api/support/tickets/${selectedTicket._id}/messages`, {
-                content: newMessage,
+                content: content,
                 messageType: 'text'
             });
-            setNewMessage('');
+            // Manual fetch to sync status and get real ID faster
             fetchMessages(selectedTicket._id);
         } catch (error) {
             toast.error('Failed to send message');
+            // Remove optimistic message on failure
+            setMessages(prev => prev.filter(m => m._id !== tempId));
         } finally {
             setIsSending(false);
-            // Reset textarea height after sending
-            const textarea = document.querySelector('textarea');
-            if (textarea) textarea.style.height = '44px';
         }
     };
 
@@ -373,6 +425,19 @@ export default function SupportPage() {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
             const uploadRes = await axios.post(`${apiUrl}/api/upload`, formData);
             const mediaUrl = uploadRes.data.url;
+
+            // Optimistic message for media
+            const tempId = `temp-media-${Date.now()}`;
+            const optimisticMsg: ChatMessage = {
+                _id: tempId,
+                sender: 'admin',
+                content: '',
+                messageType: type,
+                mediaUrl: mediaUrl,
+                createdAt: new Date().toISOString(),
+                isOptimistic: true
+            };
+            setMessages(prev => [...prev, optimisticMsg]);
 
             await axios.post(`${apiUrl}/api/support/tickets/${selectedTicket._id}/messages`, {
                 content: '',
