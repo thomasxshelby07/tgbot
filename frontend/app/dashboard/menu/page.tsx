@@ -49,11 +49,8 @@ export default function MenuPage() {
     const fetchButtons = async () => {
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-            const res = await fetch(`${apiUrl}/api/menu`);
-            if (res.ok) {
-                const data = await res.json();
-                setButtons(data);
-            }
+            const res = await axios.get(`${apiUrl}/api/menu`);
+            setButtons(res.data);
         } catch (error) {
             console.error("Error fetching menu buttons:", error);
         } finally {
@@ -127,31 +124,17 @@ export default function MenuPage() {
             ? `${apiUrl}/api/menu/${editingId}`
             : `${apiUrl}/api/menu`;
 
-        const method = editingId ? "PUT" : "POST";
-
         try {
-            console.log('Sending request:', { url, method, data: formData });
-            console.log('Media URL being saved:', formData.mediaUrl);
-
-            const res = await fetch(url, {
-                method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
-            });
-
-            if (res.ok) {
-                const savedData = await res.json();
-                console.log('Server response success:', savedData);
-                setIsModalOpen(false);
-                fetchButtons();
+            if (editingId) {
+                await axios.put(url, formData);
             } else {
-                const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
-                console.error('Server error:', errorData);
-                alert(`Failed to save button: ${errorData.error || 'Unknown error'}\n${errorData.details || ''}`);
+                await axios.post(url, formData);
             }
+            setIsModalOpen(false);
+            fetchButtons();
         } catch (error) {
             console.error("Error saving:", error);
-            alert(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            alert("Failed to save button");
         }
     };
 
@@ -159,7 +142,7 @@ export default function MenuPage() {
         if (!confirm("Delete this button?")) return;
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-            await fetch(`${apiUrl}/api/menu/${id}`, { method: "DELETE" });
+            await axios.delete(`${apiUrl}/api/menu/${id}`);
             fetchButtons();
         } catch (error) {
             console.error("Error deleting:", error);
@@ -173,7 +156,7 @@ export default function MenuPage() {
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-            await fetch(`${apiUrl}/api/menu/${id}/toggle`, { method: "PATCH" });
+            await axios.patch(`${apiUrl}/api/menu/${id}/toggle`);
         } catch (error) {
             fetchButtons(); // Revert on error
         }

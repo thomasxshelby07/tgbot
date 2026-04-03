@@ -100,17 +100,32 @@ export default function GiveawayPage() {
 
         setUploading(true);
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('image', file);
 
         try {
-            const res = await axios.post('/api/upload', formData);
-            setConfig({ ...config, mediaUrl: res.data.url });
+            const res = await axios.post(`${getApiUrl()}/api/upload`, formData);
+            setConfig({ ...config, mediaUrl: res.data.url, mediaType: res.data.mediaType || 'photo' });
             toast.success('Media uploaded!');
         } catch (error) {
             toast.error('Upload failed');
         } finally {
             setUploading(false);
         }
+    };
+
+    const handleNew = () => {
+        if (config._id && !confirm('Are you sure you want to start a new giveaway? Any unsaved changes will be lost.')) return;
+        
+        setConfig({
+            title: '',
+            description: '',
+            mediaUrl: '',
+            mediaType: '',
+            active: false,
+            questions: [],
+            buttonText: '🎁 Giveaway Offer'
+        });
+        toast('Form cleared! Ready for new giveaway.', { icon: '✨' });
     };
 
     const addQuestion = () => {
@@ -178,7 +193,12 @@ export default function GiveawayPage() {
         <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
             <Toaster position="top-right" />
             
-            <Header activeTab={activeTab} setActiveTab={setActiveTab} />
+            <Header 
+                activeTab={activeTab} 
+                setActiveTab={setActiveTab} 
+                config={config} 
+                handleNew={handleNew} 
+            />
 
             {activeTab === 'setup' ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -226,7 +246,7 @@ export default function GiveawayPage() {
                                 className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-[13px] hover:bg-black transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 active:scale-95"
                             >
                                 {saving ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <Save size={18}/>}
-                                {saving ? 'Saving...' : 'Save Configuration'}
+                                {saving ? 'Saving...' : config._id ? 'Update Giveaway' : 'Create Giveaway'}
                             </button>
                             {config._id && (
                                 <button 
@@ -360,7 +380,17 @@ export default function GiveawayPage() {
 }
 
 // Sub-components
-function Header({ activeTab, setActiveTab }: { activeTab: 'setup' | 'participants', setActiveTab: (t: 'setup' | 'participants') => void }) {
+function Header({ 
+    activeTab, 
+    setActiveTab, 
+    config, 
+    handleNew 
+}: { 
+    activeTab: 'setup' | 'participants', 
+    setActiveTab: (t: 'setup' | 'participants') => void,
+    config: GiveawayConfig,
+    handleNew: () => void
+}) {
     return (
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
             <div>
@@ -370,7 +400,17 @@ function Header({ activeTab, setActiveTab }: { activeTab: 'setup' | 'participant
                     </div>
                     Giveaway System
                 </h1>
-                <p className="text-[13px] text-slate-400 font-semibold mt-1">Configure user funnels and manage rewards.</p>
+                <div className="flex items-center gap-4 mt-1">
+                    <p className="text-[13px] text-slate-400 font-semibold">{config._id ? `Editing: ${config.title}` : 'Creating New Funnel'}</p>
+                    {config._id && (
+                        <button 
+                            onClick={handleNew}
+                            className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-lg font-black uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center gap-1"
+                        >
+                            <Plus size={10} strokeWidth={4}/> New Giveaway
+                        </button>
+                    )}
+                </div>
             </div>
             
             <div className="flex bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm shadow-blue-500/5">

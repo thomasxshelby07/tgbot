@@ -40,8 +40,11 @@ export const authMiddleware = async (request: FastifyRequest, reply: FastifyRepl
             permissions: admin.permissions
         };
 
-    } catch (error) {
-        console.error('Auth middleware error:', error);
+    } catch (error: any) {
+        console.error('❌ [AUTH_MIDDLEWARE_ERROR]:', error.message || error);
+        if (error.name === 'TokenExpiredError') {
+            return reply.status(401).send({ error: 'Token expired' });
+        }
         return reply.status(401).send({ error: 'Unauthorized: Invalid token' });
     }
 };

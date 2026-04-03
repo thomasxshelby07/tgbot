@@ -12,9 +12,10 @@ export const giveawayRoutes = async (fastify: FastifyInstance) => {
         try {
             const giveaway = await Giveaway.findOne().sort({ createdAt: -1 });
             return reply.send(giveaway || {});
-        } catch (error) {
-            console.error('Error fetching giveaway config:', error);
-            return reply.status(500).send({ error: 'Internal Server Error' });
+        } catch (error: any) {
+            console.error('❌ [GIVEAWAY_GET_ERROR]:', error.message || error);
+            if (error.stack) console.error(error.stack);
+            return reply.status(500).send({ error: 'Internal Server Error', details: error.message });
         }
     });
 
@@ -47,9 +48,10 @@ export const giveawayRoutes = async (fastify: FastifyInstance) => {
             await cache.del(SETTINGS_KEY);
 
             return reply.send(giveaway);
-        } catch (error) {
-            console.error('Error saving giveaway:', error);
-            return reply.status(500).send({ error: 'Internal Server Error' });
+        } catch (error: any) {
+            console.error('❌ [GIVEAWAY_POST_ERROR]:', error.message || error);
+            if (error.stack) console.error(error.stack);
+            return reply.status(500).send({ error: 'Internal Server Error', details: error.message });
         }
     });
 
