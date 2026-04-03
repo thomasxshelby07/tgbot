@@ -225,4 +225,18 @@ export const supportRoutes = async (fastify: FastifyInstance) => {
             return reply.status(500).send({ error: 'Internal Server Error' });
         }
     });
+
+    // Get ticket history for a user
+    fastify.get('/tickets/user/:telegramId/history', async (req: FastifyRequest<{ Params: { telegramId: string } }>, reply: FastifyReply) => {
+        try {
+            const history = await SupportTicket.find({ 
+                telegramId: req.params.telegramId 
+            }).sort({ createdAt: -1 });
+            
+            return reply.send(history);
+        } catch (error) {
+            console.error('Error fetching ticket history:', error);
+            return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
 };

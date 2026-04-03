@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import axios from 'axios';
-import { LifeBuoy, CheckCircle, Trash2, Search, Filter, MessageSquare, Smartphone, Hash, Send, ImageIcon, Video, FileAudio, X, ArrowLeft, ChevronDown } from 'lucide-react';
+import { LifeBuoy, CheckCircle, Trash2, Search, Filter, MessageSquare, Smartphone, Hash, Send, ImageIcon, Video, FileAudio, X, ArrowLeft, ChevronDown, Clock, History } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface SupportTicket {
@@ -153,6 +153,9 @@ export default function SupportPage() {
     const [showOnlyUnread, setShowOnlyUnread] = useState(false);
 
     const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+    const [userHistory, setUserHistory] = useState<SupportTicket[]>([]);
+    const [showHistory, setShowHistory] = useState(false);
+    const [historyLoading, setHistoryLoading] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
@@ -309,14 +312,29 @@ export default function SupportPage() {
         }
     };
 
+    const fetchUserHistory = async (telegramId: string) => {
+        setHistoryLoading(true);
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            const response = await axios.get(`${apiUrl}/api/support/tickets/user/${telegramId}/history`);
+            setUserHistory(response.data);
+        } catch (error) {
+            console.error('Error fetching history:', error);
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
+
     // Poll messages if a ticket is selected
     useEffect(() => {
         if (!selectedTicket) {
             lastMessageTimeRef.current = null;
+            setShowHistory(false);
             return;
         }
         
         fetchMessages(selectedTicket._id, true);
+        fetchUserHistory(selectedTicket.telegramId);
         const interval = setInterval(() => fetchMessages(selectedTicket._id), 2000); // Polling faster (2s) for better UX
         return () => clearInterval(interval);
     }, [selectedTicket]);
@@ -665,6 +683,17 @@ export default function SupportPage() {
                                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">System ID</span>
                                     <span className="text-[12px] sm:text-[13px] font-bold text-slate-900 leading-none font-mono">DFA-{selectedTicket.dafabetId}</span>
                                 </div>
+                                <button 
+                                    onClick={() => setShowHistory(!showHistory)}
+                                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${
+                                        showHistory 
+                                            ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-600/20' 
+                                            : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                                    }`}
+                                >
+                                    <History size={14} strokeWidth={2.5} /> 
+                                    <span>{userHistory.filter(h => h._id !== selectedTicket?._id).length} Past Sessions</span>
+                                </button>
                                 {selectedTicket.issueType && (
                                     <div className="ml-auto flex items-center gap-2 shrink-0">
                                         <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-white shadow-sm border border-slate-200 text-blue-600 uppercase tracking-tighter">{selectedTicket.issueType}</span>
@@ -672,44 +701,96 @@ export default function SupportPage() {
                                 )}
                             </div>
 
-                            {/* Chat Messages */}
-                            <div 
-                                ref={chatContainerRef}
-                                onScroll={handleScroll}
-                                className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 z-10 relative custom-scrollbar flex flex-col scroll-smooth bg-white"
-                            >
-                                {/* Problem Banner in message list */}
-                                {/* Main Issue Banner - Highly Prominent as requested */}
-                                <div className="self-center my-6 max-w-[95%] w-full animate-in fade-in zoom-in duration-500">
-                                    <div className="bg-white border-2 border-blue-500/20 px-8 py-6 rounded-[32px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] relative overflow-hidden group">
-                                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
-                                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-500/5 rounded-full -ml-12 -mb-12 blur-xl"></div>
-                                        
-                                        <div className="flex flex-col items-center gap-3 relative z-10 text-center">
-                                            <div className="px-4 py-1.5 bg-blue-50 rounded-full border border-blue-100 flex items-center gap-2.5">
-                                                <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></div>
-                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-700">Initial Problem / मुख्य समस्या</span>
-                                                <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></div>
-                                            </div>
+                             {/* Chat Messages */}
+                            <div className="flex-1 flex min-h-0 relative">
+                                <div 
+                                    ref={chatContainerRef}
+                                    onScroll={handleScroll}
+                                    className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 z-10 relative custom-scrollbar flex flex-col scroll-smooth bg-white"
+                                >
+                                    {/* ... existing content ... */}
+                                    {/* Problem Banner in message list */}
+                                    <div className="self-center my-6 max-w-[95%] w-full animate-in fade-in zoom-in duration-500">
+                                        <div className="bg-white border-2 border-blue-500/20 px-8 py-6 rounded-[32px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] relative overflow-hidden group">
+                                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
+                                            <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-500/5 rounded-full -ml-12 -mb-12 blur-xl"></div>
                                             
-                                            <div className="relative">
-                                                <span className="absolute -left-6 -top-2 text-4xl text-blue-100 font-serif">"</span>
-                                                <p className="text-[16px] sm:text-[18px] font-black text-slate-900 leading-relaxed tracking-tight">
-                                                    {selectedTicket.problem}
-                                                </p>
-                                                <span className="absolute -right-6 -bottom-4 text-4xl text-blue-100 font-serif">"</span>
+                                            <div className="flex flex-col items-center gap-3 relative z-10 text-center">
+                                                <div className="px-4 py-1.5 bg-blue-50 rounded-full border border-blue-100 flex items-center gap-2.5">
+                                                    <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></div>
+                                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-700">Initial Problem / मुख्य समस्या</span>
+                                                    <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></div>
+                                                </div>
+                                                
+                                                <div className="relative">
+                                                    <span className="absolute -left-6 -top-2 text-4xl text-blue-100 font-serif">"</span>
+                                                    <p className="text-[16px] sm:text-[18px] font-black text-slate-900 leading-relaxed tracking-tight">
+                                                        {selectedTicket.problem}
+                                                    </p>
+                                                    <span className="absolute -right-6 -bottom-4 text-4xl text-blue-100 font-serif">"</span>
+                                                </div>
+                                                
+                                                <div className="h-px w-20 bg-slate-100 mt-2"></div>
+                                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Submitted via Telegram Support Bot</p>
                                             </div>
-                                            
-                                            <div className="h-px w-20 bg-slate-100 mt-2"></div>
-                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Submitted via Telegram Support Bot</p>
                                         </div>
                                     </div>
+
+                                    {messages.map((msg) => (
+                                        <MessageBubble key={msg._id} msg={msg} />
+                                    ))}
+                                    <div ref={messagesEndRef} className="h-2 shrink-0" />
                                 </div>
 
-                                {messages.map((msg) => (
-                                    <MessageBubble key={msg._id} msg={msg} />
-                                ))}
-                                <div ref={messagesEndRef} className="h-2 shrink-0" />
+                                {/* History Overlay Sidebar */}
+                                {showHistory && (
+                                    <div className="absolute inset-y-0 right-0 w-full sm:w-[350px] bg-slate-50/95 backdrop-blur-xl border-l border-slate-200 z-30 shadow-2xl animate-in slide-in-from-right duration-300 overflow-hidden flex flex-col">
+                                        <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
+                                            <div className="flex items-center gap-3">
+                                                <History className="text-blue-600" size={20} />
+                                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-[13px]">Past Sessions</h3>
+                                            </div>
+                                            <button onClick={() => setShowHistory(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-all">
+                                                <X size={20} className="text-slate-400" />
+                                            </button>
+                                        </div>
+                                        
+                                        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                                            {historyLoading ? (
+                                                <div className="py-20 flex flex-col items-center justify-center gap-3 opacity-40">
+                                                    <div className="w-6 h-6 border-2 border-slate-300 border-t-blue-600 rounded-full animate-spin"></div>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">Fetching History...</span>
+                                                </div>
+                                            ) : userHistory.filter(h => h._id !== selectedTicket._id).length === 0 ? (
+                                                <div className="py-20 flex flex-col items-center justify-center gap-3 text-slate-300 grayscale opacity-50">
+                                                    <Clock size={40} strokeWidth={1} />
+                                                    <span className="text-[11px] font-black uppercase tracking-widest text-center">No Previous History<br/>Found for this user</span>
+                                                </div>
+                                            ) : (
+                                                userHistory.filter(h => h._id !== selectedTicket._id).map((past, i) => (
+                                                    <div key={past._id} className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all group">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100 uppercase tracking-widest">
+                                                                {past.issueType || 'Other'}
+                                                            </span>
+                                                            <span className="text-[10px] font-bold text-slate-400">
+                                                                {new Date(past.createdAt).toLocaleDateString()}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[13px] font-bold text-slate-800 leading-relaxed italic">
+                                                            "{past.problem}"
+                                                        </p>
+                                                        <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-lg ${past.status === 'resolved' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                                                                {past.status}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Floating Scroll to Bottom Button */}

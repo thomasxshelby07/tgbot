@@ -59,9 +59,11 @@ export default function GiveawayPage() {
         fetchSubmissions();
     }, []);
 
+    const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
     const fetchConfig = async () => {
         try {
-            const res = await axios.get('/api/giveaway');
+            const res = await axios.get(`${getApiUrl()}/api/giveaway`);
             if (res.data._id) setConfig(res.data);
         } catch (error) {
             toast.error('Failed to load giveaway config');
@@ -72,7 +74,7 @@ export default function GiveawayPage() {
 
     const fetchSubmissions = async () => {
         try {
-            const res = await axios.get('/api/giveaway/submissions');
+            const res = await axios.get(`${getApiUrl()}/api/giveaway/submissions`);
             setSubmissions(res.data);
         } catch (error) {
             console.error('Error fetching submissions:', error);
@@ -82,7 +84,7 @@ export default function GiveawayPage() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const res = await axios.post('/api/giveaway', config);
+            const res = await axios.post(`${getApiUrl()}/api/giveaway`, config);
             setConfig(res.data);
             toast.success('Giveaway configuration saved successfully!');
         } catch (error) {
@@ -131,12 +133,38 @@ export default function GiveawayPage() {
         setConfig({ ...config, questions: newQs });
     };
 
+    const handleExport = () => {
+        if (!config._id) return;
+        window.open(`${getApiUrl()}/api/giveaway/export/${config._id}`, '_blank');
+    };
+
+    const handleDelete = async () => {
+        if (!config._id) return;
+        if (!window.confirm('Are you sure you want to delete this giveaway and all its results forever? / क्या आप वाकई इस गिवअवे और इसके सभी डेटा को हमेशा के लिए हटाना चाहते हैं?')) return;
+        
+        try {
+            await axios.delete(`${getApiUrl()}/api/giveaway/${config._id}`);
+            toast.success('Giveaway deleted successfully');
+            setConfig({
+                title: '',
+                description: '',
+                questions: [],
+                active: false,
+                mediaUrl: '',
+                mediaType: '',
+                buttonText: '🎁 Giveaway Offer'
+            });
+        } catch (error) {
+            toast.error('Failed to delete giveaway');
+        }
+    };
+
     const clearSubmissions = async () => {
         if (!config._id) return;
         if (!confirm('Are you sure you want to delete ALL submissions for this giveaway? This cannot be undone.')) return;
 
         try {
-            await axios.delete(`/api/giveaway/submissions/${config._id}`);
+            await axios.delete(`${getApiUrl()}/api/giveaway/submissions/${config._id}`);
             setSubmissions([]);
             toast.success('Submissions cleared');
         } catch (error: any) {
@@ -191,14 +219,25 @@ export default function GiveawayPage() {
                             <StatusToggle active={config.active} onToggle={() => setConfig({...config, active: !config.active})} />
                         </div>
 
-                        <button 
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-[13px] hover:bg-black transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 active:scale-95"
-                        >
-                            {saving ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <Save size={18}/>}
-                            {saving ? 'Synchronizing...' : 'Save Configuration'}
-                        </button>
+                        <div className="flex gap-4">
+                            <button 
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-[13px] hover:bg-black transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 active:scale-95"
+                            >
+                                {saving ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <Save size={18}/>}
+                                {saving ? 'Saving...' : 'Save Configuration'}
+                            </button>
+                            {config._id && (
+                                <button 
+                                    onClick={handleDelete}
+                                    className="px-6 py-4 bg-rose-50 text-rose-600 rounded-2xl font-black uppercase tracking-[0.15em] text-[13px] hover:bg-rose-100 transition-all flex items-center justify-center gap-2 border border-rose-100 active:scale-95"
+                                    title="Delete Giveaway"
+                                >
+                                    <Trash2 size={18}/>
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {/* Questions Flow */}
@@ -247,6 +286,12 @@ export default function GiveawayPage() {
                             <p className="text-[12px] text-slate-500 font-medium">Total Entries: {submissions.length}</p>
                         </div>
                         <div className="flex items-center gap-3">
+                            <button 
+                                onClick={handleExport}
+                                className="flex items-center gap-2 px-5 py-3 bg-emerald-50 text-emerald-600 rounded-2xl text-[12px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all border border-emerald-100/50"
+                            >
+                                <FileText size={16}/> Export CSV
+                            </button>
                             <button 
                                 onClick={fetchSubmissions}
                                 className="p-3 bg-slate-50 text-slate-400 hover:text-slate-900 rounded-2xl transition-all border border-slate-100 hover:shadow-sm"

@@ -34,16 +34,65 @@ export const giveawayRoutes = async (fastify: FastifyInstance) => {
                 });
             }
 
-            // Sync with global settings if needed (for the main menu toggle)
+            // Sync with global settings (one active giveaway rule)
+            if (active && giveaway) {
+                // Deactivate all others EXCEPT this one
+                await Giveaway.updateMany({ _id: { $ne: giveaway._id } }, { active: false });
+            }
+
             await Settings.findOneAndUpdate({}, { 
                 giveawayActive: active,
                 giveawayButtonText: buttonText || "🎁 Giveaway Offer"
-            });
+            }, { upsert: true, new: true });
             await cache.del(SETTINGS_KEY);
 
             return reply.send(giveaway);
         } catch (error) {
             console.error('Error saving giveaway:', error);
+            return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
+    // Export submissions for a giveaway as CSV
+    fastify.get('/export/:giveawayId', async (req: FastifyRequest<{ Params: { giveawayId: string } }>, reply: FastifyReply) => {
+        try {
+            const submissions = await GiveawaySubmission.find({ giveawayId: req.params.giveawayId }).sort({ createdAt: -1 });
+            
+            if (submissions.length === 0) {
+                return reply.status(404).send({ error: 'No submissions found to export' });
+            }
+
+            // Generate CSV
+            let csv = 'Date,Name,Telegram,DafabetID,Answers\n';
+            submissions.forEach(sub => {
+                const answers = sub.answers.map(a => `${a.question}: ${a.answer}`).join(' | ');
+                const date = new Date(sub.createdAt).toLocaleString().replace(/,/g, '');
+                csv += `${date},${sub.realName},${sub.username || sub.telegramId},${sub.dafabetId},"${answers}"\n`;
+            });
+
+            reply.header('Content-Type', 'text/csv');
+            reply.header('Content-Disposition', `attachment; filename=giveaway_export_${req.params.giveawayId}.csv`);
+            return reply.send(csv);
+        } catch (error) {
+            console.error('Error exporting submissions:', error);
+            return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
+    // Delete a giveaway and all its submissions
+    fastify.delete('/:id', async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+        try {
+            const admin = (req as any).admin;
+            if (admin && admin.role !== 'superadmin') {
+                return reply.status(403).send({ error: 'Only Super Admin can delete giveaways' });
+            }
+
+            await Giveaway.findByIdAndDelete(req.params.id);
+            await GiveawaySubmission.deleteMany({ giveawayId: req.params.id });
+            
+            return reply.send({ success: true, message: 'Giveaway and submissions deleted' });
+        } catch (error) {
+            console.error('Error deleting giveaway:', error);
             return reply.status(500).send({ error: 'Internal Server Error' });
         }
     });

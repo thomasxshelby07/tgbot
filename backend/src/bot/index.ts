@@ -337,8 +337,13 @@ export const initBot = async () => {
                 const qIndex = parseInt(ctx.session.step.toString().split('_')[2]);
                 const giveaway = await Giveaway.findById(ctx.session.currentGiveawayId);
                 if (giveaway) {
-                    const question = giveaway.questions[qIndex];
+                    const question = giveaway.questions?.[qIndex];
                     if (question) {
+                        // If it's an OPTIONS question, we don't want them typing. We want them clicking.
+                        if (question.type === 'options') {
+                            return await ctx.reply("❌ Please select an option from the buttons above! / कृपया ऊपर दिए गए बटनों में से एक विकल्प चुनें!");
+                        }
+
                         ctx.session.giveawayAnswers = ctx.session.giveawayAnswers || [];
                         ctx.session.giveawayAnswers.push({ question: question.question, answer: text });
                         
@@ -346,15 +351,17 @@ export const initBot = async () => {
                         if (nextIndex < giveaway.questions.length) {
                             ctx.session.step = `giveaway_q_${nextIndex}` as any;
                             const nextQ = giveaway.questions[nextIndex];
+                            const msg = `❓ *Question ${nextIndex + 1}:*\n${nextQ.question}`;
+
                             if (nextQ.type === 'options') {
                                 const keyboard = new InlineKeyboard();
                                 nextQ.options.forEach((opt, i) => {
                                     keyboard.text(opt, `giveaway_opt_${i}`);
                                     if ((i + 1) % 2 === 0) keyboard.row();
                                 });
-                                return await ctx.reply(`❓ *Question ${nextIndex + 1}:*\n${nextQ.question}`, { reply_markup: keyboard, parse_mode: "Markdown" });
+                                return await ctx.reply(msg, { reply_markup: keyboard, parse_mode: "Markdown" });
                             } else {
-                                return await ctx.reply(`❓ *Question ${nextIndex + 1}:*\n${nextQ.question}`, { parse_mode: "Markdown" });
+                                return await ctx.reply(msg, { parse_mode: "Markdown" });
                             }
                         } else {
                             ctx.session.step = 'giveaway_name' as any;
@@ -459,11 +466,11 @@ export const initBot = async () => {
             if (isGiveawayBtn) {
                 const giveaway = await Giveaway.findOne({ active: true }).sort({ createdAt: -1 });
                 if (!giveaway) {
-                    return await ctx.reply("Currently no active giveaways. Check back later! / अभी कोई सक्रिय गिवअवे नहीं है। बाद में चेक करें!");
+                    return await ctx.reply("No giveaway available right now. Stay tuned! 🎁 / अभी कोई गिवअवे मौजूद नहीं है। जुड़े रहें!");
                 }
                 const existing = await GiveawaySubmission.findOne({ telegramId: ctx.from.id.toString(), giveawayId: giveaway._id });
                 if (existing) {
-                    return await ctx.reply("You have already entered this giveaway! / आप पहले ही इस गिवअवे में शामिल हो चुके हैं!");
+                    return await ctx.reply("✅ You have already participated in this giveaway! 🎁 / आपने पहले ही इस गिवअवे में भाग ले लिया है! 🎁");
                 }
 
                 ctx.session.currentGiveawayId = giveaway._id.toString();
