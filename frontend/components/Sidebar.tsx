@@ -16,6 +16,7 @@ import {
     LifeBuoy,
     Menu as MenuIcon,
     Tv,
+    Gift,
     X
 } from 'lucide-react';
 
@@ -42,6 +43,7 @@ const Sidebar = ({ isOpen, onClose, adminRole }: SidebarProps) => {
         { name: 'Settings', href: '/dashboard/settings', icon: Settings },
         { name: 'Logs', href: '/dashboard/logs', icon: FileText },
         { name: 'Admins', href: '/dashboard/admins', icon: Users },
+        { name: 'Giveaway', href: '/dashboard/giveaway', icon: Gift },
     ].filter(item => {
         if (!adminRole) return false;
         if (adminRole.role === 'superadmin') return true;

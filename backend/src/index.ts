@@ -44,6 +44,7 @@ import { welcomeMessageRoutes } from './routes/welcomeMessages';
 import vipRoutes from './routes/vip';
 import { supportRoutes } from './routes/support';
 import { chatRoutes } from './routes/chat';
+import { giveawayRoutes } from './routes/giveaway';
 
 import { authRoutes } from './routes/auth';
 import { authMiddleware } from './middleware/auth';
@@ -106,6 +107,7 @@ app.register(async (protectedApp) => {
     protectedApp.register(vipRoutes, { prefix: '/api/vip' });
     protectedApp.register(supportRoutes, { prefix: '/api/support' });
     protectedApp.register(chatRoutes);
+    protectedApp.register(giveawayRoutes, { prefix: '/api/giveaway' });
     
     console.log('Registering menu routes...');
     protectedApp.register(menuRoutes);

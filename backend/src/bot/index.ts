@@ -11,13 +11,13 @@ import { Channel } from '../models/Channel';
 import { WelcomeMessage } from '../models/WelcomeMessage';
 import { ChatSession } from '../models/ChatSession';
 import { ChatMessage } from '../models/ChatMessage';
+import { Giveaway } from '../models/Giveaway';
+import { GiveawaySubmission } from '../models/GiveawaySubmission';
 import cloudinary from '../config/cloudinary';
 
 // --- Session Logic ---
 interface SessionData {
-    step?: 'name' | 'number' | 'interest' | 'review' | 
-           'support_lang' | 'support_type' | 'support_name' | 'support_number' | 'support_id' | 'support_problem' | 'support_review' |
-           'chatting';
+    step?: string;
     language?: 'en' | 'hi';
     vipName?: string;
     vipNumber?: string;
@@ -29,6 +29,13 @@ interface SessionData {
     supportNumber?: string;
     supportId?: string;
     supportProblem?: string;
+
+    // Giveaway Data
+    giveawayStep?: number;
+    giveawayAnswers?: { question: string; answer: string }[];
+    currentGiveawayId?: string;
+    giveawayRealName?: string;
+    giveawayDafabetId?: string;
 }
 type MyContext = Context & SessionFlavor<SessionData>;
 import fs from 'fs';
@@ -202,9 +209,10 @@ export const initBot = async () => {
             if (menuButtons.length > 0 || settings?.vipActive || settings?.supportActive || settings?.chatActive) {
                 const keyboard = new Keyboard().resized();
                 
-                // Add VIP and Support buttons
-                if (settings?.vipActive || settings?.supportActive) {
+                // Add VIP, Support, and Giveaway buttons
+                if (settings?.vipActive || settings?.supportActive || settings?.giveawayActive) {
                     if (settings?.vipActive) keyboard.text(settings.vipButtonText || "🌟 JOIN VIP");
+                    if (settings?.giveawayActive) keyboard.text(settings.giveawayButtonText || "🎁 Giveaway Offer");
                     if (settings?.supportActive) keyboard.text(settings.supportButtonText || "🆘 Help & Support");
                     keyboard.row();
                 }
@@ -319,9 +327,55 @@ export const initBot = async () => {
             const isLiveChatBtn = false; // Deprecated standalone feature
             const isVipBtn = settings?.vipActive && text === (settings.vipButtonText || "🌟 JOIN VIP");
             const isSupportBtn = settings?.supportActive && text === (settings.supportButtonText || "🆘 Help & Support");
+            const isGiveawayBtn = settings?.giveawayActive && text === (settings.giveawayButtonText || "🎁 Giveaway Offer");
             const menuButton = await MainMenuButton.findOne({ text: text, active: true }); // Single Mongo Read
             const isMenuBtn = !!menuButton;
-            const isAnyBotMenuButton = isLiveChatBtn || isVipBtn || isSupportBtn || isMenuBtn;
+            const isAnyBotMenuButton = isLiveChatBtn || isVipBtn || isSupportBtn || isMenuBtn || isGiveawayBtn;
+
+            // --- 0b. Giveaway Question Handlers ---
+            if (ctx.session?.step?.toString().startsWith('giveaway_q_')) {
+                const qIndex = parseInt(ctx.session.step.toString().split('_')[2]);
+                const giveaway = await Giveaway.findById(ctx.session.currentGiveawayId);
+                if (giveaway) {
+                    const question = giveaway.questions[qIndex];
+                    if (question) {
+                        ctx.session.giveawayAnswers = ctx.session.giveawayAnswers || [];
+                        ctx.session.giveawayAnswers.push({ question: question.question, answer: text });
+                        
+                        const nextIndex = qIndex + 1;
+                        if (nextIndex < giveaway.questions.length) {
+                            ctx.session.step = `giveaway_q_${nextIndex}` as any;
+                            const nextQ = giveaway.questions[nextIndex];
+                            if (nextQ.type === 'options') {
+                                const keyboard = new InlineKeyboard();
+                                nextQ.options.forEach((opt, i) => {
+                                    keyboard.text(opt, `giveaway_opt_${i}`);
+                                    if ((i + 1) % 2 === 0) keyboard.row();
+                                });
+                                return await ctx.reply(`❓ *Question ${nextIndex + 1}:*\n${nextQ.question}`, { reply_markup: keyboard, parse_mode: "Markdown" });
+                            } else {
+                                return await ctx.reply(`❓ *Question ${nextIndex + 1}:*\n${nextQ.question}`, { parse_mode: "Markdown" });
+                            }
+                        } else {
+                            ctx.session.step = 'giveaway_name' as any;
+                            return await ctx.reply("✅ All setup questions done!\n\nAb apna *Full Name* daalo:", { parse_mode: "Markdown" });
+                        }
+                    }
+                }
+            }
+
+            if (ctx.session?.step === 'giveaway_name') {
+                ctx.session.giveawayRealName = text;
+                ctx.session.step = 'giveaway_id' as any;
+                return await ctx.reply("✅ Naam mil gaya! Ab apni *Dafabet ID* daalo:", { parse_mode: "Markdown" });
+            }
+
+            if (ctx.session?.step === 'giveaway_id') {
+                ctx.session.giveawayDafabetId = text;
+                ctx.session.step = 'giveaway_review' as any;
+                const summary = `🎁 *Giveaway Entry Summary*\n\n👤 Name: ${ctx.session.giveawayRealName}\n🆔 ID: ${text}\n\nClick below to submit!`;
+                return await ctx.reply(summary, { parse_mode: "Markdown", reply_markup: new InlineKeyboard().text("✅ Submit Entries", "giveaway_submit") });
+            }
 
             // --- End Chat Explicit Hook ---
             if (text === "❌ End Chat") {
@@ -402,6 +456,45 @@ export const initBot = async () => {
             }
 
             // --- 4. Process Menu Button Main Interactions ---
+            if (isGiveawayBtn) {
+                const giveaway = await Giveaway.findOne({ active: true }).sort({ createdAt: -1 });
+                if (!giveaway) {
+                    return await ctx.reply("Currently no active giveaways. Check back later! / अभी कोई सक्रिय गिवअवे नहीं है। बाद में चेक करें!");
+                }
+                const existing = await GiveawaySubmission.findOne({ telegramId: ctx.from.id.toString(), giveawayId: giveaway._id });
+                if (existing) {
+                    return await ctx.reply("You have already entered this giveaway! / आप पहले ही इस गिवअवे में शामिल हो चुके हैं!");
+                }
+
+                ctx.session.currentGiveawayId = giveaway._id.toString();
+                ctx.session.giveawayAnswers = [];
+                
+                if (giveaway.mediaUrl) {
+                    await sendMediaMessage(ctx, giveaway.mediaUrl, `🎁 *${giveaway.title}*\n\n${giveaway.description}\n\nLet's start!`, undefined, giveaway.mediaType);
+                } else {
+                    await ctx.reply(`🎁 *${giveaway.title}*\n\n${giveaway.description}\n\nLet's start!`, { parse_mode: "Markdown" });
+                }
+                
+                // Show first question
+                if (giveaway.questions.length > 0) {
+                    ctx.session.step = 'giveaway_q_0';
+                    const q = giveaway.questions[0];
+                    if (q.type === 'options') {
+                        const keyboard = new InlineKeyboard();
+                        q.options.forEach((opt, i) => {
+                            keyboard.text(opt, `giveaway_opt_${i}`);
+                            if ((i + 1) % 2 === 0) keyboard.row();
+                        });
+                        return await ctx.reply(`❓ *Question 1:*\n${q.question}`, { reply_markup: keyboard, parse_mode: "Markdown" });
+                    } else {
+                        return await ctx.reply(`❓ *Question 1:*\n${q.question}`, { parse_mode: "Markdown" });
+                    }
+                } else {
+                    ctx.session.step = 'giveaway_name';
+                    return await ctx.reply("Please enter your *Full Name* to join:", { parse_mode: "Markdown" });
+                }
+            }
+
             if (isSupportBtn) {
                 console.log(`🆘 Help & Support Button Clicked by User ${ctx.from.id}`);
                 ctx.session.step = 'support_lang';
@@ -679,6 +772,77 @@ export const initBot = async () => {
         } catch (error) {
             console.error("Error saving support ticket:", error);
             await ctx.answerCallbackQuery("Error occurred. Try again.");
+        }
+    });
+
+    // 5g. Handle Giveaway Option Selection
+    bot.callbackQuery(/^giveaway_opt_(\d+)$/, async (ctx) => {
+        const optIndex = parseInt(ctx.match[1]);
+        if (!ctx.session.step?.startsWith('giveaway_q_')) return await ctx.answerCallbackQuery("Expired session.");
+
+        const qIndex = parseInt(ctx.session.step.split('_')[2]);
+        const giveaway = await Giveaway.findById(ctx.session.currentGiveawayId);
+        
+        if (!giveaway) return await ctx.answerCallbackQuery("Giveaway not found.");
+        const currentQ = giveaway.questions[qIndex];
+        if (!currentQ) return await ctx.answerCallbackQuery("Question not found.");
+
+        const answer = currentQ.options[optIndex];
+        await ctx.answerCallbackQuery(`Selected: ${answer}`);
+
+        ctx.session.giveawayAnswers = ctx.session.giveawayAnswers || [];
+        ctx.session.giveawayAnswers.push({ question: currentQ.question, answer });
+
+        const nextIndex = qIndex + 1;
+        if (nextIndex < giveaway.questions.length) {
+            ctx.session.step = `giveaway_q_${nextIndex}`;
+            const nextQ = giveaway.questions[nextIndex];
+            const msg = `❓ *Question ${nextIndex + 1}:*\n${nextQ.question}`;
+            
+            if (nextQ.type === 'options') {
+                const keyboard = new InlineKeyboard();
+                nextQ.options.forEach((opt, i) => {
+                    keyboard.text(opt, `giveaway_opt_${i}`);
+                    if ((i + 1) % 2 === 0) keyboard.row();
+                });
+                await ctx.editMessageText(msg, { reply_markup: keyboard, parse_mode: "Markdown" });
+            } else {
+                await ctx.editMessageText(msg, { parse_mode: "Markdown" });
+            }
+        } else {
+            ctx.session.step = 'giveaway_name';
+            await ctx.editMessageText("✅ Questions done! Now please enter your *Full Name*:", { parse_mode: "Markdown" });
+        }
+    });
+
+    // 5h. Final Giveaway Submission
+    bot.callbackQuery("giveaway_submit", async (ctx) => {
+        if (ctx.session.step !== 'giveaway_review') return await ctx.answerCallbackQuery("Invalid request.");
+        await ctx.answerCallbackQuery("Submitted!");
+
+        try {
+            const { giveawayRealName, giveawayDafabetId, giveawayAnswers, currentGiveawayId } = ctx.session;
+            
+            await GiveawaySubmission.create({
+                giveawayId: currentGiveawayId,
+                telegramId: ctx.from.id.toString(),
+                firstName: ctx.from.first_name,
+                lastName: ctx.from.last_name,
+                username: ctx.from.username,
+                realName: giveawayRealName,
+                dafabetId: giveawayDafabetId,
+                answers: giveawayAnswers
+            });
+
+            ctx.session.step = undefined;
+            await ctx.editMessageText("✅ *Thank you!*\n\nAapki giveaway entry successfully submit ho gayi hai! Good luck! 🎉", { parse_mode: "Markdown" });
+        } catch (error: any) {
+            console.error("Error submitting giveaway:", error);
+            if (error.code === 11000) {
+                await ctx.editMessageText("❌ You have already submitted entries for this giveaway.");
+            } else {
+                await ctx.answerCallbackQuery("Error occurred.");
+            }
         }
     });
 

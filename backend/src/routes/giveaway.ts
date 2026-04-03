@@ -1,0 +1,79 @@
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { Giveaway } from '../models/Giveaway';
+import { GiveawaySubmission } from '../models/GiveawaySubmission';
+import { Settings } from '../models/Settings';
+import { cache } from '../utils/cache';
+
+const SETTINGS_KEY = 'bot_settings';
+
+export const giveawayRoutes = async (fastify: FastifyInstance) => {
+    // Get current giveaway configuration
+    fastify.get('/', async (req: FastifyRequest, reply: FastifyReply) => {
+        try {
+            const giveaway = await Giveaway.findOne().sort({ createdAt: -1 });
+            return reply.send(giveaway || {});
+        } catch (error) {
+            console.error('Error fetching giveaway config:', error);
+            return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
+    // Create or Update giveaway configuration
+    fastify.post('/', async (req: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
+        try {
+            const { _id, title, description, questions, active, mediaUrl, mediaType, buttonText } = req.body as any;
+            
+            let giveaway;
+            if (_id) {
+                giveaway = await Giveaway.findByIdAndUpdate(_id, {
+                    title, description, questions, active, mediaUrl, mediaType, buttonText
+                }, { new: true });
+            } else {
+                giveaway = await Giveaway.create({
+                    title, description, questions, active, mediaUrl, mediaType, buttonText
+                });
+            }
+
+            // Sync with global settings if needed (for the main menu toggle)
+            await Settings.findOneAndUpdate({}, { 
+                giveawayActive: active,
+                giveawayButtonText: buttonText || "🎁 Giveaway Offer"
+            });
+            await cache.del(SETTINGS_KEY);
+
+            return reply.send(giveaway);
+        } catch (error) {
+            console.error('Error saving giveaway:', error);
+            return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
+    // Get submissions for a giveaway
+    fastify.get('/submissions', async (req: FastifyRequest<{ Querystring: { giveawayId?: string } }>, reply: FastifyReply) => {
+        try {
+            const { giveawayId } = req.query;
+            const query = giveawayId ? { giveawayId } : {};
+            const submissions = await GiveawaySubmission.find(query).sort({ createdAt: -1 });
+            return reply.send(submissions);
+        } catch (error) {
+            console.error('Error fetching submissions:', error);
+            return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
+    // Delete all submissions for a giveaway
+    fastify.delete('/submissions/:giveawayId', async (req: FastifyRequest<{ Params: { giveawayId: string } }>, reply: FastifyReply) => {
+        try {
+            const admin = (req as any).admin;
+            if (admin && admin.role !== 'superadmin') {
+                return reply.status(403).send({ error: 'Only Super Admin can delete submissions' });
+            }
+
+            await GiveawaySubmission.deleteMany({ giveawayId: req.params.giveawayId });
+            return reply.send({ success: true, message: 'Submissions deleted' });
+        } catch (error) {
+            console.error('Error deleting submissions:', error);
+            return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
+};

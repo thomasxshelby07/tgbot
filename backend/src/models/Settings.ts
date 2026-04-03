@@ -15,9 +15,9 @@ export interface ISettings extends Document {
     supportButtonText: string;
     supportActive: boolean;
 
-    // Live Chat Settings
-    chatButtonText: string;
-    chatActive: boolean;
+    // Giveaway Settings
+    giveawayButtonText: string;
+    giveawayActive: boolean;
 }
 
 const SettingsSchema: Schema = new Schema({
@@ -40,6 +40,10 @@ const SettingsSchema: Schema = new Schema({
 
     // Live Chat Settings
     chatButtonText: { type: String, default: "💬 Live Chat" },
-    chatActive: { type: Boolean, default: true }
+    chatActive: { type: Boolean, default: true },
+ 
+    // Giveaway Settings
+    giveawayButtonText: { type: String, default: "🎁 Giveaway Offer" },
+    giveawayActive: { type: Boolean, default: false }
 });
 export const Settings = mongoose.model<ISettings>('Settings', SettingsSchema);
