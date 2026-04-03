@@ -15,6 +15,10 @@ export interface ISettings extends Document {
     supportButtonText: string;
     supportActive: boolean;
 
+    // Live Chat Settings
+    chatButtonText: string;
+    chatActive: boolean;
+ 
     // Giveaway Settings
     giveawayButtonText: string;
     giveawayActive: boolean;
