@@ -23,6 +23,7 @@ interface GiveawayConfig {
     active: boolean;
     questions: Question[];
     buttonText: string;
+    createdAt?: string;
 }
 
 interface Submission {
@@ -172,9 +173,24 @@ export default function GiveawayPage() {
         setConfig({ ...config, questions: newQs });
     };
 
-    const handleExport = () => {
+    const handleExport = async () => {
         if (!config._id) return;
-        window.open(`${getApiUrl()}/api/giveaway/export/${config._id}`, '_blank');
+        try {
+            const res = await axios.get(`${getApiUrl()}/api/giveaway/export/${config._id}`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `giveaway_export_${config.title.replace(/\s+/g, '_')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            toast.success('CSV Downloaded!');
+        } catch (error) {
+            toast.error('Failed to export CSV');
+            console.error('Export error:', error);
+        }
     };
 
     const handleDelete = async () => {
@@ -238,7 +254,7 @@ export default function GiveawayPage() {
                                     <div className="flex flex-col gap-1">
                                         <div className="flex items-center justify-between">
                                             <span className={`text-[10px] font-black uppercase tracking-widest ${config._id === g._id ? 'text-blue-100' : 'text-slate-400'}`}>
-                                                {new Date(g as any).toLocaleDateString()}
+                                                {g.createdAt ? new Date(g.createdAt).toLocaleDateString() : 'Draft'}
                                             </span>
                                             {g.active && (
                                                 <div className={`w-2 h-2 rounded-full ${config._id === g._id ? 'bg-white animate-pulse' : 'bg-emerald-500 animate-pulse'}`}></div>

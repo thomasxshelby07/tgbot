@@ -135,6 +135,17 @@ export const giveawayRoutes = async (fastify: FastifyInstance) => {
         }
     });
 
+    // Get submissions for a giveaway (by ID in params)
+    fastify.get('/submissions/:giveawayId', async (req: FastifyRequest<{ Params: { giveawayId: string } }>, reply: FastifyReply) => {
+        try {
+            const submissions = await GiveawaySubmission.find({ giveawayId: req.params.giveawayId }).sort({ createdAt: -1 });
+            return reply.send(submissions);
+        } catch (error) {
+            console.error('Error fetching submissions:', error);
+            return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
     // Delete all submissions for a giveaway
     fastify.delete('/submissions/:giveawayId', async (req: FastifyRequest<{ Params: { giveawayId: string } }>, reply: FastifyReply) => {
         try {
