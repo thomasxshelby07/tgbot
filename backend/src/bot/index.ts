@@ -210,12 +210,21 @@ export const initBot = async () => {
             if (menuButtons.length > 0 || settings?.vipActive || settings?.supportActive || settings?.chatActive) {
                 const keyboard = new Keyboard().resized();
                 
-                // Add VIP, Support, and Giveaway buttons
-                if (settings?.vipActive || settings?.supportActive || settings?.giveawayActive) {
+                // Add VIP and Support buttons
+                if (settings?.vipActive || settings?.supportActive) {
                     if (settings?.vipActive) keyboard.text(settings.vipButtonText || "🌟 JOIN VIP");
-                    if (settings?.giveawayActive) keyboard.text(settings.giveawayButtonText || "🎁 Giveaway Offer");
                     if (settings?.supportActive) keyboard.text(settings.supportButtonText || "🆘 Help & Support");
                     keyboard.row();
+                }
+
+                // Add Dynamic Giveaway buttons
+                const activeGiveaways = await Giveaway.find({ active: true }).sort({ createdAt: -1 });
+                if (activeGiveaways.length > 0) {
+                    activeGiveaways.forEach((g, i) => {
+                        keyboard.text(g.buttonText || "🎁 Giveaway Offer");
+                        if ((i + 1) % 2 === 0) keyboard.row();
+                    });
+                    if (activeGiveaways.length % 2 !== 0) keyboard.row();
                 }
 
                 menuButtons.forEach((btn, index) => {
@@ -326,9 +335,12 @@ export const initBot = async () => {
             
             // --- 2. Check Static/Action Buttons ---
             const isLiveChatBtn = false; // Deprecated standalone feature
+            const activeGiveaways = await Giveaway.find({ active: true });
+            const matchingGiveaway = activeGiveaways.find(g => text === g.buttonText);
+            
             const isVipBtn = settings?.vipActive && text === (settings.vipButtonText || "🌟 JOIN VIP");
             const isSupportBtn = settings?.supportActive && text === (settings.supportButtonText || "🆘 Help & Support");
-            const isGiveawayBtn = settings?.giveawayActive && text === (settings.giveawayButtonText || "🎁 Giveaway Offer");
+            const isGiveawayBtn = !!matchingGiveaway;
             const menuButton = await MainMenuButton.findOne({ text: text, active: true }); // Single Mongo Read
             const isMenuBtn = !!menuButton;
             const isAnyBotMenuButton = isLiveChatBtn || isVipBtn || isSupportBtn || isMenuBtn || isGiveawayBtn;
@@ -470,8 +482,8 @@ export const initBot = async () => {
             }
 
             // --- 4. Process Menu Button Main Interactions ---
-            if (isGiveawayBtn) {
-                const giveaway = await Giveaway.findOne({ active: true }).sort({ createdAt: -1 });
+            if (isGiveawayBtn && matchingGiveaway) {
+                const giveaway = matchingGiveaway;
                 if (!giveaway) {
                     return await ctx.reply("No giveaway available right now. Stay tuned! 🎁 / अभी कोई गिवअवे मौजूद नहीं है। जुड़े रहें!");
                 }

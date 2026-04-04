@@ -90,7 +90,7 @@ export const giveawayRoutes = async (fastify: FastifyInstance) => {
             // Generate CSV
             let csv = 'Date,Name,Phone,Telegram,DafabetID,Answers\n';
             submissions.forEach(sub => {
-                const answers = sub.answers.map(a => `${a.question}: ${a.answer}`).join(' | ');
+                const answers = sub.answers.map(a => a.answer).join(' | ');
                 const date = new Date(sub.createdAt).toLocaleString().replace(/,/g, '');
                 csv += `${date},${sub.realName},${sub.phoneNumber},${sub.username || sub.telegramId},${sub.dafabetId},"${answers}"\n`;
             });
