@@ -326,13 +326,13 @@ export default function DfxHelpPage() {
                 }
 
                 /* ── PLAYER ── */
-                .vplayer { position: relative; background: #000; display: flex; flex-direction: column; overflow: hidden; border-bottom: 1px solid #2a0000; }
+                .vplayer { position: relative; background: #000; display: block; overflow: hidden; border-bottom: 1px solid #2a0000; }
                 .vshimmer { width: 100%; aspect-ratio: 16/9; background: #111; animation: pulse 2s infinite; }
                 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
                 
-                .vel { width: 100%; max-height: 380px; object-fit: contain; background: #000; opacity: 0; transition: opacity 0.3s; cursor: pointer; }
+                .vel { width: 100%; height: auto; max-height: 75vh; object-fit: contain; background: #000; opacity: 0; transition: opacity 0.3s; cursor: pointer; display: block; }
                 .vel.visible { opacity: 1; }
-                .vthumb { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+                .vthumb { width: 100%; height: auto; max-height: 75vh; object-fit: contain; display: block; }
 
                 /* Overlay */
                 .vcoverlay {
@@ -415,13 +415,17 @@ export default function DfxHelpPage() {
                 .footer span { color: #facc15; }
 
                 @media (max-width: 600px) {
-                    .topbar { padding: 12px 16px; }
-                    .offer-banner { padding: 10px; font-size: 0.85rem; }
+                    .topbar { padding: 12px 16px; flex-wrap: wrap; justify-content: center; }
+                    .topbar-links { gap: 6px; justify-content: center; width: 100%; }
+                    .btn-tg, .btn-ch, .btn-reg { padding: 8px 12px; font-size: 0.65rem; }
+                    .offer-banner { padding: 10px; font-size: 0.85rem; flex-direction: column; gap: 8px; }
                     .herostrip { padding: 30px 16px 20px; }
                     .main { padding: 10px 16px 60px; }
                     .vgrid { grid-template-columns: 1fr; }
                     .linkbanner { padding: 24px 16px; }
+                    .link-cards { grid-template-columns: 1fr; }
                     .filter-tab { padding: 8px 14px; font-size: 0.75rem; }
+                    .vctitle { font-size: 1rem; }
                 }
             `}</style>
 
@@ -476,7 +480,7 @@ export default function DfxHelpPage() {
                         <div className="filter-row">
                             {(['all', 'english', 'hindi'] as const).map(cat => (
                                 <button key={cat} className={`filter-tab ${filterCat === cat ? 'active' : ''}`} onClick={() => setFilterCat(cat)}>
-                                    {cat === 'all' ? `ALL GUIDES` : cat === 'english' ? `ENG GUIDES` : `HIN GUIDES`}
+                                    {cat === 'all' ? `ALL` : cat === 'english' ? `ENGLISH` : `HINDI`}
                                 </button>
                             ))}
                         </div>
