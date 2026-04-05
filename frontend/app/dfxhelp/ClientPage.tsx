@@ -175,19 +175,7 @@ export default function DfxHelpClient({ initialVideos, initialSettings }: { init
                 
                 .bottom-offer { margin-top: 40px; }
 
-                /* ── HERO STRIP ── */
-                .herostrip {
-                    padding: 50px 24px 30px;
-                    text-align: center;
-                }
-                .herostrip h1 {
-                    font-size: clamp(2rem, 5vw, 3.5rem);
-                    font-weight: 900; letter-spacing: -0.02em;
-                    color: #fff; margin-bottom: 12px;
-                    text-transform: uppercase;
-                }
-                .herostrip h1 span { color: #facc15; }
-                .herostrip p { font-size: 1.05rem; color: #fca5a5; max-width: 600px; margin: 0 auto; line-height: 1.5; }
+                /* Removed Hero Strip */
 
                 /* ── MAIN ── */
                 .main {
@@ -282,7 +270,6 @@ export default function DfxHelpClient({ initialVideos, initialSettings }: { init
                     .btn-tg, .btn-ch, .btn-reg { padding: 6px 10px; font-size: 0.65rem; }
                     .btn-tg { padding: 6px 6px; } .btn-ch { padding: 6px 6px; } .btn-reg { padding: 6px 8px; }
                     .offer-banner { padding: 10px; font-size: 0.85rem; flex-direction: column; gap: 8px; }
-                    .herostrip { padding: 30px 16px 20px; }
                     .main { padding: 10px 12px 60px; }
                     .vgrid { grid-template-columns: 1fr 1fr; gap: 10px; }
                     .vcbody { padding: 12px; }
@@ -333,11 +320,7 @@ export default function DfxHelpClient({ initialVideos, initialSettings }: { init
                     </div>
                 )}
 
-                {/* ── HERO STRIP ── */}
-                <div className="herostrip">
-                    <h1>DFX <span>Tutorials</span></h1>
-                    <p>Official video guides to master every platform feature. Follow the steps below and start winning.</p>
-                </div>
+
 
                 {/* ── MAIN ── */}
                 <main className="main">
