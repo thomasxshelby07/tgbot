@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, Volume2, VolumeX, ExternalLink, Send, Maximize2, HelpCircle, ArrowRight, Video } from 'lucide-react';
+import { Play, ExternalLink, ArrowRight, Video, HelpCircle, Send } from 'lucide-react';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 const TG_CHANNEL = 'https://t.me/dfx0777';
@@ -33,29 +33,19 @@ interface HelpSettings {
     bottomOfferButtonUrl?: string;
 }
 
-function formatTime(sec: number) {
-    if (isNaN(sec)) return '0:00';
-    const m = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return `${m}:${s.toString().padStart(2, '0')}`;
-}
+
 
 function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const cardRef = useRef<HTMLDivElement>(null);
-    const sliderRef = useRef<HTMLInputElement>(null);
 
     const [playing, setPlaying] = useState(false);
-    const [muted, setMuted] = useState(false);
-    const [currentTime, setCurrentTime] = useState(0);
-    const [duration, setDuration] = useState(0);
     const [loaded, setLoaded] = useState(false);
-    const [dragging, setDragging] = useState(false);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
             ([entry]) => {
-                if (!entry.isIntersecting) {
+                if (!entry.isIntersecting && playing) {
                     videoRef.current?.pause();
                     setPlaying(false);
                 }
@@ -64,43 +54,26 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
         );
         if (cardRef.current) observer.observe(cardRef.current);
         return () => observer.disconnect();
-    }, []);
-
-    const togglePlay = useCallback(() => {
-        const vid = videoRef.current;
-        if (!vid) return;
-        if (playing) { vid.pause(); setPlaying(false); }
-        else { vid.play().then(() => setPlaying(true)).catch(() => {}); }
     }, [playing]);
 
-    const toggleMute = (e: React.MouseEvent) => {
+    const handlePlayFullscreen = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!videoRef.current) return;
-        videoRef.current.muted = !muted;
-        setMuted(!muted);
-    };
-
-    const onTimeUpdate = () => {
-        if (!dragging && videoRef.current) {
-            setCurrentTime(videoRef.current.currentTime);
+        try {
+            await videoRef.current.play();
+            setPlaying(true);
+            const v = videoRef.current as any;
+            if (v.requestFullscreen) {
+                await v.requestFullscreen();
+            } else if (v.webkitEnterFullscreen) {
+                v.webkitEnterFullscreen();
+            } else if (v.msRequestFullscreen) {
+                v.msRequestFullscreen();
+            }
+        } catch (err) {
+            console.error(err);
         }
     };
-
-    const onLoadedMetadata = () => {
-        setDuration(videoRef.current?.duration || 0);
-        setLoaded(true);
-    };
-
-    const onSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = Number(e.target.value);
-        setCurrentTime(val);
-        if (videoRef.current) videoRef.current.currentTime = val;
-    };
-
-    const onSliderMouseDown = () => setDragging(true);
-    const onSliderMouseUp = () => setDragging(false);
-
-    const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
     return (
         <div ref={cardRef} className="vc" style={{ animationDelay: `${index * 0.07}s` }}>
@@ -115,56 +88,19 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
                     ref={videoRef}
                     src={video.videoUrl}
                     className={`vel ${loaded ? 'visible' : ''}`}
+                    controls
                     playsInline
                     preload="metadata"
-                    onLoadedMetadata={onLoadedMetadata}
-                    onTimeUpdate={onTimeUpdate}
+                    onLoadedMetadata={() => setLoaded(true)}
                     onEnded={() => setPlaying(false)}
-                    onClick={togglePlay}
                     poster={video.thumbnailUrl || undefined}
                 />
 
-                <div className={`vcoverlay ${playing ? 'playing' : ''}`} onClick={togglePlay}>
-                    <button className="vcplaybtn" onClick={e => { e.stopPropagation(); togglePlay(); }}>
-                        {playing ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" />}
-                    </button>
-                </div>
-
-                {loaded && (
-                    <div className="vcontrols" onClick={e => e.stopPropagation()}>
-                        <div className="vslider-wrap">
-                            <input
-                                ref={sliderRef}
-                                type="range"
-                                className="vslider"
-                                min={0}
-                                max={duration || 0}
-                                step={0.1}
-                                value={currentTime}
-                                onChange={onSliderChange}
-                                onMouseDown={onSliderMouseDown}
-                                onMouseUp={onSliderMouseUp}
-                                onTouchStart={onSliderMouseDown}
-                                onTouchEnd={onSliderMouseUp}
-                                style={{ '--pct': `${progress}%` } as React.CSSProperties}
-                            />
-                        </div>
-                        <div className="vctoolbar">
-                            <button className="vctool playpause" onClick={togglePlay}>
-                                {playing ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
-                            </button>
-                            <span className="vctime">
-                                {formatTime(currentTime)} / {formatTime(duration)}
-                            </span>
-                            <div className="vctool-right">
-                                <button className="vctool" onClick={toggleMute}>
-                                    {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                                </button>
-                                <button className="vctool" onClick={() => videoRef.current?.requestFullscreen?.()}>
-                                    <Maximize2 size={15} />
-                                </button>
-                            </div>
-                        </div>
+                {!playing && (
+                    <div className="vcoverlay" onClick={handlePlayFullscreen}>
+                        <button className="vcplaybtn" onClick={handlePlayFullscreen}>
+                            <Play size={22} fill="currentColor" />
+                        </button>
                     </div>
                 )}
             </div>
@@ -324,26 +260,22 @@ export default function DfxHelpPage() {
                 }
                 @keyframes fadein {
                     from { opacity: 0; transform: translateY(15px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-
-                /* ── PLAYER ── */
-                .vplayer { position: relative; background: #000; display: block; overflow: hidden; border-bottom: 1px solid #2a0000; }
-                .vshimmer { width: 100%; aspect-ratio: 16/9; background: #111; animation: pulse 2s infinite; }
+                    to { opacity: 1;                /* ── PLAYER ── */
+                .vplayer { position: relative; background: #000; display: block; overflow: hidden; border-bottom: 1px solid #2a0000; aspect-ratio: 1 / 1; width: 100%; }
+                .vshimmer { width: 100%; height: 100%; background: #111; animation: pulse 2s infinite; }
                 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
                 
-                .vel { width: 100%; height: auto; max-height: 480px; object-fit: contain; background: #000; opacity: 0; transition: opacity 0.3s; cursor: pointer; display: block; }
+                .vel { width: 100%; height: 100%; object-fit: contain; background: #000; opacity: 0; transition: opacity 0.3s; cursor: pointer; display: block; }
                 .vel.visible { opacity: 1; }
-                .vthumb { width: 100%; height: auto; max-height: 480px; object-fit: contain; display: block; }
+                .vthumb { width: 100%; height: 100%; object-fit: contain; display: block; }
 
                 /* Overlay */
                 .vcoverlay {
-                    position: absolute; top: 0; left: 0; right: 0; bottom: 44px;
+                    position: absolute; inset: 0;
                     display: flex; align-items: center; justify-content: center;
-                    background: rgba(0,0,0,0.3); transition: background 0.2s; cursor: pointer;
+                    background: rgba(0,0,0,0.3); transition: background 0.3s; cursor: pointer; z-index: 10;
                 }
-                .vcoverlay.playing { background: transparent; }
-                .vcoverlay.playing:hover { background: rgba(0,0,0,0.15); }
+                .vcoverlay:hover { background: rgba(0,0,0,0.1); }
 
                 .vcplaybtn {
                     width: 56px; height: 56px; border-radius: 50%;
@@ -352,25 +284,8 @@ export default function DfxHelpPage() {
                     transition: all 0.2s; box-shadow: 0 4px 15px rgba(250,204,21,0.4);
                 }
                 .vcplaybtn:hover { transform: scale(1.1); background: #ffea00; box-shadow: 0 4px 25px rgba(250,204,21,0.6); }
-                .vcoverlay.playing .vcplaybtn { opacity: 0; transform: scale(0.8); }
-                .vcoverlay.playing:hover .vcplaybtn { opacity: 1; transform: scale(1); }
 
-                /* Controls */
-                .vcontrols { background: #000; padding: 0 12px 10px; position: relative; z-index: 10; border-top: 1px solid rgba(255,255,255,0.05); }
-                .vslider-wrap { padding: 8px 0 4px; }
-                .vslider {
-                    -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
-                    background: linear-gradient(to right, #facc15 var(--pct, 0%), #333 var(--pct, 0%));
-                    outline: none; cursor: pointer; border-radius: 2px;
-                }
-                .vslider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #fff; cursor: pointer; border-radius: 50%; border: 3px solid #facc15; }
-                
-                .vctoolbar { display: flex; align-items: center; gap: 12px; padding-top: 4px; }
-                .vctool { color: #aaa; background: none; border: none; cursor: pointer; padding: 4px; transition: color 0.15s; display: flex; }
-                .vctool:hover { color: #facc15; }
-                .vctool.playpause { color: #fff; }
-                .vctime { font-size: 0.75rem; font-weight: 500; color: #888; font-variant-numeric: tabular-nums; white-space: nowrap; }
-                .vctool-right { margin-left: auto; display: flex; gap: 6px; }
+                /* ── CARD BODY ── */flex; gap: 6px; }
 
                 /* ── CARD BODY ── */
                 .vcbody { padding: 20px; }
