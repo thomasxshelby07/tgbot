@@ -45,6 +45,7 @@ import vipRoutes from './routes/vip';
 import { supportRoutes } from './routes/support';
 import { chatRoutes } from './routes/chat';
 import { giveawayRoutes } from './routes/giveaway';
+import { dfxHelpRoutes, dfxHelpAdminRoutes } from './routes/dfxhelp';
 
 import { authRoutes } from './routes/auth';
 import { authMiddleware } from './middleware/auth';
@@ -93,6 +94,8 @@ const seedSuperAdmin = async () => {
 
 // Register public/auth routes
 app.register(authRoutes);
+// Register public dfxhelp GET route (no auth needed)
+app.register(dfxHelpRoutes);
 
 // Register Protected Routes
 app.register(async (protectedApp) => {
@@ -108,6 +111,7 @@ app.register(async (protectedApp) => {
     protectedApp.register(supportRoutes, { prefix: '/api/support' });
     protectedApp.register(chatRoutes);
     protectedApp.register(giveawayRoutes, { prefix: '/api/giveaway' });
+    protectedApp.register(dfxHelpAdminRoutes);
     
     console.log('Registering menu routes...');
     protectedApp.register(menuRoutes);

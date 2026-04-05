@@ -17,7 +17,8 @@ import {
     Menu as MenuIcon,
     Tv,
     Gift,
-    X
+    X,
+    HelpCircle
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -44,6 +45,7 @@ const Sidebar = ({ isOpen, onClose, adminRole }: SidebarProps) => {
         { name: 'Logs', href: '/dashboard/logs', icon: FileText },
         { name: 'Admins', href: '/dashboard/admins', icon: Users },
         { name: 'Giveaway', href: '/dashboard/giveaway', icon: Gift },
+        { name: 'DFX Help', href: '/dashboard/dfxhelp', icon: HelpCircle },
     ].filter(item => {
         if (!adminRole) return false;
         if (adminRole.role === 'superadmin') return true;
