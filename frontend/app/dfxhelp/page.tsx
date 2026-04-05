@@ -222,7 +222,7 @@ export default function DfxHelpPage() {
                     background: rgba(0,0,0,0.6);
                     backdrop-filter: blur(12px);
                     border-bottom: 1px solid #ff1a1a;
-                    padding: 12px 24px;
+                    padding: 8px 24px;
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
@@ -230,7 +230,7 @@ export default function DfxHelpPage() {
                     gap: 12px;
                 }
                 .brand { display: flex; align-items: center; gap: 10px; }
-                .brand-logo { height: 60px; max-height: none; width: auto; object-fit: contain; }
+                .brand-logo { height: 46px; max-height: none; width: auto; object-fit: contain; }
                 .brand-icon {
                     width: 34px; height: 34px;
                     background: #facc15;
