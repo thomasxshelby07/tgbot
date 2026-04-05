@@ -4,8 +4,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, Volume2, VolumeX, ExternalLink, Send, HelpCircle, Maximize2 } from 'lucide-react';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-const TELEGRAM_BOT_LINK = process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL || 'https://t.me/yourbot';
-const TELEGRAM_BOT_NAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME || 'DFX Bot';
+const TG_CHANNEL = 'https://t.me/dfx0777';
+const TG_BOT     = 'https://t.me/DafaxbetBot';
+const DFX_SITE   = 'http://dafaxbet.com/register?campaignId=tg07';
 
 interface HelpVideo {
     _id: string;
@@ -234,16 +235,40 @@ export default function DfxHelpPage() {
                     background: #eff6ff; color: #2563eb;
                     padding: 2px 8px; letter-spacing: 0.06em;
                 }
+                .topbar-links { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
                 .btn-tg {
-                    display: inline-flex; align-items: center; gap: 7px;
+                    display: inline-flex; align-items: center; gap: 6px;
                     background: #2196F3; color: #fff;
-                    font-size: 0.82rem; font-weight: 600;
-                    padding: 9px 16px;
+                    font-size: 0.78rem; font-weight: 600;
+                    padding: 8px 14px;
                     text-decoration: none;
                     transition: background 0.15s;
-                    white-space: nowrap; flex-shrink: 0;
+                    white-space: nowrap;
                 }
-                .btn-tg:hover { background: #1976D2; }
+                .btn-tg:hover { background: #1565C0; }
+                .btn-ch {
+                    display: inline-flex; align-items: center; gap: 6px;
+                    background: #0f9d58; color: #fff;
+                    font-size: 0.78rem; font-weight: 600;
+                    padding: 8px 14px;
+                    text-decoration: none;
+                    transition: background 0.15s;
+                    white-space: nowrap;
+                }
+                .btn-ch:hover { background: #0b8043; }
+                .btn-reg {
+                    display: inline-flex; align-items: center; gap: 6px;
+                    background: #e65100; color: #fff;
+                    font-size: 0.78rem; font-weight: 600;
+                    padding: 8px 14px;
+                    text-decoration: none;
+                    transition: background 0.15s;
+                    white-space: nowrap;
+                }
+                .btn-reg:hover { background: #bf360c; }
+                @media (max-width: 720px) {
+                    .btn-ch-label, .btn-reg-label { display: none; }
+                }
 
                 /* ── HERO STRIP ── */
                 .herostrip {
@@ -473,35 +498,54 @@ export default function DfxHelpPage() {
                 .empty h3 { font-size: 1rem; font-weight: 700; color: #374151; margin-bottom: 4px; }
                 .empty p { font-size: 0.85rem; }
 
-                /* ── TELEGRAM BANNER ── */
-                .tgbanner {
+                /* ── LINKS BANNER ── */
+                .linkbanner {
                     margin-top: 40px;
-                    background: #eff6ff;
-                    border: 1px solid #bfdbfe;
-                    padding: 26px 28px;
-                    display: flex; align-items: center;
-                    justify-content: space-between;
-                    gap: 20px; flex-wrap: wrap;
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-top: 3px solid #2563eb;
+                    padding: 24px 28px;
                 }
-                .tgleft { display: flex; align-items: center; gap: 14px; }
-                .tgicon {
-                    width: 44px; height: 44px;
-                    background: #2196F3;
-                    display: flex; align-items: center; justify-content: center;
-                    color: #fff; flex-shrink: 0;
+                .linkbanner-title {
+                    font-size: 0.8rem; font-weight: 700;
+                    color: #374151; letter-spacing: 0.06em;
+                    text-transform: uppercase; margin-bottom: 16px;
                 }
-                .tgbanner h3 { font-size: 0.95rem; font-weight: 700; color: #1e3a5f; margin-bottom: 3px; }
-                .tgbanner p { font-size: 0.8rem; color: #4b6a8a; }
-                .btn-tg-lg {
-                    display: inline-flex; align-items: center; gap: 8px;
-                    background: #2196F3; color: #fff;
-                    font-size: 0.85rem; font-weight: 700;
-                    padding: 11px 20px;
+                .link-cards {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                    gap: 12px;
+                }
+                .link-card {
+                    display: flex; align-items: center; gap: 12px;
+                    padding: 14px 16px;
                     text-decoration: none;
-                    transition: background 0.15s;
-                    flex-shrink: 0; white-space: nowrap;
+                    border: 1px solid #e2e8f0;
+                    background: #fff;
+                    transition: border-color 0.15s, box-shadow 0.15s;
                 }
-                .btn-tg-lg:hover { background: #1976D2; }
+                .link-card:hover {
+                    border-color: #93c5fd;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                }
+                .link-card-icon {
+                    width: 36px; height: 36px; flex-shrink: 0;
+                    display: flex; align-items: center; justify-content: center;
+                    color: #fff;
+                }
+                .lc-tg { background: #2196F3; }
+                .lc-ch { background: #0f9d58; }
+                .lc-site { background: #e65100; }
+                .link-card-text {}
+                .link-card-label {
+                    font-size: 0.7rem; font-weight: 600;
+                    color: #9ca3af; text-transform: uppercase;
+                    letter-spacing: 0.06em; margin-bottom: 2px;
+                }
+                .link-card-name {
+                    font-size: 0.88rem; font-weight: 700;
+                    color: #111827;
+                }
 
                 /* ── FOOTER ── */
                 .footer {
@@ -529,9 +573,17 @@ export default function DfxHelpPage() {
                         <span className="brand-name">DFX Help</span>
                         <span className="brand-tag">OFFICIAL</span>
                     </div>
-                    <a href={TELEGRAM_BOT_LINK} target="_blank" rel="noopener noreferrer" className="btn-tg">
-                        <Send size={14} />{TELEGRAM_BOT_NAME}
-                    </a>
+                    <div className="topbar-links">
+                        <a href={TG_CHANNEL} target="_blank" rel="noopener noreferrer" className="btn-ch">
+                            <Send size={13} /><span className="btn-ch-label">Channel</span>
+                        </a>
+                        <a href={TG_BOT} target="_blank" rel="noopener noreferrer" className="btn-tg">
+                            <Send size={13} /><span className="btn-ch-label">Bot</span>
+                        </a>
+                        <a href={DFX_SITE} target="_blank" rel="noopener noreferrer" className="btn-reg">
+                            <ExternalLink size={13} /><span className="btn-reg-label">Register</span>
+                        </a>
+                    </div>
                 </header>
 
                 {/* ── HERO STRIP ── */}
@@ -583,18 +635,32 @@ export default function DfxHelpPage() {
                         </div>
                     )}
 
-                    {/* ── TELEGRAM BANNER ── */}
-                    <div className="tgbanner">
-                        <div className="tgleft">
-                            <div className="tgicon"><Send size={20} /></div>
-                            <div>
-                                <h3>Need more help?</h3>
-                                <p>Join our Telegram bot for live support and updates</p>
-                            </div>
+                    {/* ── LINKS BANNER ── */}
+                    <div className="linkbanner">
+                        <div className="linkbanner-title">Quick Links</div>
+                        <div className="link-cards">
+                            <a href={TG_BOT} target="_blank" rel="noopener noreferrer" className="link-card">
+                                <div className="link-card-icon lc-tg"><Send size={18} /></div>
+                                <div className="link-card-text">
+                                    <div className="link-card-label">Telegram Bot</div>
+                                    <div className="link-card-name">@DafaxbetBot</div>
+                                </div>
+                            </a>
+                            <a href={TG_CHANNEL} target="_blank" rel="noopener noreferrer" className="link-card">
+                                <div className="link-card-icon lc-ch"><Send size={18} /></div>
+                                <div className="link-card-text">
+                                    <div className="link-card-label">Telegram Channel</div>
+                                    <div className="link-card-name">@dfx0777</div>
+                                </div>
+                            </a>
+                            <a href={DFX_SITE} target="_blank" rel="noopener noreferrer" className="link-card">
+                                <div className="link-card-icon lc-site"><ExternalLink size={18} /></div>
+                                <div className="link-card-text">
+                                    <div className="link-card-label">DFX Register</div>
+                                    <div className="link-card-name">dafaxbet.com</div>
+                                </div>
+                            </a>
                         </div>
-                        <a href={TELEGRAM_BOT_LINK} target="_blank" rel="noopener noreferrer" className="btn-tg-lg">
-                            <Send size={15} /> Open {TELEGRAM_BOT_NAME}
-                        </a>
                     </div>
                 </main>
 
