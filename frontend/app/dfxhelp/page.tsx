@@ -298,7 +298,7 @@ export default function DfxHelpPage() {
 
                 /* ── MAIN ── */
                 .main {
-                    max-width: 1000px; margin: 0 auto;
+                    max-width: 1200px; margin: 0 auto;
                     padding: 10px 20px 80px; flex: 1; width: 100%;
                 }
                 
@@ -386,7 +386,11 @@ export default function DfxHelpPage() {
                 .vcbtn:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(255,255,255,0.3); }
 
                 /* ── GRID ── */
-                .vgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 24px; }
+                .vgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; align-items: start; }
+                
+                @media (max-width: 900px) {
+                    .vgrid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+                }
                 
                 /* Skeletons */
                 .skcard { background: #0f0202; border: 1px solid #2a0000; }
