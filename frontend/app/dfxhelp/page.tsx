@@ -40,7 +40,6 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
     const cardRef = useRef<HTMLDivElement>(null);
 
     const [playing, setPlaying] = useState(false);
-    const [wantsToPlay, setWantsToPlay] = useState(false);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -56,34 +55,12 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
         return () => observer.disconnect();
     }, [playing]);
 
-    const handlePlayFullscreen = async (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setWantsToPlay(true);
-        setTimeout(async () => {
-            if (!videoRef.current) return;
-            try {
-                await videoRef.current.play();
-                setPlaying(true);
-                const v = videoRef.current as any;
-                if (v.requestFullscreen) {
-                    await v.requestFullscreen();
-                } else if (v.webkitEnterFullscreen) {
-                    v.webkitEnterFullscreen();
-                } else if (v.msRequestFullscreen) {
-                    v.msRequestFullscreen();
-                }
-            } catch (err) {
-                console.error(err);
-            }
-        }, 50);
-    };
-
     return (
         <div ref={cardRef} className="vc" style={{ animationDelay: `${index * 0.05}s` }}>
             <div className="vplayer">
                 <video
                     ref={videoRef}
-                    src={wantsToPlay ? video.videoUrl : undefined}
+                    src={video.videoUrl}
                     className="vel visible"
                     controls
                     playsInline
@@ -93,14 +70,6 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
                     onEnded={() => setPlaying(false)}
                     poster={video.thumbnailUrl || undefined}
                 />
-
-                {!playing && (
-                    <div className="vcoverlay" onClick={handlePlayFullscreen}>
-                        <button className="vcplaybtn" onClick={handlePlayFullscreen}>
-                            <Play size={22} fill="currentColor" />
-                        </button>
-                    </div>
-                )}
             </div>
 
             <div className="vcbody">
@@ -266,21 +235,7 @@ export default function DfxHelpPage() {
                 
                 .vel { width: 100%; height: 100%; object-fit: contain; background: #000; cursor: pointer; display: block; }
 
-                /* Overlay */
-                .vcoverlay {
-                    position: absolute; inset: 0;
-                    display: flex; align-items: center; justify-content: center;
-                    background: rgba(0,0,0,0.3); transition: background 0.3s; cursor: pointer; z-index: 10;
-                }
-                .vcoverlay:hover { background: rgba(0,0,0,0.1); }
-
-                .vcplaybtn {
-                    width: 56px; height: 56px; border-radius: 50%;
-                    background: #facc15; color: #000; border: none; cursor: pointer;
-                    display: flex; align-items: center; justify-content: center;
-                    transition: all 0.2s; box-shadow: 0 4px 15px rgba(250,204,21,0.4);
-                }
-                .vcplaybtn:hover { transform: scale(1.1); background: #ffea00; box-shadow: 0 4px 25px rgba(250,204,21,0.6); }
+                /* Overlay Cleaned Up */
 
                 /* ── CARD BODY ── */
                 .vcbody { padding: 20px; }
