@@ -39,6 +39,8 @@ export const dfxHelpAdminRoutes = async (fastify: FastifyInstance) => {
                     title: string;
                     description?: string;
                     videoUrl: string;
+                    thumbnailUrl?: string;
+                    category?: 'hindi' | 'english';
                     buttonLabel?: string;
                     buttonUrl?: string;
                     order?: number;
@@ -52,7 +54,7 @@ export const dfxHelpAdminRoutes = async (fastify: FastifyInstance) => {
                     return reply.status(403).send({ error: 'Forbidden: Super Admin only' });
                 }
 
-                const { title, description, videoUrl, buttonLabel, buttonUrl, order } = req.body;
+                const { title, description, videoUrl, thumbnailUrl, category, buttonLabel, buttonUrl, order } = req.body;
 
                 if (!title || !videoUrl) {
                     return reply.status(400).send({ error: 'Title and videoUrl are required' });
@@ -65,6 +67,8 @@ export const dfxHelpAdminRoutes = async (fastify: FastifyInstance) => {
                     title,
                     description: description || '',
                     videoUrl,
+                    thumbnailUrl: thumbnailUrl || '',
+                    category: category || 'english',
                     buttonLabel: buttonLabel || '',
                     buttonUrl: buttonUrl || '',
                     order: nextOrder,

@@ -13,6 +13,8 @@ interface HelpVideo {
     title: string;
     description: string;
     videoUrl: string;
+    thumbnailUrl?: string;
+    category: 'hindi' | 'english';
     buttonLabel: string;
     buttonUrl: string;
     order: number;
@@ -95,7 +97,11 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
             {/* ── VIDEO PLAYER ── */}
             <div className="vplayer">
                 {/* Shimmer */}
-                {!loaded && <div className="vshimmer" />}
+                {!loaded && (
+                    video.thumbnailUrl
+                        ? <img src={video.thumbnailUrl} alt={video.title} className="vthumb" />
+                        : <div className="vshimmer" />
+                )}
 
                 {/* Video element */}
                 <video
@@ -108,6 +114,7 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
                     onTimeUpdate={onTimeUpdate}
                     onEnded={() => setPlaying(false)}
                     onClick={togglePlay}
+                    poster={video.thumbnailUrl || undefined}
                 />
 
                 {/* Centre play/pause overlay */}
@@ -187,6 +194,7 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
 export default function DfxHelpPage() {
     const [videos, setVideos] = useState<HelpVideo[]>([]);
     const [loading, setLoading] = useState(true);
+    const [filterCat, setFilterCat] = useState<'all' | 'hindi' | 'english'>('all');
 
     useEffect(() => {
         fetch(`${API}/api/dfxhelp`)
@@ -307,6 +315,18 @@ export default function DfxHelpPage() {
                     padding: 3px 9px;
                 }
 
+                /* ── FILTER TABS ── */
+                .filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+                .filter-tab {
+                    padding: 7px 16px;
+                    font-size: 0.82rem; font-weight: 600;
+                    border: 1px solid #e2e8f0;
+                    background: #fff; color: #6b7280;
+                    cursor: pointer; transition: all 0.15s;
+                }
+                .filter-tab:hover { border-color: #93c5fd; color: #2563eb; }
+                .filter-tab.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+
                 /* ── VIDEO CARD ── */
                 .vc {
                     background: #fff;
@@ -356,6 +376,13 @@ export default function DfxHelpPage() {
                     cursor: pointer;
                 }
                 .vel.visible { opacity: 1; }
+                .vthumb {
+                    position: absolute;
+                    inset: 0;
+                    width: 100%; height: 100%;
+                    object-fit: cover;
+                    display: block;
+                }
 
                 /* centre play overlay */
                 .vcoverlay {
@@ -606,6 +633,21 @@ export default function DfxHelpPage() {
                         )}
                     </div>
 
+                    {/* Filter tabs */}
+                    {!loading && videos.length > 0 && (
+                        <div className="filter-row">
+                            {(['all', 'english', 'hindi'] as const).map(cat => (
+                                <button
+                                    key={cat}
+                                    className={`filter-tab ${filterCat === cat ? 'active' : ''}`}
+                                    onClick={() => setFilterCat(cat)}
+                                >
+                                    {cat === 'all' ? `All (${videos.length})` : cat === 'english' ? `🌐 English (${videos.filter(v => v.category === 'english').length})` : `🇮🇳 Hindi (${videos.filter(v => v.category === 'hindi').length})`}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
                     {loading ? (
                         <div className="skgrid">
                             {[1,2,3,4,5,6].map(i => (
@@ -619,19 +661,21 @@ export default function DfxHelpPage() {
                                 </div>
                             ))}
                         </div>
-                    ) : videos.length === 0 ? (
+                    ) : videos.filter(v => filterCat === 'all' || v.category === filterCat).length === 0 ? (
                         <div className="empty">
                             <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" style={{margin:'0 auto 12px', display:'block'}}>
                                 <path d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
                             </svg>
-                            <h3>No tutorials yet</h3>
+                            <h3>{videos.length === 0 ? 'No tutorials yet' : 'No videos in this category'}</h3>
                             <p>Check back soon — guides are being added!</p>
                         </div>
                     ) : (
                         <div className="vgrid">
-                            {videos.map((video, i) => (
-                                <VideoCard key={video._id} video={video} index={i} />
-                            ))}
+                            {videos
+                                .filter(v => filterCat === 'all' || v.category === filterCat)
+                                .map((video, i) => (
+                                    <VideoCard key={video._id} video={video} index={i} />
+                                ))}
                         </div>
                     )}
 
