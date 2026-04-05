@@ -298,8 +298,8 @@ export default function DfxHelpPage() {
 
                 /* ── MAIN ── */
                 .main {
-                    max-width: 1200px; margin: 0 auto;
-                    padding: 10px 20px 80px; flex: 1; w-full;
+                    max-width: 1000px; margin: 0 auto;
+                    padding: 10px 20px 80px; flex: 1; width: 100%;
                 }
                 
                 /* ── FILTER TABS ── */
@@ -386,7 +386,7 @@ export default function DfxHelpPage() {
                 .vcbtn:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(255,255,255,0.3); }
 
                 /* ── GRID ── */
-                .vgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; }
+                .vgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 24px; }
                 
                 /* Skeletons */
                 .skcard { background: #0f0202; border: 1px solid #2a0000; }
@@ -417,17 +417,22 @@ export default function DfxHelpPage() {
                 .footer span { color: #facc15; }
 
                 @media (max-width: 600px) {
-                    .topbar { padding: 12px 16px; flex-wrap: wrap; justify-content: center; }
-                    .topbar-links { gap: 6px; justify-content: center; width: 100%; }
-                    .btn-tg, .btn-ch, .btn-reg { padding: 8px 12px; font-size: 0.65rem; }
+                    .topbar { padding: 8px 12px; flex-wrap: nowrap; justify-content: space-between; }
+                    .brand-name { display: none; }
+                    .topbar-links { gap: 4px; justify-content: flex-end; width: auto; }
+                    .btn-tg, .btn-ch, .btn-reg { padding: 6px 10px; font-size: 0.65rem; }
+                    .btn-tg { padding: 6px 6px; } .btn-ch { padding: 6px 6px; } .btn-reg { padding: 6px 8px; }
                     .offer-banner { padding: 10px; font-size: 0.85rem; flex-direction: column; gap: 8px; }
                     .herostrip { padding: 30px 16px 20px; }
-                    .main { padding: 10px 16px 60px; }
-                    .vgrid { grid-template-columns: 1fr; }
+                    .main { padding: 10px 12px 60px; }
+                    .vgrid { grid-template-columns: 1fr 1fr; gap: 10px; }
+                    .vcbody { padding: 12px; }
+                    .vctitle { font-size: 0.85rem; line-height: 1.2; margin-bottom: 6px; }
+                    .vcdesc { font-size: 0.7rem; margin-bottom: 10px; }
+                    .vcbtn { padding: 8px 12px; font-size: 0.7rem; }
                     .linkbanner { padding: 24px 16px; }
                     .link-cards { grid-template-columns: 1fr; }
-                    .filter-tab { padding: 8px 14px; font-size: 0.75rem; }
-                    .vctitle { font-size: 1rem; }
+                    .filter-tab { padding: 8px 12px; font-size: 0.7rem; }
                 }
             `}</style>
 
