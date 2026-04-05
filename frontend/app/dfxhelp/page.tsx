@@ -40,7 +40,6 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
     const cardRef = useRef<HTMLDivElement>(null);
 
     const [playing, setPlaying] = useState(false);
-    const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -76,22 +75,17 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
     };
 
     return (
-        <div ref={cardRef} className="vc" style={{ animationDelay: `${index * 0.07}s` }}>
+        <div ref={cardRef} className="vc" style={{ animationDelay: `${index * 0.05}s` }}>
             <div className="vplayer">
-                {!loaded && (
-                    video.thumbnailUrl
-                        ? <img src={video.thumbnailUrl} alt={video.title} className="vthumb" />
-                        : <div className="vshimmer" />
-                )}
-
                 <video
                     ref={videoRef}
                     src={video.videoUrl}
-                    className={`vel ${loaded ? 'visible' : ''}`}
+                    className="vel visible"
                     controls
                     playsInline
-                    preload="metadata"
-                    onLoadedMetadata={() => setLoaded(true)}
+                    preload="none"
+                    onPause={() => setPlaying(false)}
+                    onPlay={() => setPlaying(true)}
                     onEnded={() => setPlaying(false)}
                     poster={video.thumbnailUrl || undefined}
                 />
@@ -265,12 +259,8 @@ export default function DfxHelpPage() {
 
                 /* ── PLAYER ── */
                 .vplayer { position: relative; background: #000; display: block; overflow: hidden; border-bottom: 1px solid #2a0000; aspect-ratio: 1 / 1; width: 100%; }
-                .vshimmer { width: 100%; height: 100%; background: #111; animation: pulse 2s infinite; }
-                @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
                 
-                .vel { width: 100%; height: 100%; object-fit: contain; background: #000; opacity: 0; transition: opacity 0.3s; cursor: pointer; display: block; }
-                .vel.visible { opacity: 1; }
-                .vthumb { width: 100%; height: 100%; object-fit: contain; display: block; }
+                .vel { width: 100%; height: 100%; object-fit: contain; background: #000; cursor: pointer; display: block; }
 
                 /* Overlay */
                 .vcoverlay {
