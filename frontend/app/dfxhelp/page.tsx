@@ -27,6 +27,10 @@ interface HelpSettings {
     offerText?: string;
     offerButtonLabel?: string;
     offerButtonUrl?: string;
+    bottomOfferActive?: boolean;
+    bottomOfferText?: string;
+    bottomOfferButtonLabel?: string;
+    bottomOfferButtonUrl?: string;
 }
 
 function formatTime(sec: number) {
@@ -166,7 +170,6 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
             </div>
 
             <div className="vcbody">
-                <div className="vcnum">STEP {String(index + 1).padStart(2, '0')}</div>
                 <h3 className="vctitle">{video.title}</h3>
                 {video.description && <p className="vcdesc">{video.description}</p>}
                 {video.buttonLabel && video.buttonUrl && (
@@ -227,7 +230,7 @@ export default function DfxHelpPage() {
                     gap: 12px;
                 }
                 .brand { display: flex; align-items: center; gap: 10px; }
-                .brand-logo { height: 34px; width: auto; object-fit: contain; }
+                .brand-logo { height: 60px; max-height: none; width: auto; object-fit: contain; }
                 .brand-icon {
                     width: 34px; height: 34px;
                     background: #facc15;
@@ -258,23 +261,26 @@ export default function DfxHelpPage() {
 
                 /* ── OFFER BANNER ── */
                 .offer-banner {
-                    background: linear-gradient(90deg, #eab308 0%, #facc15 50%, #eab308 100%);
-                    color: #000;
-                    padding: 12px 20px;
+                    background: linear-gradient(90deg, #ff9900 0%, #ffcc00 50%, #ff9900 100%);
+                    color: #0d0000;
+                    padding: 14px 24px;
                     text-align: center;
-                    font-weight: 700;
-                    display: flex; align-items: center; justify-content: center; gap: 16px;
+                    font-weight: 900;
+                    display: flex; align-items: center; justify-content: center; gap: 20px;
                     flex-wrap: wrap;
-                    box-shadow: 0 4px 20px rgba(250, 204, 21, 0.2);
+                    box-shadow: 0 4px 25px rgba(255, 170, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.6);
+                    border-bottom: 2px solid #b36b00;
                 }
-                .offer-text { font-size: 0.95rem; text-shadow: 0 1px 0 rgba(255,255,255,0.4); }
+                .offer-text { font-size: 1.05rem; letter-spacing: 0.02em; text-transform: uppercase; text-shadow: 0 1px 1px rgba(255,255,255,0.5); }
                 .offer-btn {
-                    background: #000; color: #facc15;
-                    font-size: 0.75rem; text-transform: uppercase; padding: 6px 14px;
-                    text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 5px;
-                    transition: all 0.2s;
+                    background: #000; color: #fff;
+                    font-size: 0.8rem; font-weight: 900; text-transform: uppercase; padding: 8px 18px;
+                    text-decoration: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 10px rgba(0,0,0,0.3);
                 }
-                .offer-btn:hover { background: #111; color: #fff; transform: scale(1.05); }
+                .offer-btn:hover { background: #1a1a1a; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.5); color: #ffcc00; }
+                
+                .bottom-offer { margin-top: 40px; }
 
                 /* ── HERO STRIP ── */
                 .herostrip {
@@ -287,7 +293,7 @@ export default function DfxHelpPage() {
                     color: #fff; margin-bottom: 12px;
                     text-transform: uppercase;
                 }
-                .herostrip h1 span { color: #facc15; text-shadow: 0 0 30px rgba(250,204,21,0.4); }
+                .herostrip h1 span { color: #facc15; }
                 .herostrip p { font-size: 1.05rem; color: #fca5a5; max-width: 600px; margin: 0 auto; line-height: 1.5; }
 
                 /* ── MAIN ── */
@@ -303,22 +309,18 @@ export default function DfxHelpPage() {
                     border: 1px solid #4a0000; background: #1a0505; color: #fca5a5;
                     cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.05em;
                 }
-                .filter-tab:hover { background: #2a0000; color: #fff; border-color: #ff1a1a; box-shadow: 0 0 15px rgba(255,26,26,0.2); }
-                .filter-tab.active { background: #facc15; color: #000; border-color: #facc15; box-shadow: 0 0 20px rgba(250,204,21,0.3); }
+                .filter-tab:hover { background: #2a0000; color: #fff; border-color: #fff; }
+                .filter-tab.active { background: #facc15; color: #000; border-color: #facc15; }
 
                 /* ── VIDEO CARD ── */
                 .vc {
-                    background: #0f0202; border: 1px solid #3a0000;
-                    overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    background: #0f0202; border: 1px solid #ffffff; border-radius: 6px;
+                    overflow: hidden; transition: border-color 0.2s;
                     animation: fadein 0.35s ease both;
                     position: relative;
                 }
-                .vc::before {
-                    content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent, rgba(250,204,21,0.02)); pointer-events: none;
-                }
                 .vc:hover {
-                    border-color: #ff1a1a; transform: translateY(-4px);
-                    box-shadow: 0 12px 30px rgba(255, 0, 0, 0.15), 0 0 0 1px rgba(250,204,21,0.2) inset;
+                    border-color: #facc15;
                 }
                 @keyframes fadein {
                     from { opacity: 0; transform: translateY(15px); }
@@ -330,9 +332,9 @@ export default function DfxHelpPage() {
                 .vshimmer { width: 100%; aspect-ratio: 16/9; background: #111; animation: pulse 2s infinite; }
                 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
                 
-                .vel { width: 100%; height: auto; max-height: 75vh; object-fit: contain; background: #000; opacity: 0; transition: opacity 0.3s; cursor: pointer; display: block; }
+                .vel { width: 100%; height: auto; max-height: 480px; object-fit: contain; background: #000; opacity: 0; transition: opacity 0.3s; cursor: pointer; display: block; }
                 .vel.visible { opacity: 1; }
-                .vthumb { width: 100%; height: auto; max-height: 75vh; object-fit: contain; display: block; }
+                .vthumb { width: 100%; height: auto; max-height: 480px; object-fit: contain; display: block; }
 
                 /* Overlay */
                 .vcoverlay {
@@ -384,7 +386,7 @@ export default function DfxHelpPage() {
                 .vcbtn:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(255,255,255,0.3); }
 
                 /* ── GRID ── */
-                .vgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; }
+                .vgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; }
                 
                 /* Skeletons */
                 .skcard { background: #0f0202; border: 1px solid #2a0000; }
@@ -511,6 +513,18 @@ export default function DfxHelpPage() {
                                 .map((video, i) => (
                                     <VideoCard key={video._id} video={video} index={i} />
                                 ))}
+                        </div>
+                    )}
+
+                    {/* ── BOTTOM OFFER BANNER ── */}
+                    {settings?.bottomOfferActive && settings.bottomOfferText && (
+                        <div className="offer-banner bottom-offer">
+                            <span className="offer-text">{settings.bottomOfferText}</span>
+                            {settings.bottomOfferButtonLabel && settings.bottomOfferButtonUrl && (
+                                <a href={settings.bottomOfferButtonUrl} target="_blank" rel="noopener noreferrer" className="offer-btn">
+                                    {settings.bottomOfferButtonLabel} <ArrowRight size={14} />
+                                </a>
+                            )}
                         </div>
                     )}
 

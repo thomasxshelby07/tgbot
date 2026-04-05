@@ -33,6 +33,10 @@ interface HelpSettings {
     offerText: string;
     offerButtonLabel: string;
     offerButtonUrl: string;
+    bottomOfferActive: boolean;
+    bottomOfferText: string;
+    bottomOfferButtonLabel: string;
+    bottomOfferButtonUrl: string;
 }
 
 interface Toast { id: number; message: string; type: 'success' | 'error'; }
@@ -52,7 +56,7 @@ const CAT_LABELS: Record<Category, string> = { english: '🌐 English', hindi: '
 export default function DfxHelpAdminPage() {
     // Media State
     const [videos, setVideos] = useState<HelpVideo[]>([]);
-    const [settings, setSettings] = useState<HelpSettings>({ logoUrl: '', offerActive: false, offerText: '', offerButtonLabel: '', offerButtonUrl: '' });
+    const [settings, setSettings] = useState<HelpSettings>({ logoUrl: '', offerActive: false, offerText: '', offerButtonLabel: '', offerButtonUrl: '', bottomOfferActive: false, bottomOfferText: '', bottomOfferButtonLabel: '', bottomOfferButtonUrl: '' });
     
     // UI State
     const [loading, setLoading] = useState(true);
@@ -331,6 +335,38 @@ export default function DfxHelpAdminPage() {
                                         <div>
                                             <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Button Link</label>
                                             <input type="text" value={settings.offerButtonUrl} onChange={e => setSettings(p => ({...p, offerButtonUrl: e.target.value}))} placeholder="https://..." className="w-full border rounded-xl px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr className="border-slate-100" />
+
+                            {/* Bottom Offer Banner */}
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700">Bottom Offer Banner</label>
+                                        <p className="text-xs text-slate-500">Show a promotional banner above the footer link section.</p>
+                                    </div>
+                                    <button onClick={() => setSettings(p => ({...p, bottomOfferActive: !p.bottomOfferActive}))} className={`p-1 rounded-full transition-colors ${settings.bottomOfferActive ? 'text-green-500' : 'text-slate-300'}`}>
+                                        {settings.bottomOfferActive ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+                                    </button>
+                                </div>
+
+                                <div className={`space-y-4 pt-3 transition-opacity ${!settings.bottomOfferActive ? 'opacity-40 pointer-events-none' : ''}`}>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Announcement Text</label>
+                                        <input type="text" value={settings.bottomOfferText} onChange={e => setSettings(p => ({...p, bottomOfferText: e.target.value}))} placeholder="e.g., 🔥 Claim your daily reward now!" className="w-full border rounded-xl px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Button Label</label>
+                                            <input type="text" value={settings.bottomOfferButtonLabel} onChange={e => setSettings(p => ({...p, bottomOfferButtonLabel: e.target.value}))} placeholder="e.g., Claim Now" className="w-full border rounded-xl px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Button Link</label>
+                                            <input type="text" value={settings.bottomOfferButtonUrl} onChange={e => setSettings(p => ({...p, bottomOfferButtonUrl: e.target.value}))} placeholder="https://..." className="w-full border rounded-xl px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
                                         </div>
                                     </div>
                                 </div>
