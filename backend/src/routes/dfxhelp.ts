@@ -228,4 +228,42 @@ export const dfxHelpAdminRoutes = async (fastify: FastifyInstance) => {
             }
         }
     );
+    // ─── ADMIN: Bulk Reorder ───────────────────────────────────────────────────
+    fastify.patch(
+        '/api/dfxhelp/reorder',
+        async (
+            req: FastifyRequest<{
+                Body: { orderedIds: string[] };
+            }>,
+            reply: FastifyReply
+        ) => {
+            try {
+                const admin = (req as any).admin;
+                if (admin.role !== 'superadmin') {
+                    return reply.status(403).send({ error: 'Forbidden: Super Admin only' });
+                }
+
+                const { orderedIds } = req.body;
+                if (!Array.isArray(orderedIds)) {
+                    return reply.status(400).send({ error: 'orderedIds array is required' });
+                }
+
+                const bulkOps = orderedIds.map((id, index) => ({
+                    updateOne: {
+                        filter: { _id: id },
+                        update: { order: index },
+                    },
+                }));
+
+                if (bulkOps.length > 0) {
+                    await HelpVideo.bulkWrite(bulkOps);
+                }
+
+                return reply.send({ success: true, message: 'Reordered successfully' });
+            } catch (error) {
+                console.error('Error reordering videos:', error);
+                return reply.status(500).send({ error: 'Internal Server Error' });
+            }
+        }
+    );
 };

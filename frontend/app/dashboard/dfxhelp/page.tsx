@@ -6,7 +6,7 @@ import {
     Plus, Video, Trash2, Edit3, Eye, EyeOff, Save, X,
     Upload, Link2, Type, AlignLeft, ExternalLink, Loader2,
     CheckCircle2, AlertCircle, Image as ImageIcon, Globe, Languages,
-    Settings as SettingsIcon, ToggleLeft, ToggleRight
+    Settings as SettingsIcon, GripVertical, ToggleLeft, ToggleRight
 } from 'lucide-react';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -77,6 +77,9 @@ export default function DfxHelpAdminPage() {
     // Upload State
     const [uploading, setUploading] = useState<'video' | 'thumb' | 'logo' | null>(null);
     const fileRef = useRef<HTMLInputElement>(null);
+
+    // DND State
+    const [draggedId, setDraggedId] = useState<string | null>(null);
 
     const addToast = (message: string, type: 'success' | 'error') => {
         const id = ++toastId.current;
@@ -164,6 +167,50 @@ export default function DfxHelpAdminPage() {
         catch { addToast('Delete failed', 'error'); }
     };
 
+    // --- Drag and Drop ---
+    const handleDragStart = (id: string, e: React.DragEvent) => {
+        if (filterCat !== 'all') { e.preventDefault(); return; }
+        setDraggedId(id);
+        e.dataTransfer.effectAllowed = 'move';
+        // Hide the default HTML5 drag ghost image slightly
+        e.dataTransfer.setDragImage(e.currentTarget as Element, 20, 20);
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault(); // Necessary to allow dropping
+        e.dataTransfer.dropEffect = 'move';
+    };
+
+    const handleDrop = async (targetId: string, e: React.DragEvent) => {
+        e.preventDefault();
+        if (!draggedId || draggedId === targetId || filterCat !== 'all') {
+            setDraggedId(null);
+            return;
+        }
+
+        const newVideos = [...videos];
+        const draggedIndex = newVideos.findIndex(v => v._id === draggedId);
+        const targetIndex = newVideos.findIndex(v => v._id === targetId);
+        
+        if (draggedIndex === -1 || targetIndex === -1) return;
+
+        // Optimistically update UI
+        const [movedItem] = newVideos.splice(draggedIndex, 1);
+        newVideos.splice(targetIndex, 0, movedItem);
+        setVideos(newVideos);
+        setDraggedId(null);
+
+        // Map and send to API
+        const orderedIds = newVideos.map(v => v._id);
+        try {
+            await axios.patch(`${API}/api/dfxhelp/reorder`, { orderedIds });
+            addToast('Order saved', 'success');
+        } catch {
+            addToast('Failed to save order', 'error');
+            fetchData(); // Rollback on failure
+        }
+    };
+
     // --- Settings Management ---
     const handleSaveSettings = async () => {
         setSavingSettings(true);
@@ -242,7 +289,19 @@ export default function DfxHelpAdminPage() {
                         ) : (
                             <div className="grid gap-3">
                                 {filtered.map(v => (
-                                    <div key={v._id} className={`bg-white rounded-xl border p-4 flex gap-4 transition-all hover:border-blue-200 ${!v.isActive ? 'opacity-60 bg-slate-50' : ''}`}>
+                                    <div 
+                                        key={v._id} 
+                                        draggable={filterCat === 'all'}
+                                        onDragStart={(e) => handleDragStart(v._id, e)}
+                                        onDragOver={handleDragOver}
+                                        onDrop={(e) => handleDrop(v._id, e)}
+                                        className={`bg-white rounded-xl border p-4 flex gap-4 transition-all hover:border-blue-200 ${!v.isActive ? 'opacity-60 bg-slate-50' : ''} ${draggedId === v._id ? 'opacity-50 scale-[0.98]' : ''} ${filterCat === 'all' ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                                    >
+                                        {filterCat === 'all' && (
+                                            <div className="flex items-center text-slate-300 hover:text-slate-500 transition-colors px-1 cursor-grab">
+                                                <GripVertical size={20} />
+                                            </div>
+                                        )}
                                         <div className="w-40 h-24 rounded-lg bg-slate-900 shrink-0 overflow-hidden relative group">
                                             {v.thumbnailUrl ? <img src={v.thumbnailUrl} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition" /> : <video src={v.videoUrl} className="w-full h-full object-cover" />}
                                             <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white text-[10px] uppercase font-bold px-1.5 py-0.5 rounded">
