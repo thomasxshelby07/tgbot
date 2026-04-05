@@ -260,7 +260,10 @@ export default function DfxHelpPage() {
                 }
                 @keyframes fadein {
                     from { opacity: 0; transform: translateY(15px); }
-                    to { opacity: 1;                /* ── PLAYER ── */
+                    to { opacity: 1; transform: translateY(0); }
+                }
+
+                /* ── PLAYER ── */
                 .vplayer { position: relative; background: #000; display: block; overflow: hidden; border-bottom: 1px solid #2a0000; aspect-ratio: 1 / 1; width: 100%; }
                 .vshimmer { width: 100%; height: 100%; background: #111; animation: pulse 2s infinite; }
                 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
@@ -284,8 +287,6 @@ export default function DfxHelpPage() {
                     transition: all 0.2s; box-shadow: 0 4px 15px rgba(250,204,21,0.4);
                 }
                 .vcplaybtn:hover { transform: scale(1.1); background: #ffea00; box-shadow: 0 4px 25px rgba(250,204,21,0.6); }
-
-                /* ── CARD BODY ── */flex; gap: 6px; }
 
                 /* ── CARD BODY ── */
                 .vcbody { padding: 20px; }
