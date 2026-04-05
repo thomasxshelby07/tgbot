@@ -40,6 +40,7 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
     const cardRef = useRef<HTMLDivElement>(null);
 
     const [playing, setPlaying] = useState(false);
+    const [wantsToPlay, setWantsToPlay] = useState(false);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -57,21 +58,24 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
 
     const handlePlayFullscreen = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!videoRef.current) return;
-        try {
-            await videoRef.current.play();
-            setPlaying(true);
-            const v = videoRef.current as any;
-            if (v.requestFullscreen) {
-                await v.requestFullscreen();
-            } else if (v.webkitEnterFullscreen) {
-                v.webkitEnterFullscreen();
-            } else if (v.msRequestFullscreen) {
-                v.msRequestFullscreen();
+        setWantsToPlay(true);
+        setTimeout(async () => {
+            if (!videoRef.current) return;
+            try {
+                await videoRef.current.play();
+                setPlaying(true);
+                const v = videoRef.current as any;
+                if (v.requestFullscreen) {
+                    await v.requestFullscreen();
+                } else if (v.webkitEnterFullscreen) {
+                    v.webkitEnterFullscreen();
+                } else if (v.msRequestFullscreen) {
+                    v.msRequestFullscreen();
+                }
+            } catch (err) {
+                console.error(err);
             }
-        } catch (err) {
-            console.error(err);
-        }
+        }, 50);
     };
 
     return (
@@ -79,7 +83,7 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
             <div className="vplayer">
                 <video
                     ref={videoRef}
-                    src={video.videoUrl}
+                    src={wantsToPlay ? video.videoUrl : undefined}
                     className="vel visible"
                     controls
                     playsInline
