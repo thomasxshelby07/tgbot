@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, Volume2, VolumeX, ExternalLink, Send, HelpCircle, Maximize2 } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, ExternalLink, Send, Maximize2, HelpCircle, ArrowRight, Video } from 'lucide-react';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 const TG_CHANNEL = 'https://t.me/dfx0777';
@@ -19,6 +19,14 @@ interface HelpVideo {
     buttonUrl: string;
     order: number;
     isActive: boolean;
+}
+
+interface HelpSettings {
+    logoUrl?: string;
+    offerActive?: boolean;
+    offerText?: string;
+    offerButtonLabel?: string;
+    offerButtonUrl?: string;
 }
 
 function formatTime(sec: number) {
@@ -40,7 +48,6 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
     const [loaded, setLoaded] = useState(false);
     const [dragging, setDragging] = useState(false);
 
-    // auto-pause when scrolled out
     useEffect(() => {
         const observer = new IntersectionObserver(
             ([entry]) => {
@@ -93,17 +100,13 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
 
     return (
         <div ref={cardRef} className="vc" style={{ animationDelay: `${index * 0.07}s` }}>
-
-            {/* ── VIDEO PLAYER ── */}
             <div className="vplayer">
-                {/* Shimmer */}
                 {!loaded && (
                     video.thumbnailUrl
                         ? <img src={video.thumbnailUrl} alt={video.title} className="vthumb" />
                         : <div className="vshimmer" />
                 )}
 
-                {/* Video element */}
                 <video
                     ref={videoRef}
                     src={video.videoUrl}
@@ -117,20 +120,14 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
                     poster={video.thumbnailUrl || undefined}
                 />
 
-                {/* Centre play/pause overlay */}
-                <div
-                    className={`vcoverlay ${playing ? 'playing' : ''}`}
-                    onClick={togglePlay}
-                >
+                <div className={`vcoverlay ${playing ? 'playing' : ''}`} onClick={togglePlay}>
                     <button className="vcplaybtn" onClick={e => { e.stopPropagation(); togglePlay(); }}>
-                        {playing ? <Pause size={20} /> : <Play size={20} />}
+                        {playing ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" />}
                     </button>
                 </div>
 
-                {/* ── CONTROLS BAR ── */}
                 {loaded && (
                     <div className="vcontrols" onClick={e => e.stopPropagation()}>
-                        {/* Seek slider */}
                         <div className="vslider-wrap">
                             <input
                                 ref={sliderRef}
@@ -148,21 +145,19 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
                                 style={{ '--pct': `${progress}%` } as React.CSSProperties}
                             />
                         </div>
-
-                        {/* Bottom row */}
                         <div className="vctoolbar">
-                            <button className="vctool" onClick={togglePlay}>
-                                {playing ? <Pause size={15} /> : <Play size={15} />}
+                            <button className="vctool playpause" onClick={togglePlay}>
+                                {playing ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
                             </button>
                             <span className="vctime">
                                 {formatTime(currentTime)} / {formatTime(duration)}
                             </span>
                             <div className="vctool-right">
                                 <button className="vctool" onClick={toggleMute}>
-                                    {muted ? <VolumeX size={15} /> : <Volume2 size={15} />}
+                                    {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
                                 </button>
                                 <button className="vctool" onClick={() => videoRef.current?.requestFullscreen?.()}>
-                                    <Maximize2 size={14} />
+                                    <Maximize2 size={15} />
                                 </button>
                             </div>
                         </div>
@@ -170,20 +165,13 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
                 )}
             </div>
 
-            {/* ── CARD BODY ── */}
             <div className="vcbody">
-                <div className="vcnum">#{String(index + 1).padStart(2, '0')}</div>
+                <div className="vcnum">STEP {String(index + 1).padStart(2, '0')}</div>
                 <h3 className="vctitle">{video.title}</h3>
                 {video.description && <p className="vcdesc">{video.description}</p>}
                 {video.buttonLabel && video.buttonUrl && (
-                    <a
-                        href={video.buttonUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="vcbtn"
-                    >
-                        <ExternalLink size={13} />
-                        {video.buttonLabel}
+                    <a href={video.buttonUrl} target="_blank" rel="noopener noreferrer" className="vcbtn">
+                        {video.buttonLabel} <ExternalLink size={14} />
                     </a>
                 )}
             </div>
@@ -193,13 +181,17 @@ function VideoCard({ video, index }: { video: HelpVideo; index: number }) {
 
 export default function DfxHelpPage() {
     const [videos, setVideos] = useState<HelpVideo[]>([]);
+    const [settings, setSettings] = useState<HelpSettings | null>(null);
     const [loading, setLoading] = useState(true);
     const [filterCat, setFilterCat] = useState<'all' | 'hindi' | 'english'>('all');
 
     useEffect(() => {
         fetch(`${API}/api/dfxhelp`)
             .then(r => r.json())
-            .then(d => setVideos(d.videos || []))
+            .then(d => {
+                setVideos(d.videos || []);
+                setSettings(d.settings || null);
+            })
             .catch(() => {})
             .finally(() => setLoading(false));
     }, []);
@@ -207,23 +199,27 @@ export default function DfxHelpPage() {
     return (
         <>
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+                
                 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
                 body {
-                    background: #f4f6f9;
-                    color: #111827;
+                    background-color: #050000;
+                    background-image: radial-gradient(circle at 50% 0%, #4a0000 0%, #050000 70%);
+                    background-attachment: fixed;
+                    color: #ffffff;
                     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
                     -webkit-font-smoothing: antialiased;
                 }
 
-                .dfx-root { min-height: 100vh; background: #f4f6f9; }
+                .dfx-root { min-height: 100vh; display: flex; flex-direction: column; }
 
                 /* ── TOPBAR ── */
                 .topbar {
-                    background: #fff;
-                    border-bottom: 1px solid #e2e8f0;
-                    padding: 13px 24px;
+                    background: rgba(0,0,0,0.6);
+                    backdrop-filter: blur(12px);
+                    border-bottom: 1px solid #ff1a1a;
+                    padding: 12px 24px;
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
@@ -231,364 +227,201 @@ export default function DfxHelpPage() {
                     gap: 12px;
                 }
                 .brand { display: flex; align-items: center; gap: 10px; }
+                .brand-logo { height: 34px; width: auto; object-fit: contain; }
                 .brand-icon {
-                    width: 32px; height: 32px;
-                    background: #2563eb;
+                    width: 34px; height: 34px;
+                    background: #facc15;
+                    border-radius: 50%;
                     display: flex; align-items: center; justify-content: center;
-                    color: #fff;
+                    color: #000;
                 }
-                .brand-name { font-size: 0.95rem; font-weight: 700; color: #111827; }
-                .brand-tag {
-                    font-size: 0.68rem; font-weight: 700;
-                    background: #eff6ff; color: #2563eb;
-                    padding: 2px 8px; letter-spacing: 0.06em;
+                .brand-name { font-size: 1.1rem; font-weight: 800; color: #facc15; text-transform: uppercase; letter-spacing: 0.05em; }
+                .topbar-links { display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap; }
+                
+                .btn-tg, .btn-ch, .btn-reg {
+                    display: inline-flex; align-items: center; justify-content: center;
+                    font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+                    padding: 8px 16px; text-decoration: none; transition: all 0.2s;
+                    border-radius: 4px; gap: 6px; letter-spacing: 0.05em;
                 }
-                .topbar-links { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
-                .btn-tg {
-                    display: inline-flex; align-items: center; gap: 6px;
-                    background: #2196F3; color: #fff;
-                    font-size: 0.78rem; font-weight: 600;
-                    padding: 8px 14px;
-                    text-decoration: none;
-                    transition: background 0.15s;
-                    white-space: nowrap;
-                }
-                .btn-tg:hover { background: #1565C0; }
-                .btn-ch {
-                    display: inline-flex; align-items: center; gap: 6px;
-                    background: #0f9d58; color: #fff;
-                    font-size: 0.78rem; font-weight: 600;
-                    padding: 8px 14px;
-                    text-decoration: none;
-                    transition: background 0.15s;
-                    white-space: nowrap;
-                }
-                .btn-ch:hover { background: #0b8043; }
-                .btn-reg {
-                    display: inline-flex; align-items: center; gap: 6px;
-                    background: #e65100; color: #fff;
-                    font-size: 0.78rem; font-weight: 600;
-                    padding: 8px 14px;
-                    text-decoration: none;
-                    transition: background 0.15s;
-                    white-space: nowrap;
-                }
-                .btn-reg:hover { background: #bf360c; }
+                .btn-tg { background: #2196F3; color: #fff; box-shadow: 0 0 10px rgba(33,150,243,0.3); }
+                .btn-tg:hover { background: #1976D2; box-shadow: 0 0 15px rgba(33,150,243,0.5); transform: translateY(-1px); }
+                .btn-ch { background: #000; color: #fff; border: 1px solid #333; }
+                .btn-ch:hover { background: #111; border-color: #555; }
+                .btn-reg { background: #e65100; color: #fff; box-shadow: 0 0 10px rgba(230,81,0,0.3); }
+                .btn-reg:hover { background: #bf360c; box-shadow: 0 0 15px rgba(230,81,0,0.5); transform: translateY(-1px); }
+
                 @media (max-width: 720px) {
-                    .btn-ch-label, .btn-reg-label { display: none; }
+                    .btn-label { display: none; }
+                    .btn-tg, .btn-ch, .btn-reg { padding: 10px; }
                 }
+
+                /* ── OFFER BANNER ── */
+                .offer-banner {
+                    background: linear-gradient(90deg, #eab308 0%, #facc15 50%, #eab308 100%);
+                    color: #000;
+                    padding: 12px 20px;
+                    text-align: center;
+                    font-weight: 700;
+                    display: flex; align-items: center; justify-content: center; gap: 16px;
+                    flex-wrap: wrap;
+                    box-shadow: 0 4px 20px rgba(250, 204, 21, 0.2);
+                }
+                .offer-text { font-size: 0.95rem; text-shadow: 0 1px 0 rgba(255,255,255,0.4); }
+                .offer-btn {
+                    background: #000; color: #facc15;
+                    font-size: 0.75rem; text-transform: uppercase; padding: 6px 14px;
+                    text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 5px;
+                    transition: all 0.2s;
+                }
+                .offer-btn:hover { background: #111; color: #fff; transform: scale(1.05); }
 
                 /* ── HERO STRIP ── */
                 .herostrip {
-                    background: #fff;
-                    border-bottom: 1px solid #e2e8f0;
-                    padding: 28px 24px;
+                    padding: 50px 24px 30px;
                     text-align: center;
                 }
                 .herostrip h1 {
-                    font-size: clamp(1.4rem, 3.5vw, 2rem);
-                    font-weight: 800; letter-spacing: -0.02em;
-                    color: #111827; margin-bottom: 6px;
+                    font-size: clamp(2rem, 5vw, 3.5rem);
+                    font-weight: 900; letter-spacing: -0.02em;
+                    color: #fff; margin-bottom: 12px;
+                    text-transform: uppercase;
                 }
-                .herostrip h1 span { color: #2563eb; }
-                .herostrip p { font-size: 0.875rem; color: #6b7280; }
+                .herostrip h1 span { color: #facc15; text-shadow: 0 0 30px rgba(250,204,21,0.4); }
+                .herostrip p { font-size: 1.05rem; color: #fca5a5; max-width: 600px; margin: 0 auto; line-height: 1.5; }
 
                 /* ── MAIN ── */
                 .main {
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    padding: 32px 20px 80px;
+                    max-width: 1200px; margin: 0 auto;
+                    padding: 10px 20px 80px; flex: 1; w-full;
                 }
-                .sec-row {
-                    display: flex; align-items: center;
-                    justify-content: space-between;
-                    margin-bottom: 20px; gap: 12px;
-                    flex-wrap: wrap;
-                }
-                .sec-title {
-                    font-size: 0.875rem; font-weight: 700; color: #374151;
-                    display: flex; align-items: center; gap: 7px;
-                }
-                .sec-badge {
-                    font-size: 0.7rem; font-weight: 600;
-                    background: #f3f4f6; color: #6b7280;
-                    padding: 3px 9px;
-                }
-
+                
                 /* ── FILTER TABS ── */
-                .filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+                .filter-row { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; justify-content: center; }
                 .filter-tab {
-                    padding: 7px 16px;
-                    font-size: 0.82rem; font-weight: 600;
-                    border: 1px solid #e2e8f0;
-                    background: #fff; color: #6b7280;
-                    cursor: pointer; transition: all 0.15s;
+                    padding: 8px 20px; font-size: 0.85rem; font-weight: 700;
+                    border: 1px solid #4a0000; background: #1a0505; color: #fca5a5;
+                    cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.05em;
                 }
-                .filter-tab:hover { border-color: #93c5fd; color: #2563eb; }
-                .filter-tab.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+                .filter-tab:hover { background: #2a0000; color: #fff; border-color: #ff1a1a; box-shadow: 0 0 15px rgba(255,26,26,0.2); }
+                .filter-tab.active { background: #facc15; color: #000; border-color: #facc15; box-shadow: 0 0 20px rgba(250,204,21,0.3); }
 
                 /* ── VIDEO CARD ── */
                 .vc {
-                    background: #fff;
-                    border: 1px solid #e2e8f0;
-                    overflow: hidden;
-                    transition: box-shadow 0.2s, border-color 0.2s;
+                    background: #0f0202; border: 1px solid #3a0000;
+                    overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     animation: fadein 0.35s ease both;
+                    position: relative;
+                }
+                .vc::before {
+                    content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent, rgba(250,204,21,0.02)); pointer-events: none;
                 }
                 .vc:hover {
-                    box-shadow: 0 6px 24px rgba(0,0,0,0.08);
-                    border-color: #c7d2e0;
+                    border-color: #ff1a1a; transform: translateY(-4px);
+                    box-shadow: 0 12px 30px rgba(255, 0, 0, 0.15), 0 0 0 1px rgba(250,204,21,0.2) inset;
                 }
                 @keyframes fadein {
-                    from { opacity: 0; transform: translateY(10px); }
+                    from { opacity: 0; transform: translateY(15px); }
                     to { opacity: 1; transform: translateY(0); }
                 }
 
                 /* ── PLAYER ── */
-                .vplayer {
-                    position: relative;
-                    background: #000;
-                    overflow: hidden;
-                    /* natural ratio, show full video */
-                    display: flex;
-                    flex-direction: column;
-                }
-                .vshimmer {
-                    width: 100%;
-                    aspect-ratio: 16/9;
-                    background: linear-gradient(90deg, #e9ebee 25%, #f3f4f6 50%, #e9ebee 75%);
-                    background-size: 200% 100%;
-                    animation: shimmer 1.3s infinite;
-                }
-                @keyframes shimmer {
-                    0% { background-position: 200% 0; }
-                    100% { background-position: -200% 0; }
-                }
-                .vel {
-                    width: 100%;
-                    /* contain so full video is always visible, natural height */
-                    max-height: 340px;
-                    object-fit: contain;
-                    background: #000;
-                    display: block;
-                    opacity: 0;
-                    transition: opacity 0.25s;
-                    cursor: pointer;
-                }
+                .vplayer { position: relative; background: #000; display: flex; flex-direction: column; overflow: hidden; border-bottom: 1px solid #2a0000; }
+                .vshimmer { width: 100%; aspect-ratio: 16/9; background: #111; animation: pulse 2s infinite; }
+                @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+                
+                .vel { width: 100%; max-height: 380px; object-fit: contain; background: #000; opacity: 0; transition: opacity 0.3s; cursor: pointer; }
                 .vel.visible { opacity: 1; }
-                .vthumb {
-                    position: absolute;
-                    inset: 0;
-                    width: 100%; height: 100%;
-                    object-fit: cover;
-                    display: block;
-                }
+                .vthumb { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
-                /* centre play overlay */
+                /* Overlay */
                 .vcoverlay {
-                    position: absolute;
-                    top: 0; left: 0; right: 0;
-                    /* only covers video area, not controls */
-                    bottom: 52px;
+                    position: absolute; top: 0; left: 0; right: 0; bottom: 44px;
                     display: flex; align-items: center; justify-content: center;
-                    background: rgba(0,0,0,0.18);
-                    transition: background 0.2s;
-                    cursor: pointer;
+                    background: rgba(0,0,0,0.3); transition: background 0.2s; cursor: pointer;
                 }
                 .vcoverlay.playing { background: transparent; }
-                .vcoverlay.playing:hover { background: rgba(0,0,0,0.12); }
+                .vcoverlay.playing:hover { background: rgba(0,0,0,0.15); }
 
                 .vcplaybtn {
-                    width: 44px; height: 44px;
-                    background: rgba(255,255,255,0.9);
-                    color: #111827;
-                    border: none; cursor: pointer;
+                    width: 56px; height: 56px; border-radius: 50%;
+                    background: #facc15; color: #000; border: none; cursor: pointer;
                     display: flex; align-items: center; justify-content: center;
-                    transition: all 0.15s;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                    transition: all 0.2s; box-shadow: 0 4px 15px rgba(250,204,21,0.4);
                 }
-                .vcplaybtn:hover { background: #fff; transform: scale(1.08); }
-                .vcoverlay.playing .vcplaybtn { opacity: 0; }
-                .vcoverlay.playing:hover .vcplaybtn { opacity: 1; }
+                .vcplaybtn:hover { transform: scale(1.1); background: #ffea00; box-shadow: 0 4px 25px rgba(250,204,21,0.6); }
+                .vcoverlay.playing .vcplaybtn { opacity: 0; transform: scale(0.8); }
+                .vcoverlay.playing:hover .vcplaybtn { opacity: 1; transform: scale(1); }
 
-                /* ── CONTROLS BAR ── */
-                .vcontrols {
-                    background: #1a1d23;
-                    padding: 0 10px 8px;
-                    position: relative;
-                    z-index: 10;
-                }
-
-                /* seek slider */
-                .vslider-wrap { padding: 6px 0 2px; }
+                /* Controls */
+                .vcontrols { background: #000; padding: 0 12px 10px; position: relative; z-index: 10; border-top: 1px solid rgba(255,255,255,0.05); }
+                .vslider-wrap { padding: 8px 0 4px; }
                 .vslider {
-                    -webkit-appearance: none;
-                    appearance: none;
-                    width: 100%; height: 3px;
-                    background: linear-gradient(to right, #2563eb var(--pct, 0%), #4b5563 var(--pct, 0%));
-                    outline: none; border: none;
-                    cursor: pointer;
-                    transition: height 0.1s;
+                    -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
+                    background: linear-gradient(to right, #facc15 var(--pct, 0%), #333 var(--pct, 0%));
+                    outline: none; cursor: pointer; border-radius: 2px;
                 }
-                .vslider:hover { height: 5px; }
-                .vslider::-webkit-slider-thumb {
-                    -webkit-appearance: none;
-                    width: 13px; height: 13px;
-                    background: #2563eb;
-                    cursor: pointer;
-                    border: 2px solid #fff;
-                    box-shadow: 0 0 3px rgba(0,0,0,0.4);
-                }
-                .vslider::-moz-range-thumb {
-                    width: 13px; height: 13px;
-                    background: #2563eb;
-                    border: 2px solid #fff;
-                    cursor: pointer;
-                }
-
-                /* toolbar */
-                .vctoolbar {
-                    display: flex; align-items: center; gap: 10px;
-                    padding-top: 3px;
-                }
-                .vctool {
-                    display: flex; align-items: center; justify-content: center;
-                    color: #d1d5db; background: none; border: none;
-                    cursor: pointer; padding: 4px;
-                    transition: color 0.15s;
-                }
-                .vctool:hover { color: #fff; }
-                .vctime {
-                    font-size: 0.7rem; font-weight: 500;
-                    color: #9ca3af; font-variant-numeric: tabular-nums;
-                    white-space: nowrap;
-                }
-                .vctool-right { margin-left: auto; display: flex; gap: 4px; }
+                .vslider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #fff; cursor: pointer; border-radius: 50%; border: 3px solid #facc15; }
+                
+                .vctoolbar { display: flex; align-items: center; gap: 12px; padding-top: 4px; }
+                .vctool { color: #aaa; background: none; border: none; cursor: pointer; padding: 4px; transition: color 0.15s; display: flex; }
+                .vctool:hover { color: #facc15; }
+                .vctool.playpause { color: #fff; }
+                .vctime { font-size: 0.75rem; font-weight: 500; color: #888; font-variant-numeric: tabular-nums; white-space: nowrap; }
+                .vctool-right { margin-left: auto; display: flex; gap: 6px; }
 
                 /* ── CARD BODY ── */
-                .vcbody { padding: 14px 16px 18px; }
-                .vcnum {
-                    font-size: 0.65rem; font-weight: 700;
-                    color: #2563eb; letter-spacing: 0.08em;
-                    margin-bottom: 4px;
-                }
-                .vctitle {
-                    font-size: 0.95rem; font-weight: 700;
-                    color: #111827; line-height: 1.35;
-                    margin-bottom: 6px;
-                }
-                .vcdesc {
-                    font-size: 0.82rem; color: #6b7280;
-                    line-height: 1.55; margin-bottom: 12px;
-                }
+                .vcbody { padding: 20px; }
+                .vcnum { font-size: 0.7rem; font-weight: 800; color: #facc15; letter-spacing: 0.1em; margin-bottom: 6px; }
+                .vctitle { font-size: 1.1rem; font-weight: 700; color: #fff; line-height: 1.3; margin-bottom: 8px; }
+                .vcdesc { font-size: 0.85rem; color: #fca5a5; line-height: 1.6; margin-bottom: 16px; opacity: 0.8; }
                 .vcbtn {
-                    display: inline-flex; align-items: center; gap: 6px;
-                    background: #2563eb; color: #fff;
-                    text-decoration: none;
-                    font-size: 0.78rem; font-weight: 600;
-                    padding: 8px 14px;
-                    transition: background 0.15s;
+                    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+                    background: #facc15; color: #000; text-decoration: none; text-transform: uppercase;
+                    font-size: 0.75rem; font-weight: 800; padding: 10px 18px; letter-spacing: 0.05em;
+                    transition: all 0.2s; border-radius: 2px; width: 100%;
                 }
-                .vcbtn:hover { background: #1d4ed8; }
+                .vcbtn:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(255,255,255,0.3); }
 
                 /* ── GRID ── */
-                .vgrid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-                    gap: 18px;
-                }
+                .vgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; }
+                
+                /* Skeletons */
+                .skcard { background: #0f0202; border: 1px solid #2a0000; }
+                .skline { height: 12px; background: #222; margin-bottom: 12px; animation: pulse 2s infinite; }
+                .skline.sm { width: 60%; }
 
-                /* ── SKELETON ── */
-                .skgrid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-                    gap: 18px;
-                }
-                .skcard { background: #fff; border: 1px solid #e2e8f0; }
-                .skvideo {
-                    aspect-ratio: 16/9;
-                    background: linear-gradient(90deg, #f3f4f6 25%, #e9ebee 50%, #f3f4f6 75%);
-                    background-size: 200% 100%;
-                    animation: shimmer 1.3s infinite;
-                }
-                .skbody { padding: 14px 16px; }
-                .skline {
-                    height: 11px; margin-bottom: 8px;
-                    background: linear-gradient(90deg, #f3f4f6 25%, #e9ebee 50%, #f3f4f6 75%);
-                    background-size: 200% 100%;
-                    animation: shimmer 1.3s infinite;
-                }
-                .skline.sm { width: 55%; height: 9px; margin-bottom: 0; }
+                /* Empty */
+                .empty { text-align: center; padding: 80px 20px; color: #aaa; }
+                .empty h3 { font-size: 1.2rem; font-weight: 700; color: #fff; margin: 12px 0 6px; }
 
-                /* ── EMPTY ── */
-                .empty { text-align: center; padding: 60px 20px; color: #9ca3af; }
-                .empty h3 { font-size: 1rem; font-weight: 700; color: #374151; margin-bottom: 4px; }
-                .empty p { font-size: 0.85rem; }
-
-                /* ── LINKS BANNER ── */
-                .linkbanner {
-                    margin-top: 40px;
-                    background: #f8fafc;
-                    border: 1px solid #e2e8f0;
-                    border-top: 3px solid #2563eb;
-                    padding: 24px 28px;
-                }
-                .linkbanner-title {
-                    font-size: 0.8rem; font-weight: 700;
-                    color: #374151; letter-spacing: 0.06em;
-                    text-transform: uppercase; margin-bottom: 16px;
-                }
-                .link-cards {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-                    gap: 12px;
-                }
+                /* ── TELEGRAM BANNER ── */
+                .linkbanner { margin-top: 60px; background: #0f0202; border: 1px solid #3a0000; border-top: 3px solid #facc15; padding: 30px; text-align: center; }
+                .linkbanner-title { font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 6px; text-transform: uppercase; }
+                .linkbanner-sub { color: #fca5a5; font-size: 0.9rem; margin-bottom: 24px; }
+                .link-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; max-width: 1000px; margin: 0 auto; }
+                
                 .link-card {
-                    display: flex; align-items: center; gap: 12px;
-                    padding: 14px 16px;
-                    text-decoration: none;
-                    border: 1px solid #e2e8f0;
-                    background: #fff;
-                    transition: border-color 0.15s, box-shadow 0.15s;
+                    display: flex; align-items: center; justify-content: center; gap: 12px;
+                    padding: 16px; background: #1a0505; border: 1px solid #3a0000; text-decoration: none;
+                    transition: all 0.2s;
                 }
-                .link-card:hover {
-                    border-color: #93c5fd;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-                }
-                .link-card-icon {
-                    width: 36px; height: 36px; flex-shrink: 0;
-                    display: flex; align-items: center; justify-content: center;
-                    color: #fff;
-                }
-                .lc-tg { background: #2196F3; }
-                .lc-ch { background: #0f9d58; }
-                .lc-site { background: #e65100; }
-                .link-card-text {}
-                .link-card-label {
-                    font-size: 0.7rem; font-weight: 600;
-                    color: #9ca3af; text-transform: uppercase;
-                    letter-spacing: 0.06em; margin-bottom: 2px;
-                }
-                .link-card-name {
-                    font-size: 0.88rem; font-weight: 700;
-                    color: #111827;
-                }
+                .link-card:hover { border-color: #facc15; background: #2a0000; transform: translateY(-3px); }
+                .lc-icon { color: #facc15; }
+                .lc-name { font-size: 0.95rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.05em; }
 
                 /* ── FOOTER ── */
-                .footer {
-                    border-top: 1px solid #e2e8f0;
-                    background: #fff;
-                    padding: 18px 24px;
-                    text-align: center;
-                    font-size: 0.75rem; color: #9ca3af;
-                }
+                .footer { border-top: 1px solid #2a0000; background: #050000; padding: 24px; text-align: center; font-size: 0.8rem; color: #888; font-weight: 500; }
+                .footer span { color: #facc15; }
 
                 @media (max-width: 600px) {
-                    .main { padding: 20px 12px 60px; }
-                    .vgrid, .skgrid { grid-template-columns: 1fr; }
-                    .tgbanner { padding: 18px 16px; }
-                    .topbar { padding: 11px 14px; }
-                    .brand-tag { display: none; }
+                    .topbar { padding: 12px 16px; }
+                    .offer-banner { padding: 10px; font-size: 0.85rem; }
+                    .herostrip { padding: 30px 16px 20px; }
+                    .main { padding: 10px 16px 60px; }
+                    .vgrid { grid-template-columns: 1fr; }
+                    .linkbanner { padding: 24px 16px; }
+                    .filter-tab { padding: 8px 14px; font-size: 0.75rem; }
                 }
             `}</style>
 
@@ -596,78 +429,76 @@ export default function DfxHelpPage() {
                 {/* ── TOPBAR ── */}
                 <header className="topbar">
                     <div className="brand">
-                        <div className="brand-icon"><HelpCircle size={17} /></div>
-                        <span className="brand-name">DFX Help</span>
-                        <span className="brand-tag">OFFICIAL</span>
+                        {settings?.logoUrl ? (
+                            <img src={settings.logoUrl} alt="DFX Logo" className="brand-logo" />
+                        ) : (
+                            <>
+                                <div className="brand-icon"><HelpCircle size={18} /></div>
+                                <span className="brand-name">DFX HELP</span>
+                            </>
+                        )}
                     </div>
                     <div className="topbar-links">
                         <a href={TG_CHANNEL} target="_blank" rel="noopener noreferrer" className="btn-ch">
-                            <Send size={13} /><span className="btn-ch-label">Channel</span>
+                            <Send size={14} /><span className="btn-label">Channel</span>
                         </a>
                         <a href={TG_BOT} target="_blank" rel="noopener noreferrer" className="btn-tg">
-                            <Send size={13} /><span className="btn-ch-label">Bot</span>
+                            <Send size={14} /><span className="btn-label">Support Bot</span>
                         </a>
                         <a href={DFX_SITE} target="_blank" rel="noopener noreferrer" className="btn-reg">
-                            <ExternalLink size={13} /><span className="btn-reg-label">Register</span>
+                            <ExternalLink size={14} /><span className="btn-label">Register</span>
                         </a>
                     </div>
                 </header>
 
+                {/* ── OFFER BANNER ── */}
+                {settings?.offerActive && settings.offerText && (
+                    <div className="offer-banner">
+                        <span className="offer-text">{settings.offerText}</span>
+                        {settings.offerButtonLabel && settings.offerButtonUrl && (
+                            <a href={settings.offerButtonUrl} target="_blank" rel="noopener noreferrer" className="offer-btn">
+                                {settings.offerButtonLabel} <ArrowRight size={14} />
+                            </a>
+                        )}
+                    </div>
+                )}
+
                 {/* ── HERO STRIP ── */}
                 <div className="herostrip">
-                    <h1>DFX <span>Help Center</span></h1>
-                    <p>Step-by-step video guides to help you master every feature.</p>
+                    <h1>DFX <span>Tutorials</span></h1>
+                    <p>Official video guides to master every platform feature. Follow the steps below and start winning.</p>
                 </div>
 
                 {/* ── MAIN ── */}
                 <main className="main">
-                    <div className="sec-row">
-                        <div className="sec-title">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5">
-                                <path d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
-                            </svg>
-                            Video Tutorials
-                        </div>
-                        {!loading && videos.length > 0 && (
-                            <span className="sec-badge">{videos.length} video{videos.length !== 1 ? 's' : ''}</span>
-                        )}
-                    </div>
-
-                    {/* Filter tabs */}
+                    {/* Filters */}
                     {!loading && videos.length > 0 && (
                         <div className="filter-row">
                             {(['all', 'english', 'hindi'] as const).map(cat => (
-                                <button
-                                    key={cat}
-                                    className={`filter-tab ${filterCat === cat ? 'active' : ''}`}
-                                    onClick={() => setFilterCat(cat)}
-                                >
-                                    {cat === 'all' ? `All (${videos.length})` : cat === 'english' ? `🌐 English (${videos.filter(v => v.category === 'english').length})` : `🇮🇳 Hindi (${videos.filter(v => v.category === 'hindi').length})`}
+                                <button key={cat} className={`filter-tab ${filterCat === cat ? 'active' : ''}`} onClick={() => setFilterCat(cat)}>
+                                    {cat === 'all' ? `ALL GUIDES` : cat === 'english' ? `ENG GUIDES` : `HIN GUIDES`}
                                 </button>
                             ))}
                         </div>
                     )}
 
                     {loading ? (
-                        <div className="skgrid">
-                            {[1,2,3,4,5,6].map(i => (
+                        <div className="vgrid">
+                            {[1, 2, 3, 4, 5, 6].map(i => (
                                 <div key={i} className="skcard">
-                                    <div className="skvideo" />
-                                    <div className="skbody">
-                                        <div className="skline" style={{width:'30%', height:8, marginBottom:8}} />
-                                        <div className="skline" />
+                                    <div className="vshimmer" />
+                                    <div className="vcbody">
                                         <div className="skline sm" />
+                                        <div className="skline" />
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : videos.filter(v => filterCat === 'all' || v.category === filterCat).length === 0 ? (
                         <div className="empty">
-                            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" style={{margin:'0 auto 12px', display:'block'}}>
-                                <path d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
-                            </svg>
-                            <h3>{videos.length === 0 ? 'No tutorials yet' : 'No videos in this category'}</h3>
-                            <p>Check back soon — guides are being added!</p>
+                            <Video size={48} className="mx-auto text-[#4a0000] mb-4" />
+                            <h3>{videos.length === 0 ? 'NO GUIDES AVAILABLE' : 'NO GUIDES IN THIS LANGUAGE'}</h3>
+                            <p>Guides are being recorded and will be uploaded shortly.</p>
                         </div>
                     ) : (
                         <div className="vgrid">
@@ -681,28 +512,20 @@ export default function DfxHelpPage() {
 
                     {/* ── LINKS BANNER ── */}
                     <div className="linkbanner">
-                        <div className="linkbanner-title">Quick Links</div>
+                        <div className="linkbanner-title">Need More Action?</div>
+                        <p className="linkbanner-sub">Join the community or directly contact absolute 24/7 support.</p>
                         <div className="link-cards">
                             <a href={TG_BOT} target="_blank" rel="noopener noreferrer" className="link-card">
-                                <div className="link-card-icon lc-tg"><Send size={18} /></div>
-                                <div className="link-card-text">
-                                    <div className="link-card-label">Telegram Bot</div>
-                                    <div className="link-card-name">@DafaxbetBot</div>
-                                </div>
+                                <Send size={24} className="lc-icon" />
+                                <span className="lc-name">@DafaxbetBot</span>
                             </a>
                             <a href={TG_CHANNEL} target="_blank" rel="noopener noreferrer" className="link-card">
-                                <div className="link-card-icon lc-ch"><Send size={18} /></div>
-                                <div className="link-card-text">
-                                    <div className="link-card-label">Telegram Channel</div>
-                                    <div className="link-card-name">@dfx0777</div>
-                                </div>
+                                <Send size={24} className="lc-icon" />
+                                <span className="lc-name">@dfx0777</span>
                             </a>
                             <a href={DFX_SITE} target="_blank" rel="noopener noreferrer" className="link-card">
-                                <div className="link-card-icon lc-site"><ExternalLink size={18} /></div>
-                                <div className="link-card-text">
-                                    <div className="link-card-label">DFX Register</div>
-                                    <div className="link-card-name">dafaxbet.com</div>
-                                </div>
+                                <ExternalLink size={24} className="lc-icon" />
+                                <span className="lc-name">Dafaxbet.com</span>
                             </a>
                         </div>
                     </div>
@@ -710,7 +533,7 @@ export default function DfxHelpPage() {
 
                 {/* ── FOOTER ── */}
                 <footer className="footer">
-                    © {new Date().getFullYear()} DFX Help Center · Managed by admin team
+                    © {new Date().getFullYear()} <span>DFX</span> OFFICIAL HELP DESK
                 </footer>
             </div>
         </>

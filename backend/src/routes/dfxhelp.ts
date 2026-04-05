@@ -1,12 +1,15 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { HelpVideo } from '../models/HelpVideo';
+import HelpSettings from '../models/HelpSettings';
 
 export const dfxHelpRoutes = async (fastify: FastifyInstance) => {
     // ─── PUBLIC: Get all active videos (no auth required) ─────────────────────
     fastify.get('/api/dfxhelp', async (req: FastifyRequest, reply: FastifyReply) => {
         try {
             const videos = await HelpVideo.find({ isActive: true }).sort({ order: 1, createdAt: 1 });
-            return reply.send({ success: true, videos });
+            let settings = await HelpSettings.findOne();
+            if (!settings) settings = await HelpSettings.create({});
+            return reply.send({ success: true, videos, settings });
         } catch (error) {
             console.error('Error fetching help videos:', error);
             return reply.status(500).send({ error: 'Internal Server Error' });
@@ -29,6 +32,58 @@ export const dfxHelpAdminRoutes = async (fastify: FastifyInstance) => {
             return reply.status(500).send({ error: 'Internal Server Error' });
         }
     });
+
+    // ─── ADMIN: Get settings ───────────────────────────────────────────────────
+    fastify.get('/api/dfxhelp/settings', async (req: FastifyRequest, reply: FastifyReply) => {
+        try {
+            const admin = (req as any).admin;
+            if (admin.role !== 'superadmin') {
+                return reply.status(403).send({ error: 'Forbidden: Super Admin only' });
+            }
+            let settings = await HelpSettings.findOne();
+            if (!settings) settings = await HelpSettings.create({});
+            return reply.send({ success: true, settings });
+        } catch (error) {
+            console.error('Error fetching settings:', error);
+            return reply.status(500).send({ error: 'Internal Server Error' });
+        }
+    });
+
+    // ─── ADMIN: Update settings ────────────────────────────────────────────────
+    fastify.put(
+        '/api/dfxhelp/settings',
+        async (
+            req: FastifyRequest<{
+                Body: {
+                    logoUrl?: string;
+                    offerActive?: boolean;
+                    offerText?: string;
+                    offerButtonLabel?: string;
+                    offerButtonUrl?: string;
+                };
+            }>,
+            reply: FastifyReply
+        ) => {
+            try {
+                const admin = (req as any).admin;
+                if (admin.role !== 'superadmin') {
+                    return reply.status(403).send({ error: 'Forbidden: Super Admin only' });
+                }
+                
+                let settings = await HelpSettings.findOne();
+                if (!settings) {
+                    settings = new HelpSettings(req.body);
+                } else {
+                    Object.assign(settings, req.body);
+                }
+                await settings.save();
+                return reply.send({ success: true, settings });
+            } catch (error) {
+                console.error('Error updating settings:', error);
+                return reply.status(500).send({ error: 'Internal Server Error' });
+            }
+        }
+    );
 
     // ─── ADMIN: Create a new video ─────────────────────────────────────────────
     fastify.post(
