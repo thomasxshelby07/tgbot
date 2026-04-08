@@ -40,6 +40,7 @@ const Sidebar = ({ isOpen, onClose, adminRole }: SidebarProps) => {
         { name: 'Support Tickets', href: '/dashboard/support', icon: LifeBuoy },
         { name: 'Menu Buttons', href: '/dashboard/menu', icon: MenuIcon },
         { name: 'Broadcast', href: '/dashboard/broadcast', icon: Send },
+        { name: 'Quiz Broadcasts', href: '/dashboard/quiz', icon: MessageCircle },
         { name: 'Users', href: '/dashboard/users', icon: Users },
         { name: 'Settings', href: '/dashboard/settings', icon: Settings },
         { name: 'Logs', href: '/dashboard/logs', icon: FileText },

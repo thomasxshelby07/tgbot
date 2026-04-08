@@ -13,6 +13,8 @@ import { ChatSession } from '../models/ChatSession';
 import { ChatMessage } from '../models/ChatMessage';
 import { Giveaway } from '../models/Giveaway';
 import { GiveawaySubmission } from '../models/GiveawaySubmission';
+import { Quiz } from '../models/Quiz';
+import { QuizVote } from '../models/QuizVote';
 import cloudinary from '../config/cloudinary';
 
 // --- Session Logic ---
@@ -218,7 +220,7 @@ export const initBot = async () => {
                 }
 
                 // Add Dynamic Giveaway buttons
-                const activeGiveaways = await Giveaway.find({ active: true }).sort({ createdAt: -1 });
+                const activeGiveaways = await Giveaway.find({ showButton: true }).sort({ createdAt: -1 });
                 if (activeGiveaways.length > 0) {
                     activeGiveaways.forEach((g, i) => {
                         keyboard.text(g.buttonText || "🎁 Giveaway Offer");
@@ -335,7 +337,7 @@ export const initBot = async () => {
             
             // --- 2. Check Static/Action Buttons ---
             const isLiveChatBtn = false; // Deprecated standalone feature
-            const activeGiveaways = await Giveaway.find({ active: true });
+            const activeGiveaways = await Giveaway.find({ showButton: true });
             const matchingGiveaway = activeGiveaways.find(g => text === g.buttonText);
             
             const isVipBtn = settings?.vipActive && text === (settings.vipButtonText || "🌟 JOIN VIP");
@@ -486,6 +488,9 @@ export const initBot = async () => {
                 const giveaway = matchingGiveaway;
                 if (!giveaway) {
                     return await ctx.reply("No giveaway available right now. Stay tuned! 🎁 / अभी कोई गिवअवे मौजूद नहीं है। जुड़े रहें!");
+                }
+                if (!giveaway.active) {
+                    return await ctx.reply(giveaway.inactiveMessage || "Offer is ended");
                 }
                 const existing = await GiveawaySubmission.findOne({ telegramId: ctx.from.id.toString(), giveawayId: giveaway._id });
                 if (existing) {
@@ -798,6 +803,36 @@ export const initBot = async () => {
         } catch (error) {
             console.error("Error saving support ticket:", error);
             await ctx.answerCallbackQuery("Error occurred. Try again.");
+        }
+    });
+
+    // 5i. Handle Quiz Broadcast Selection
+    bot.callbackQuery(/^quiz_(.+)_(.+)$/, async (ctx) => {
+        const quizId = ctx.match[1];
+        const optIndex = parseInt(ctx.match[2]);
+        const telegramId = ctx.from.id.toString();
+
+        try {
+            const quiz = await Quiz.findById(quizId);
+            if (!quiz) return await ctx.answerCallbackQuery("Quiz expired or not found.");
+
+            // Check if voted already
+            const existingVote = await QuizVote.findOne({ quizId, telegramId });
+            if (existingVote) {
+                return await ctx.answerCallbackQuery({ text: "❌ You have already voted on this poll!", show_alert: true });
+            }
+
+            // Save vote
+            await QuizVote.create({
+                quizId,
+                telegramId,
+                optionIndex: optIndex
+            });
+
+            await ctx.answerCallbackQuery({ text: "✅ Vote recorded successfully!", show_alert: false });
+        } catch (error) {
+            console.error("Error saving quiz vote:", error);
+            await ctx.answerCallbackQuery("Error occurred. Please try again.");
         }
     });
 

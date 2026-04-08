@@ -6,6 +6,8 @@ export interface IGiveaway extends Document {
     mediaUrl?: string;
     mediaType?: 'photo' | 'video' | 'audio';
     active: boolean;
+    showButton: boolean;
+    inactiveMessage: string;
     questions: {
         question: string;
         type: 'text' | 'options';
@@ -22,6 +24,8 @@ const GiveawaySchema: Schema = new Schema({
     mediaUrl: { type: String, default: "" },
     mediaType: { type: String, enum: ['photo', 'video', 'audio', ''], default: "" },
     active: { type: Boolean, default: false },
+    showButton: { type: Boolean, default: false },
+    inactiveMessage: { type: String, default: "Offer is ended" },
     questions: [
         {
             question: { type: String, required: true },

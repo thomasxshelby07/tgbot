@@ -16,7 +16,10 @@ export const initWorker = () => {
 
         try {
             const inlineKeyboard = buttons && buttons.length > 0 ? {
-                inline_keyboard: buttons.map((btn: any) => [{ text: btn.text, url: btn.url }])
+                inline_keyboard: buttons.map((btn: any) => [{ 
+                    text: btn.text, 
+                    ...(btn.callback_data ? { callback_data: btn.callback_data } : { url: btn.url }) 
+                }])
             } : undefined;
 
             if (mediaUrl) {

@@ -45,23 +45,23 @@ export const giveawayRoutes = async (fastify: FastifyInstance) => {
     // Create or Update giveaway configuration
     fastify.post('/', async (req: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
         try {
-            const { _id, title, description, questions, active, mediaUrl, mediaType, buttonText } = req.body as any;
+            const { _id, title, description, questions, active, showButton, inactiveMessage, mediaUrl, mediaType, buttonText } = req.body as any;
             
             let giveaway;
             if (_id) {
                 giveaway = await Giveaway.findByIdAndUpdate(_id, {
-                    title, description, questions, active, mediaUrl, mediaType, buttonText
+                    title, description, questions, active, showButton, inactiveMessage, mediaUrl, mediaType, buttonText
                 }, { new: true });
             } else {
                 giveaway = await Giveaway.create({
-                    title, description, questions, active, mediaUrl, mediaType, buttonText
+                    title, description, questions, active, showButton, inactiveMessage, mediaUrl, mediaType, buttonText
                 });
             }
 
             // Sync with global settings (one active giveaway rule)
             if (active && giveaway) {
                 // Deactivate all others EXCEPT this one
-                await Giveaway.updateMany({ _id: { $ne: giveaway._id } }, { active: false });
+                // await Giveaway.updateMany({ _id: { $ne: giveaway._id } }, { active: false });
             }
 
             await Settings.findOneAndUpdate({}, { 

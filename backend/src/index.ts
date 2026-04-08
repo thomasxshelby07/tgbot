@@ -46,6 +46,7 @@ import { supportRoutes } from './routes/support';
 import { chatRoutes } from './routes/chat';
 import { giveawayRoutes } from './routes/giveaway';
 import { dfxHelpRoutes, dfxHelpAdminRoutes } from './routes/dfxhelp';
+import { quizRoutes } from './routes/quiz';
 
 import { authRoutes } from './routes/auth';
 import { authMiddleware } from './middleware/auth';
@@ -112,6 +113,7 @@ app.register(async (protectedApp) => {
     protectedApp.register(chatRoutes);
     protectedApp.register(giveawayRoutes, { prefix: '/api/giveaway' });
     protectedApp.register(dfxHelpAdminRoutes);
+    protectedApp.register(quizRoutes);
     
     console.log('Registering menu routes...');
     protectedApp.register(menuRoutes);

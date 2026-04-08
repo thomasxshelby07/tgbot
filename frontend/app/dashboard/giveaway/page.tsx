@@ -21,6 +21,8 @@ interface GiveawayConfig {
     mediaUrl: string;
     mediaType: 'photo' | 'video' | 'audio' | '';
     active: boolean;
+    showButton: boolean;
+    inactiveMessage: string;
     questions: Question[];
     buttonText: string;
     createdAt?: string;
@@ -52,6 +54,8 @@ export default function GiveawayPage() {
         mediaUrl: '',
         mediaType: '',
         active: false,
+        showButton: false,
+        inactiveMessage: 'Offer is ended',
         questions: [],
         buttonText: '🎁 Giveaway Offer'
     });
@@ -147,6 +151,8 @@ export default function GiveawayPage() {
             mediaUrl: '',
             mediaType: '',
             active: false,
+            showButton: false,
+            inactiveMessage: 'Offer is ended',
             questions: [],
             buttonText: '🎁 Giveaway Offer'
         });
@@ -313,7 +319,21 @@ export default function GiveawayPage() {
                                         uploading={uploading}
                                     />
 
-                                    <StatusToggle active={config.active} onToggle={() => setConfig({...config, active: !config.active})} />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <StatusToggle label="Accept Entries" active={config.active} onToggle={() => setConfig({...config, active: !config.active})} />
+                                        <StatusToggle label="Show Bot Button" active={config.showButton} onToggle={() => setConfig({...config, showButton: !config.showButton})} />
+                                    </div>
+                                    {!config.active && (
+                                        <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                                            <label className="text-[11px] font-black uppercase tracking-widest text-slate-400 ml-1">Offer Ended Message / ऑफ़र खत्म होने का संदेश</label>
+                                            <input 
+                                                value={config.inactiveMessage} 
+                                                onChange={(e) => setConfig({...config, inactiveMessage: e.target.value})}
+                                                placeholder="e.g. Offer is ended"
+                                                className="w-full p-4 bg-rose-50 rounded-2xl border border-rose-100 focus:bg-white outline-none transition-all font-bold text-rose-600 placeholder-rose-300 shadow-inner"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="flex gap-4">
@@ -631,12 +651,12 @@ function MediaUpload({ url, type, setUrl, setType, onUpload, uploading }: { url:
     );
 }
 
-function StatusToggle({ active, onToggle }: { active: boolean, onToggle: () => void }) {
+function StatusToggle({ active, onToggle, label = "Giveaway Status" }: { active: boolean, onToggle: () => void, label?: string }) {
     return (
         <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
             <div className="flex items-center gap-3">
                 <div className={`w-3 h-3 rounded-full ${active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></div>
-                <span className="text-[13px] font-black uppercase tracking-widest text-slate-700">Giveaway Status</span>
+                <span className="text-[13px] font-black uppercase tracking-widest text-slate-700">{label}</span>
             </div>
             <button 
                 onClick={onToggle}
