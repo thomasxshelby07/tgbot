@@ -338,7 +338,7 @@ export const initBot = async () => {
             // --- 2. Check Static/Action Buttons ---
             const isLiveChatBtn = false; // Deprecated standalone feature
             const activeGiveaways = await Giveaway.find({ showButton: true });
-            const matchingGiveaway = activeGiveaways.find(g => text === g.buttonText);
+            const matchingGiveaway = activeGiveaways.find(g => text.trim() === (g.buttonText?.trim() || "🎁 Giveaway Offer"));
             
             const isVipBtn = settings?.vipActive && text === (settings.vipButtonText || "🌟 JOIN VIP");
             const isSupportBtn = settings?.supportActive && text === (settings.supportButtonText || "🆘 Help & Support");
