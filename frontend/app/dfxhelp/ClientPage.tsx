@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, ExternalLink, ArrowRight, Video, HelpCircle, Send } from 'lucide-react';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-const TG_CHANNEL = 'https://t.me/dfx0777';
+const TG_CHANNEL = 'https://t.me/dafaxofficial';
 const TG_BOT     = 'https://t.me/DafaxbetBot';
 const DFX_SITE   = 'http://dafaxbet.com/register?campaignId=tg07';
 
@@ -386,7 +386,7 @@ export default function DfxHelpClient({ initialVideos, initialSettings }: { init
                             </a>
                             <a href={TG_CHANNEL} target="_blank" rel="noopener noreferrer" className="link-card">
                                 <Send size={24} className="lc-icon" />
-                                <span className="lc-name">@dfx0777</span>
+                                <span className="lc-name">@dafaxofficial</span>
                             </a>
                             <a href={DFX_SITE} target="_blank" rel="noopener noreferrer" className="link-card">
                                 <ExternalLink size={24} className="lc-icon" />
