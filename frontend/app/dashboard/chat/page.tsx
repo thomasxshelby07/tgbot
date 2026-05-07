@@ -72,7 +72,14 @@ export default function ChatPage() {
             if (showLoading) setLoadingSessions(true);
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
             const response = await axios.get(`${apiUrl}/api/chat/sessions`);
-            setSessions(response.data);
+            
+            // Only update sessions if the data has actually changed to prevent list flickering and jitter
+            setSessions(prev => {
+                if (JSON.stringify(prev) === JSON.stringify(response.data)) {
+                    return prev;
+                }
+                return response.data;
+            });
         } catch (error) {
             console.error('Error fetching sessions:', error);
             if (showLoading) toast.error('Failed to fetch chat sessions');
@@ -98,7 +105,18 @@ export default function ChatPage() {
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
             const response = await axios.get(`${apiUrl}/api/chat/sessions/${sessionId}/messages`);
-            setMessages(response.data);
+            
+            // Only update messages if they are structurally different (prevents continuous layout recalculation and scroll jumps)
+            setMessages(prev => {
+                // Filter out optimistic messages from prev list before checking equality
+                const nonOptimisticPrev = prev.filter(msg => !msg._id.startsWith('optimistic-'));
+                if (JSON.stringify(nonOptimisticPrev) === JSON.stringify(response.data)) {
+                    return prev;
+                }
+                // Keep any optimistic messages currently sending at the end
+                const optimisticMessages = prev.filter(msg => msg._id.startsWith('optimistic-'));
+                return [...response.data, ...optimisticMessages];
+            });
         } catch (error) {
             console.error('Error fetching messages:', error);
         }
@@ -142,8 +160,8 @@ export default function ChatPage() {
 
     // Auto-scroll to bottom of messages
     useEffect(() => {
-        if (isAutoScroll) {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (isAutoScroll && messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [messages, isAutoScroll]);
 
@@ -168,23 +186,40 @@ export default function ChatPage() {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedSession || !inputMessage.trim()) return;
+        const textToSend = inputMessage.trim();
+        if (!selectedSession || !textToSend) return;
 
-        setSending(true);
+        // Generate dynamic optimistic message ID
+        const optimisticId = `optimistic-${Date.now()}`;
+        const optimisticMsg: ChatMessage = {
+            _id: optimisticId,
+            sessionId: selectedSession._id,
+            sender: 'admin',
+            content: textToSend,
+            messageType: 'text',
+            createdAt: new Date().toISOString()
+        };
+
+        // Render message instantly! No lag, zero delay.
+        setMessages(prev => [...prev, optimisticMsg]);
+        setInputMessage('');
+        setIsAutoScroll(true);
+
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-            await axios.post(`${apiUrl}/api/chat/sessions/${selectedSession._id}/messages`, {
-                content: inputMessage
+            const response = await axios.post(`${apiUrl}/api/chat/sessions/${selectedSession._id}/messages`, {
+                content: textToSend
             });
-            setInputMessage('');
-            setIsAutoScroll(true);
-            fetchMessages(selectedSession._id); // instant refresh
+            
+            // Replace optimistic message with actual server message
+            setMessages(prev => prev.map(msg => msg._id === optimisticId ? response.data : msg));
             fetchSessions(false); // update last modified sorting
         } catch (error) {
             console.error('Error sending message:', error);
             toast.error('Failed to send message');
-        } finally {
-            setSending(false);
+            // Remove optimistic message and restore input text if failed
+            setMessages(prev => prev.filter(msg => msg._id !== optimisticId));
+            setInputMessage(textToSend);
         }
     };
 
@@ -205,7 +240,7 @@ export default function ChatPage() {
             const mediaUrl = uploadRes.data.url;
             
             await axios.post(`${apiUrl}/api/chat/sessions/${selectedSession._id}/messages`, {
-                content: '', // Optional caption could be added here
+                content: '', 
                 messageType: 'photo',
                 mediaUrl: mediaUrl
             });
@@ -488,15 +523,19 @@ export default function ChatPage() {
                                                     : 'bg-white text-slate-900 rounded-[24px] rounded-tl-[4px] border border-slate-100 hover:shadow-xl hover:shadow-slate-900/5'
                                             }`}>
                                                 {isPhoto && (
-                                                    <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="block mb-2 rounded-2xl overflow-hidden ring-4 ring-black/5 hover:ring-white/30 transition-all">
+                                                    <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="block mb-2 rounded-2xl overflow-hidden ring-4 ring-black/5 hover:ring-white/30 transition-all bg-slate-100 min-w-[200px] min-h-[150px]">
                                                         <img src={msg.mediaUrl} alt="Media Attachment" className="max-w-full max-h-[300px] object-contain mx-auto" />
                                                     </a>
                                                 )}
                                                 {isVideo && (
-                                                    <video src={msg.mediaUrl} controls className="max-w-full max-h-[300px] rounded-2xl mb-2 bg-black ring-4 ring-black/5" />
+                                                    <div className="rounded-2xl overflow-hidden mb-2 bg-black ring-4 ring-black/5 min-w-[200px] min-h-[150px]">
+                                                        <video src={msg.mediaUrl} controls className="max-w-full max-h-[300px] w-full" />
+                                                    </div>
                                                 )}
                                                 {isAudio && (
-                                                    <audio src={msg.mediaUrl} controls className="max-w-full mb-2 h-10 ring-4 ring-black/5 rounded-full" />
+                                                    <div className="mb-2 min-w-[200px]">
+                                                        <audio src={msg.mediaUrl} controls className="max-w-full h-10 ring-4 ring-black/5 rounded-full w-full" />
+                                                    </div>
                                                 )}
                                                 {isDocument && (
                                                     <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-3 mb-2 p-3 rounded-2xl border transition-all ${isAdmin ? 'bg-white/10 border-white/20 hover:bg-white/20' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'} text-[13px] font-bold`}>

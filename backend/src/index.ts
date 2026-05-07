@@ -65,19 +65,26 @@ const seedSuperAdmin = async () => {
 
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
-        await Admin.findOneAndUpdate(
-            { email },
-            {
-                $setOnInsert: {
-                    email,
-                    passwordHash,
-                    role: 'superadmin',
-                    permissions: ['all']
-                }
-            },
-            { upsert: true, new: true }
-        );
-        console.log('✅ Super Admin seed checked/upserted.');
+
+        // IMPORTANT: Use $set for passwordHash so it ALWAYS syncs with the env var.
+        // $setOnInsert was the bug — it only runs on first insert, so changing the
+        // env var password would never update the stored hash, causing 401 on login.
+        const existing = await Admin.findOne({ email });
+        if (existing) {
+            existing.passwordHash = passwordHash;
+            existing.role = 'superadmin';
+            existing.permissions = ['all'];
+            await existing.save();
+            console.log('✅ Super Admin password synced from env.');
+        } else {
+            await Admin.create({
+                email,
+                passwordHash,
+                role: 'superadmin',
+                permissions: ['all']
+            });
+            console.log('✅ Super Admin created.');
+        }
 
         // Cleanup any accidental duplicates (keep one)
         const duplicates = await Admin.find({ email });
@@ -128,9 +135,9 @@ import { webhookCallback } from 'grammy';
 const start = async () => {
     try {
         await connectDB();
-        if (cluster.worker?.id === 1) {
-            await seedSuperAdmin();
-        }
+        // Run seed on every worker startup — it's idempotent and fixes
+        // the case where the primary never reaches this if cluster.isWorker
+        await seedSuperAdmin();
         await initBot();
 
         // Start Broadcast Worker ONLY ONCE — guard against multiple cluster workers
