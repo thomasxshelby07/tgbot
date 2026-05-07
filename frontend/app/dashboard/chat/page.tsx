@@ -370,6 +370,17 @@ export default function ChatPage() {
                         </div>
                     </div>
                     
+                    {/* Prominent Message New User / Search Directory Button */}
+                    <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/30 shrink-0">
+                        <button 
+                            onClick={() => { fetchAllUsers(); setIsNewChatModalOpen(true); }}
+                            className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-slate-900 hover:to-slate-900 text-white rounded-[18px] text-[10px] font-black uppercase tracking-widest shadow-md hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 active:scale-95"
+                        >
+                            <Search size={15} strokeWidth={3} />
+                            <span>🔍 Search & Message User</span>
+                        </button>
+                    </div>
+                    
                     <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar bg-white">
                         {loadingSessions ? (
                             <div className="py-20 text-center flex flex-col items-center gap-3">
