@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { User, Search } from 'lucide-react';
+import { User, Search, MessageSquare, Loader2 } from 'lucide-react';
 
 interface UserData {
     telegramId: string;
@@ -18,6 +18,23 @@ export default function UsersPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'blocked'>('all');
+    const [chatLoadingUserId, setChatLoadingUserId] = useState<string | null>(null);
+
+    const handleStartChat = async (user: UserData) => {
+        setChatLoadingUserId(user.telegramId);
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+            const res = await axios.post(`${apiUrl}/api/chat/sessions`, {
+                telegramId: user.telegramId
+            });
+            window.location.href = `/dashboard/chat?sessionId=${res.data._id}`;
+        } catch (err) {
+            console.error('Error starting chat session:', err);
+            alert('Failed to start chat session');
+        } finally {
+            setChatLoadingUserId(null);
+        }
+    };
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -85,7 +102,8 @@ export default function UsersPage() {
                                 <th className="px-6 py-5 font-black text-slate-400 uppercase tracking-[0.1em] text-[10px] border-b border-slate-100">Username</th>
                                 <th className="px-6 py-5 font-black text-slate-400 uppercase tracking-[0.1em] text-[10px] border-b border-slate-100 text-center">Status</th>
                                 <th className="px-6 py-5 font-black text-slate-400 uppercase tracking-[0.1em] text-[10px] border-b border-slate-100">Telegram ID</th>
-                                <th className="px-6 py-5 font-black text-slate-400 uppercase tracking-[0.1em] text-[10px] border-b border-slate-100 text-right">Joined Date</th>
+                                <th className="px-6 py-5 font-black text-slate-400 uppercase tracking-[0.1em] text-[10px] border-b border-slate-100 text-center">Joined Date</th>
+                                <th className="px-6 py-5 font-black text-slate-400 uppercase tracking-[0.1em] text-[10px] border-b border-slate-100 text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -141,10 +159,24 @@ export default function UsersPage() {
                                                 {user.telegramId}
                                             </code>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-6 py-4 text-center">
                                             <span className="text-[12px] font-bold text-slate-500">
                                                 {new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button
+                                                onClick={() => handleStartChat(user)}
+                                                disabled={chatLoadingUserId !== null}
+                                                className="inline-flex items-center gap-2 px-4.5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-slate-900 hover:to-slate-900 text-white rounded-[14px] text-[10px] font-black uppercase tracking-widest shadow-md hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 disabled:opacity-50 active:scale-95"
+                                            >
+                                                {chatLoadingUserId === user.telegramId ? (
+                                                    <Loader2 size={12} className="animate-spin" />
+                                                ) : (
+                                                    <MessageSquare size={12} />
+                                                )}
+                                                <span>Chat Now</span>
+                                            </button>
                                         </td>
                                     </tr>
                                 ))

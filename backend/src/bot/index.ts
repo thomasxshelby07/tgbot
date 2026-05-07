@@ -212,10 +212,17 @@ export const initBot = async () => {
             if (menuButtons.length > 0 || settings?.vipActive || settings?.supportActive || settings?.chatActive) {
                 const keyboard = new Keyboard().resized();
                 
-                // Add VIP and Support buttons
-                if (settings?.vipActive || settings?.supportActive) {
-                    if (settings?.vipActive) keyboard.text(settings.vipButtonText || "🌟 JOIN VIP");
-                    if (settings?.supportActive) keyboard.text(settings.supportButtonText || "🆘 Help & Support");
+                // Add VIP, Support, and Live Chat buttons
+                const row1 = [];
+                if (settings?.vipActive) row1.push(settings.vipButtonText || "🌟 JOIN VIP");
+                if (settings?.supportActive) row1.push(settings.supportButtonText || "🆘 Help & Support");
+                if (row1.length > 0) {
+                    row1.forEach(btn => keyboard.text(btn));
+                    keyboard.row();
+                }
+
+                if (settings?.chatActive) {
+                    keyboard.text(settings.chatButtonText || "💬 Live Chat");
                     keyboard.row();
                 }
 
@@ -336,7 +343,7 @@ export const initBot = async () => {
             const settings = await getSettings();
             
             // --- 2. Check Static/Action Buttons ---
-            const isLiveChatBtn = false; // Deprecated standalone feature
+            const isLiveChatBtn = settings?.chatActive && text === (settings.chatButtonText || "💬 Live Chat");
             const activeGiveaways = await Giveaway.find({ showButton: true });
             const matchingGiveaway = activeGiveaways.find(g => text.trim() === (g.buttonText?.trim() || "🎁 Giveaway Offer"));
             
@@ -524,6 +531,32 @@ export const initBot = async () => {
                     ctx.session.step = 'giveaway_name';
                     return await ctx.reply("Please enter your *Full Name* to join:", { parse_mode: "Markdown" });
                 }
+            }
+
+            if (isLiveChatBtn) {
+                console.log(`💬 Live Chat Button Clicked by User ${ctx.from.id}`);
+                const tgIdStr = ctx.from.id.toString();
+                
+                let activeSession = await ChatSession.findOne({ telegramId: tgIdStr, status: 'active' });
+                if (!activeSession) {
+                    const user = await User.findOne({ telegramId: tgIdStr });
+                    activeSession = await ChatSession.create({
+                        telegramId: tgIdStr,
+                        userId: user?._id,
+                        status: 'active'
+                    });
+                }
+                
+                ctx.session.step = 'chatting';
+                
+                await cache.del('chat_sessions_admin');
+                
+                const keyboard = new Keyboard().text("❌ End Chat").resized();
+                
+                return await ctx.reply(
+                    "💬 *Live Chat Connected!*\n\nType your message here and our support team will reply instantly.\nTo close the chat at any time, click the *❌ End Chat* button below.\n\n---\n\n💬 *लाइव चैट कनेक्ट हो गया है!*\n\nअपनी समस्या यहाँ टाइप करें, हमारे एडमिन तुरंत जवाब देंगे।\nचैट बंद करने के लिए नीचे *❌ End Chat* बटन पर क्लिक करें।",
+                    { parse_mode: "Markdown", reply_markup: keyboard }
+                );
             }
 
             if (isSupportBtn) {

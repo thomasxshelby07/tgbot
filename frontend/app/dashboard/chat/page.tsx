@@ -62,6 +62,20 @@ export default function ChatPage() {
     const [userSearchTerm, setUserSearchTerm] = useState('');
     const [sessionFilter, setSessionFilter] = useState<'all' | 'active' | 'closed'>('all');
 
+    useEffect(() => {
+        if (typeof window !== 'undefined' && sessions.length > 0) {
+            const params = new URLSearchParams(window.location.search);
+            const querySessionId = params.get('sessionId');
+            if (querySessionId) {
+                const matched = sessions.find(s => s._id === querySessionId);
+                if (matched) {
+                    setSelectedSession(matched);
+                    window.history.replaceState({}, '', window.location.pathname);
+                }
+            }
+        }
+    }, [sessions]);
+
     const [settings, setSettings] = useState({
         chatButtonText: '💬 Live Chat',
         chatActive: true
