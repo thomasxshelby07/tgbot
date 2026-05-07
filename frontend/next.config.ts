@@ -16,6 +16,18 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://tgbot-production-71a9.up.railway.app/api/:path*',
+      },
+      {
+        source: '/uploads/:path*',
+        destination: 'https://tgbot-production-71a9.up.railway.app/uploads/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
